@@ -5,7 +5,6 @@ import java.io.FileReader;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
 
@@ -19,27 +18,10 @@ public class StatementReader {
 				Statement statement;
 				while ((statement = parser.Statement()) != null) {
 					if (statement instanceof Select) {
-						SelectHandler<Void> handler = new SelectHandler<Void>() {
-
-							@Override
-							public Void processStatement(Select selectStatement) {
-								SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
-								selectStatement.getSelectBody().accept(selectVisitor);
-								return null;
-							}
-						};
-						handler.processStatement((Select) statement);
+						SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
+						((Select)statement).getSelectBody().accept(selectVisitor);
 					} else if (statement instanceof CreateTable) {
-						CreateTableHandler<Void> handler = new CreateTableHandler<Void>() {
-
-							@Override
-							public Void processStatement(
-									CreateTable createTableStatement) {
-								// TODO Auto-generated method stub
-								return null;
-							}
-						};
-						handler.processStatement((CreateTable) statement);
+						//TODO create appropriate visitor
 					}
 				}
 			}
