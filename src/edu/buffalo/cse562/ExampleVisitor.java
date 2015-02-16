@@ -13,6 +13,7 @@ public class ExampleVisitor implements SelectVisitor {
 	@Override
 	public void visit(PlainSelect arg0) {
 		//process Plain Select
+		
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import java.io.FileReader;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
 
@@ -22,7 +23,8 @@ public class StatementReader {
 
 							@Override
 							public Void processStatement(Select selectStatement) {
-								// TODO Auto-generated method stub
+								SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
+								selectStatement.getSelectBody().accept(selectVisitor);
 								return null;
 							}
 						};

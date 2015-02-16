@@ -43,65 +43,72 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
+import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitor;
+import net.sf.jsqlparser.statement.select.SelectVisitor;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.Union;
 
-public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor, ExpressionVisitor {
+public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor, ExpressionVisitor,SelectVisitor{
 
+	private String dataDir;
+	
+	public SelectQueryEvaluator(String dataDir) {
+		this.dataDir=dataDir;
+	}
+	
 	@Override
 	public void visit(NullValue nullvalue) {
-		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(Function function) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Function");
 	}
 
 	@Override
 	public void visit(InverseExpression inverseexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Inverse expression");
 	}
 
 	@Override
 	public void visit(JdbcParameter jdbcparameter) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("jdbc parameter");
 	}
 
 	@Override
 	public void visit(DoubleValue doublevalue) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Double value");
 	}
 
 	@Override
 	public void visit(LongValue longvalue) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Long Value");
 	}
 
 	@Override
 	public void visit(DateValue datevalue) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Date Value");
 	}
 
 	@Override
 	public void visit(TimeValue timevalue) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Time Value");
 	}
 
 	@Override
 	public void visit(TimestampValue timestampvalue) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -215,43 +222,43 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(Column column) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(CaseExpression caseexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(WhenClause whenclause) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(ExistsExpression existsexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(AllComparisonExpression allcomparisonexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(AnyComparisonExpression anycomparisonexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(Concat concat) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
@@ -269,49 +276,59 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(BitwiseOr bitwiseor) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(BitwiseXor bitwisexor) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(Table table) {
-		// TODO Auto-generated method stub
-		
+		table.getName();
 	}
 
 	@Override
 	public void visit(SubSelect subselect) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(SubJoin subjoin) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(AllColumns allcolumns) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(AllTableColumns alltablecolumns) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(SelectExpressionItem selectexpressionitem) {
 		// TODO Auto-generated method stub
+		System.out.println("Null Value");
+	}
+
+	@Override
+	public void visit(PlainSelect arg0) {
+		arg0.getFromItem().accept(this);
 		
 	}
 
+	@Override
+	public void visit(Union arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }
