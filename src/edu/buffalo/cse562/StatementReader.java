@@ -3,6 +3,7 @@ package edu.buffalo.cse562;
 import java.io.File;
 import java.io.FileReader;
 
+import edu.buffalo.cse562.utils.TableUtils;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -16,8 +17,8 @@ public class StatementReader {
 			File dir = new File(dataDir);
 			sqlfiles = dir.list();
 			for (int i=0;i<sqlfiles.length;i++) {
-				File file = new File(dataDir + "/" + sqlfiles[i]);
-				//Remove next if statement
+				File file = new File(dataDir + File.separator + sqlfiles[i]);
+				//Remove check condition
 				if(file.isFile()) {
 					CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
 					Statement statement;
@@ -26,7 +27,9 @@ public class StatementReader {
 							SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
 							((Select)statement).getSelectBody().accept(selectVisitor);
 						} else if (statement instanceof CreateTable) {
-							//TODO create appropriate visitor
+							CreateTable createTableStmt = (CreateTable) statement;
+							String tableName = createTableStmt.getTable().getName();
+							TableUtils.getTableSchemaMap().put(tableName, createTableStmt);
 						}
 					}
 				}
