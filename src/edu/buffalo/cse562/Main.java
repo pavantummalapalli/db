@@ -10,12 +10,10 @@ public class Main {
 		String dataDir = "";
 		String sqlFiles[] = new String[args.length - 2];
 		int index = 0;
-		boolean flag = true;
 		for (int i = 0; i < args.length; i++) {
-			if (flag && args[i].equals("--data")) {
+			if (args[i].equals("--data")) {
 				dataDir = args[i + 1];
-				flag = false;			
-				i++;
+				i++;				
 			} else {
 				sqlFiles[index++] = args[i];
 			}
