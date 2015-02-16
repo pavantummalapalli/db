@@ -1,5 +1,9 @@
 package edu.buffalo.cse562;
 
+import java.util.List;
+
+import javax.management.RuntimeErrorException;
+
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
 import net.sf.jsqlparser.expression.CaseExpression;
@@ -9,6 +13,7 @@ import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.InverseExpression;
 import net.sf.jsqlparser.expression.JdbcParameter;
+import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.NullValue;
 import net.sf.jsqlparser.expression.Parenthesis;
@@ -40,9 +45,11 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
+import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitor;
@@ -54,10 +61,12 @@ import net.sf.jsqlparser.statement.select.Union;
 public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor, ExpressionVisitor,SelectVisitor{
 
 	private String dataDir;
+	private SPUJAEval evaluator = new SPUJAEval();
 	
 	public SelectQueryEvaluator(String dataDir) {
 		this.dataDir=dataDir;
 	}
+//------------------------------------------EXPRESSION END---------------------------------//
 	
 	@Override
 	public void visit(NullValue nullvalue) {
@@ -174,55 +183,71 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(GreaterThan greaterthan) {
 		// TODO Auto-generated method stub
-		
+		LeafValue value = new LeafValue() {
+			
+			@Override
+			public long toLong() throws InvalidLeaf {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+			
+			@Override
+			public double toDouble() throws InvalidLeaf {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+		};
+		greaterthan.getLeftExpression().accept(this);
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(GreaterThanEquals greaterthanequals) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(InExpression inexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(IsNullExpression isnullexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(LikeExpression likeexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(MinorThan minorthan) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(MinorThanEquals minorthanequals) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(NotEqualsTo notequalsto) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(Column column) {
 		// TODO Auto-generated method stub
-		System.out.println("Null Value");
+		column.getTable();
+		System.out.println(column.toString());
 	}
 
 	@Override
@@ -284,22 +309,31 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 		// TODO Auto-generated method stub
 		System.out.println("Null Value");
 	}
-
+//------------------------------------------EXPRESSION END---------------------------------//
 	@Override
 	public void visit(Table table) {
-		table.getName();
+		String dataFileName = table.getName();
+		evaluator.setTableName(dataFileName);
 	}
 
 	@Override
 	public void visit(SubSelect subselect) {
 		// TODO Auto-generated method stub
+		SelectQueryEvaluator subSelectEval= new SelectQueryEvaluator(dataDir);
+		subselect.getSelectBody().accept(subSelectEval);
+		CreateTable table = subSelectEval.getEvaluator().eval();
+		//Put table in the hash map
+		evaluator.setTableName(table.getTable().getName());
 		System.out.println("Null Value");
 	}
 
 	@Override
 	public void visit(SubJoin subjoin) {
 		// TODO Auto-generated method stub
-		System.out.println("Null Value");
+		throw new RuntimeException("Subjoin not supported");
+//		subjoin.getLeft();
+//		subjoin.getJoin();
+//		System.out.println("Null Value");
 	}
 
 	@Override
@@ -323,12 +357,18 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(PlainSelect arg0) {
 		arg0.getFromItem().accept(this);
-		
+		if(arg0.getJoins()!=null && arg0.getJoins().size()>0)
+			evaluator.setJoins((List<Join>)arg0.getJoins());
+		arg0.getWhere().accept(this);
 	}
 
 	@Override
 	public void visit(Union arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public SPUJAEval getEvaluator(){
+		return evaluator;
 	}
 }
