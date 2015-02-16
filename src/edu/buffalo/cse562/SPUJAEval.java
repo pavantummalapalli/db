@@ -1,15 +1,13 @@
 package edu.buffalo.cse562;
 
 import java.util.List;
-
-import net.sf.jsqlparser.schema.Table;
+import edu.buffalo.cse562.utils.TableUtils;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.select.Join;
 
 public class SPUJAEval {
 
 	private String tableName;
-	private List<Table> joins;
+	private List<CreateTable> joins;
 	
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
@@ -19,17 +17,23 @@ public class SPUJAEval {
 		return tableName;
 	}
 	
-	public void setJoins(List<Table> joins) {
+	public void setJoins(List<CreateTable> joins) {
 		this.joins = joins;
 	}
 	
-	public List<Table> getJoins() {
+	public List<CreateTable> getJoins() {
 		return joins;
 	}
 	
 	public CreateTable eval(){
-		for(Join join:joins)
-			
+		CreateTable table = TableUtils.getTableSchemaMap().get(tableName);
+		for(CreateTable join:joins){
+			table=evaluate(table, join);
+		}
+		return new CreateTable();
+	}
+	
+	public CreateTable evaluate(CreateTable table, CreateTable b){
 		return new CreateTable();
 	}
 }

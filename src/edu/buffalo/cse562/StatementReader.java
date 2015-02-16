@@ -3,11 +3,12 @@ package edu.buffalo.cse562;
 import java.io.File;
 import java.io.FileReader;
 
-import edu.buffalo.cse562.utils.TableUtils;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
+import edu.buffalo.cse562.queryplan.Node;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class StatementReader {
 
@@ -19,8 +20,11 @@ public class StatementReader {
 				Statement statement;
 				while ((statement = parser.Statement()) != null) {
 					if (statement instanceof Select) {
-						SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
-						((Select)statement).getSelectBody().accept(selectVisitor);
+//						SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
+						SelectVisitorImpl selectVistor=new SelectVisitorImpl();
+						((Select)statement).getSelectBody().accept(selectVistor);
+						Node node = selectVistor.getQueryPlanTreeRoot();
+						//TODO evaluation of the query plan
 					} else if (statement instanceof CreateTable) {
 						CreateTable createTableStmt = (CreateTable) statement;
 						String tableName = createTableStmt.getTable().getName();
