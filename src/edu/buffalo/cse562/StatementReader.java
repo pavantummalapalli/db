@@ -12,16 +12,22 @@ public class StatementReader {
 
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
+			//Remove next 2 lines. Just for my local use
+			File dir = new File(dataDir);
+			sqlfiles = dir.list();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(dataDir + "/" + sqlfiles[i]);
-				CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
-				Statement statement;
-				while ((statement = parser.Statement()) != null) {
-					if (statement instanceof Select) {
-						SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
-						((Select)statement).getSelectBody().accept(selectVisitor);
-					} else if (statement instanceof CreateTable) {
-						//TODO create appropriate visitor
+				//Remove next if statement
+				if(file.isFile()) {
+					CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
+					Statement statement;
+					while ((statement = parser.Statement()) != null) {
+						if (statement instanceof Select) {
+							SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
+							((Select)statement).getSelectBody().accept(selectVisitor);
+						} else if (statement instanceof CreateTable) {
+							//TODO create appropriate visitor
+						}
 					}
 				}
 			}

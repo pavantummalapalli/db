@@ -2,9 +2,11 @@ package edu.buffalo.cse562;
 
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.CaseExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.InverseExpression;
@@ -114,121 +116,136 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(Parenthesis parenthesis) {
 		// TODO Auto-generated method stub
+		System.out.println("Paranthesis");
 		
 	}
 
 	@Override
 	public void visit(StringValue stringvalue) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("stringvalue");
 	}
 
 	@Override
 	public void visit(Addition addition) {
 		// TODO Auto-generated method stub
+		System.out.println("Addition");
+		visitBinaryExp(addition);
 		
 	}
 
 	@Override
 	public void visit(Division division) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Division");
+		visitBinaryExp(division);
 	}
 
 	@Override
 	public void visit(Multiplication multiplication) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("multiplication");
+		visitBinaryExp(multiplication);
 	}
 
 	@Override
 	public void visit(Subtraction subtraction) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Subtraction");
+		visitBinaryExp(subtraction);
 	}
 
 	@Override
 	public void visit(AndExpression andexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("andexpression");
+		visitBinaryExp(andexpression);
 	}
 
 	@Override
 	public void visit(OrExpression orexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("orexpression");
+		visitBinaryExp(orexpression);
 	}
 
 	@Override
 	public void visit(Between between) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("between");
 	}
 
 	@Override
 	public void visit(EqualsTo equalsto) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("EqualsTo");
+		visitBinaryExp(equalsto);
 	}
 
 	@Override
 	public void visit(GreaterThan greaterthan) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("greaterthan");
+		visitBinaryExp(greaterthan);
 	}
 
 	@Override
 	public void visit(GreaterThanEquals greaterthanequals) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("greaterthanequals");
+		visitBinaryExp(greaterthanequals);
 	}
 
 	@Override
 	public void visit(InExpression inexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("inexpression");
 	}
 
 	@Override
 	public void visit(IsNullExpression isnullexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("isnullexpression");
 	}
 
 	@Override
 	public void visit(LikeExpression likeexpression) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("likeexpression");
+		visitBinaryExp(likeexpression);
 	}
 
 	@Override
 	public void visit(MinorThan minorthan) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("minorthan");
+		visitBinaryExp(minorthan);
 	}
 
 	@Override
 	public void visit(MinorThanEquals minorthanequals) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("minorthanequals");
+		visitBinaryExp(minorthanequals);
 	}
 
 	@Override
 	public void visit(NotEqualsTo notequalsto) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("stringvalue");
+		visitBinaryExp(notequalsto);
 	}
 
 	@Override
 	public void visit(Column column) {
 		// TODO Auto-generated method stub
-		System.out.println("Null Value");
+		System.out.println("column");
 	}
 
 	@Override
 	public void visit(CaseExpression caseexpression) {
 		// TODO Auto-generated method stub
-		System.out.println("Null Value");
+		System.out.println("caseexpression");
 	}
 
 	@Override
@@ -264,13 +281,13 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(Matches matches) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("stringvalue");
 	}
 
 	@Override
 	public void visit(BitwiseAnd bitwiseand) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("stringvalue");
 	}
 
 	@Override
@@ -323,12 +340,19 @@ public class SelectQueryEvaluator implements SelectItemVisitor, FromItemVisitor,
 	@Override
 	public void visit(PlainSelect arg0) {
 		arg0.getFromItem().accept(this);
-		
+		Expression whereExp = arg0.getWhere();
+		if(whereExp != null)
+			whereExp.accept(this);
 	}
 
 	@Override
 	public void visit(Union arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private void visitBinaryExp(BinaryExpression binaryExp) {
+		binaryExp.getLeftExpression();
+		binaryExp.getRightExpression();		
 	}
 }
