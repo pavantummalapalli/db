@@ -16,7 +16,7 @@ public final class TableUtils {
 	public static void setTableSchemaMap(Map<String, CreateTable> tableSchemaMap) {
 		TableUtils.tableSchemaMap = tableSchemaMap;
 	}
-	
+
 	private TableUtils() {
 		
 	}
