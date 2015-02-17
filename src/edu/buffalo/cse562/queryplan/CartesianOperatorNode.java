@@ -1,11 +1,7 @@
 package edu.buffalo.cse562.queryplan;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import edu.buffalo.cse562.CartesianProduct;
-import edu.buffalo.cse562.SqlIterator;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import edu.buffalo.cse562.CartesianProduct;
 
 public class CartesianOperatorNode implements Operator{
 	

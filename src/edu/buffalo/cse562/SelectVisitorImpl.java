@@ -25,11 +25,12 @@ public class SelectVisitorImpl implements SelectVisitor {
 	//This is the heart of the solution. The query plan root node will be extracted from here
 	@Override
 	public void visit(PlainSelect arg0) {
+		//STEP 1 : SET FROM CLAUSE
 		FromItemImpl visitor = new FromItemImpl();
 		arg0.getFromItem().accept(visitor);
 		Node leftNode = visitor.getFromItemNode();
-		if(arg0.getJoins()!=null && arg0.getJoins().size()>0){
-			List<Join> joins = (List<Join>)arg0.getJoins();
+		List<Join> joins=arg0.getJoins();
+		if(joins!=null && joins.size()>0){
 			for(Join join:joins){
 				FromItemImpl tempVisitor = new FromItemImpl();
 				join.getRightItem().accept(tempVisitor);
@@ -37,20 +38,34 @@ public class SelectVisitorImpl implements SelectVisitor {
 				leftNode = buildCartesianOperatorNode(leftNode, rightNode);
 			}
 		}
+		node=leftNode;
 		//left Node is the root Node which stores the entire cartesian joins
 		//Now apply select filters using where items
 		//No premature optimization will be done at this level
-		ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
-		expressionNode.setChildNode(leftNode);
+		//STEP 2 : SET WHERE CLAUSE
+		if(arg0.getWhere()!=null){
+			ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
+			expressionNode.setChildNode(node);
+			node=expressionNode;
+		}
+		//STEP 3: SET GROUP BY CLAUSE AND PROCESS AGGREGATES
+		List groupByColumns = arg0.getGroupByColumnReferences();
+		boolean extendedMode=false;
+		if(groupByColumns!=null && groupByColumns.size()>0){
+			extendedMode=true;
+		}
+		//STEP 4: SET HAVING CLAUSE
 		
+		if(arg0.getHaving()!=null){
+			//arg0.getHa
+		}
+		
+		//STEP 5: SET SELECT PROJECTION
 		ProjectNode projectNode = new ProjectNode();
-		
 		List <Node> nodeList = new ArrayList <>();
-		List <SelectItem> selectItem = arg0.getSelectItems();		
+		List <SelectItem> selectItem = arg0.getSelectItems();
 		List <String> columnList = new ArrayList <>();
-		
 		for (SelectItem selItem : selectItem) {
-						
 			ProjectItemImpl prjImp = new ProjectItemImpl(null);
 			selItem.accept(prjImp);
 			Node prjNode = prjImp.getSelectItemNode();
@@ -60,11 +75,17 @@ public class SelectVisitorImpl implements SelectVisitor {
 			}
 			if (tempList != null && tempList.size() > 0) {
 				columnList.addAll(tempList);
-			}			
+			}
 		}
 		projectNode.setColumnList(columnList);
-		projectNode.setChildNode(expressionNode);
-		projectNode.setNodeList(nodeList);		
+		projectNode.setChildNode(node);
+		projectNode.setNodeList(nodeList);	
+		node=projectNode;
+		//STEP 7: SET ORDER BY
+		
+		//STEP 6: SET DISTINCT
+		
+		//STEP 7: SET LIMIT
 	}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
