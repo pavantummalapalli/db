@@ -7,7 +7,7 @@ import edu.buffalo.cse562.CartesianProduct;
 import edu.buffalo.cse562.SqlIterator;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 
-public class CartesianOperatorNode implements Node{
+public class CartesianOperatorNode implements Operator{
 	
 	private EqualsTo expression;
 	private Node relationNode1;

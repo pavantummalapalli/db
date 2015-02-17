@@ -34,7 +34,6 @@ public class SelectQueryEvaluator implements SelectItemVisitor{
 		System.out.println("Null Value");
 	}
 	
-	
 	public SPUJAEval getEvaluator(){
 		return evaluator;
 	}

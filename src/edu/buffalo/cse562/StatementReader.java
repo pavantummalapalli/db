@@ -20,11 +20,10 @@ public class StatementReader {
 				Statement statement;
 				while ((statement = parser.Statement()) != null) {
 					if (statement instanceof Select) {
-//						SelectQueryEvaluator selectVisitor = new SelectQueryEvaluator(dataDir);
 						SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 						((Select)statement).getSelectBody().accept(selectVistor);
 						Node node = selectVistor.getQueryPlanTreeRoot();
-						//TODO evaluation of the query plan
+						node.eval();
 					} else if (statement instanceof CreateTable) {
 						CreateTable createTableStmt = (CreateTable) statement;
 						String tableName = createTableStmt.getTable().getName();
