@@ -42,16 +42,15 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//No premature optimization will be done at this level
 		ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
 		expressionNode.setChildNode(leftNode);
-		node = expressionNode.eval();
-		//ProjectNode projectNode = new ProjectNode();
 		
-		/*List <Node> nodeList = new ArrayList <>();
+		ProjectNode projectNode = new ProjectNode();
+		
+		List <Node> nodeList = new ArrayList <>();
 		List <SelectItem> selectItem = arg0.getSelectItems();		
 		List <String> columnList = new ArrayList <>();
 		
-		for (SelectItem selItem : selectItem) {
-						
-			ProjectItemImpl prjImp = new ProjectItemImpl(null);
+		for (SelectItem selItem : selectItem) {						
+			ProjectItemImpl prjImp = new ProjectItemImpl(leftNode.eval().getTableName());
 			selItem.accept(prjImp);
 			Node prjNode = prjImp.getSelectItemNode();
 			List <String> tempList = prjImp.getSelectColumnList();
@@ -64,7 +63,8 @@ public class SelectVisitorImpl implements SelectVisitor {
 		}
 		projectNode.setColumnList(columnList);
 		projectNode.setChildNode(expressionNode);
-		projectNode.setNodeList(nodeList);		*/
+		projectNode.setNodeList(nodeList);	
+		this.node = projectNode.eval();
 	}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){

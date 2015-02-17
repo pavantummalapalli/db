@@ -14,14 +14,17 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class ProjectItemImpl implements SelectItemVisitor {
 	
+	//TODO move these static variables in props file.
 	private static String DOT_STR = ".";
+	private static String TABLE_SPLITTER_STR = "-";
+	
 	private Node node;
-	private String tableName;
+	private String[] tableName;
 	private List <String> columnList;
 	
 	public ProjectItemImpl(String tableName) {
 		// TODO Auto-generated constructor stub
-		this.tableName = tableName;
+		this.tableName = tableName.split(TABLE_SPLITTER_STR);
 		this.columnList = new ArrayList <>();
 	}
 	
@@ -34,7 +37,8 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	@Override
 	public void visit(AllTableColumns allTableColumns) {
 		// TODO Auto-generated method stub
-		this.tableName = allTableColumns.getTable().getName();		
+		String tname = allTableColumns.getTable().getName();
+		this.tableName = new String[] {tname};		
 		getColumnList();
 	}
 
@@ -44,13 +48,16 @@ public class ProjectItemImpl implements SelectItemVisitor {
 		ExpressionNode expNode = new ExpressionNode(selectExpressionItem.getExpression());
 		this.node = expNode;
 		
+		//this.columnList.add(expNode.eval().getTableName() + DOT_STR + colName);
 	}
 	
 	private void getColumnList() {
-		List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(tableName).getColumnDefinitions();
-		for (ColumnDefinition colDef : colDefList) {
-			this.columnList.add(tableName + DOT_STR + colDef.getColumnName());
-		}
+		for (String table : tableName) {
+			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table).getColumnDefinitions();
+			for (ColumnDefinition colDef : colDefList) {
+				this.columnList.add(tableName + DOT_STR + colDef.getColumnName());
+			}
+		}	
 	}
 	
 	public Node getSelectItemNode() {
