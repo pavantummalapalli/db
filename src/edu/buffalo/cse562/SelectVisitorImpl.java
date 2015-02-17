@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SelectVisitor;
 import net.sf.jsqlparser.statement.select.Union;
 import edu.buffalo.cse562.queryplan.CartesianOperatorNode;
@@ -41,10 +42,29 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//No premature optimization will be done at this level
 		ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
 		expressionNode.setChildNode(leftNode);
+		node = expressionNode.eval();
+		//ProjectNode projectNode = new ProjectNode();
 		
-		ProjectNode projectNode = new ProjectNode(arg0.getSelectItems());
-		projectNode.setChildNode(expressionNode);	
-		this.node = projectNode.eval();
+		/*List <Node> nodeList = new ArrayList <>();
+		List <SelectItem> selectItem = arg0.getSelectItems();		
+		List <String> columnList = new ArrayList <>();
+		
+		for (SelectItem selItem : selectItem) {
+						
+			ProjectItemImpl prjImp = new ProjectItemImpl(null);
+			selItem.accept(prjImp);
+			Node prjNode = prjImp.getSelectItemNode();
+			List <String> tempList = prjImp.getSelectColumnList();
+			if (prjNode != null) {
+				nodeList.add(prjNode);
+			}
+			if (tempList != null && tempList.size() > 0) {
+				columnList.addAll(tempList);
+			}			
+		}
+		projectNode.setColumnList(columnList);
+		projectNode.setChildNode(expressionNode);
+		projectNode.setNodeList(nodeList);		*/
 	}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
