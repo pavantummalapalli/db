@@ -1,5 +1,10 @@
 package edu.buffalo.cse562.queryplan;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.buffalo.cse562.CartesianProduct;
+import edu.buffalo.cse562.SqlIterator;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 
 public class CartesianOperatorNode implements Node{
@@ -27,7 +32,7 @@ public class CartesianOperatorNode implements Node{
 		return relationNode2;
 	}	
 	public RelationNode eval(){
-		//TODO
-		return null;
+		CartesianProduct cartesianProduct = new CartesianProduct(relationNode1, relationNode2, expression); 
+		return cartesianProduct.doCartesianProduct();
 	}
 }

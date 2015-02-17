@@ -1,5 +1,7 @@
 package edu.buffalo.cse562;
 
+import edu.buffalo.cse562.utils.TableUtils;
+
 public class Main {
 	public static void main(String[] args) {
 		if (args.length < 3) {
@@ -20,6 +22,7 @@ public class Main {
 				sqlFiles[index++] = args[i];
 			}
 		}
+		TableUtils.setDataDir(dataDir);
 		new StatementReader().readSqlFile(dataDir, sqlFiles);
 	}
 

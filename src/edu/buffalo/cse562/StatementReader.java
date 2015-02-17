@@ -14,9 +14,6 @@ public class StatementReader {
 
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
-			//Remove next 2 lines. Just for my local use
-			File dir = new File(dataDir);
-			sqlfiles = dir.list();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
 				CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
