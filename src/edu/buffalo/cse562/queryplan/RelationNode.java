@@ -8,13 +8,14 @@ public class RelationNode implements Node {
 	public RelationNode(){}
 	
 	public RelationNode(String tableName,String aliasName){
-		
+		this.tableName = tableName;
+		this.aliasName = aliasName;
 	}
 	
 	@Override
 	public RelationNode eval() {
 		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 	
 	public void setTableName(String tableName) {

@@ -41,7 +41,7 @@ public class SqlIterator extends Eval {
 		Expression expression;
 		CreateTable table;
 		HashMap<String, Integer> columnMapping;
-		private List<String> colVals;
+		private String[] colVals;
 		
 		public SqlIterator(CreateTable table, Expression expression) {
 			this.expression = expression;
@@ -50,11 +50,11 @@ public class SqlIterator extends Eval {
 			open();
 		}
 		
-		public List<String> getColVals() {
+		public String[] getColVals() {
 			return colVals;
 		}
 		
-		public void setColVals(List<String> colVals) {
+		public void setColVals(String[] colVals) {
 			this.colVals = colVals;
 		}
 		
@@ -64,13 +64,13 @@ public class SqlIterator extends Eval {
 			List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 			ColDataType dataType = colDefns.get(index).getColDataType();
 			if(dataType.getDataType().equals("int"))
-				return new LongValue(colVals.get(index));
+				return new LongValue(colVals[index]);
 			else if(dataType.getDataType().equals("date"))
-				return new DateValue(colVals.get(index));
+				return new DateValue(colVals[index]);
 			else if(dataType.getDataType().equals("string"))
-				return new StringValue(colVals.get(index));
+				return new StringValue(colVals[index]);
 			else if(dataType.getDataType().equals("double"))
-				return new DoubleValue(colVals.get(index));
+				return new DoubleValue(colVals[index]);
 			return null;
 		}
 		
@@ -91,28 +91,26 @@ public class SqlIterator extends Eval {
 			}
 		}
 		
-		public List<String> next() {
+		public String[] next() {
 			try {
 				String row = bufferedReader.readLine();
-				if(row == null)
+				if(row == null || row.trim().isEmpty())
 					return null;
-				if(!row.trim().isEmpty()) {
-					colVals = Arrays.asList(row.split("\\|"));
-					try {
-						if(expression != null) {
-							LeafValue leafValue = eval(expression);
-							if(leafValue instanceof BooleanValue) {
-								BooleanValue booleanValue = (BooleanValue)leafValue;
-								if(booleanValue == BooleanValue.FALSE)
-									return new ArrayList<>();
+				colVals = row.split("\\|");
+				try {
+					if(expression != null) {
+						LeafValue leafValue = eval(expression);
+						if(leafValue instanceof BooleanValue) {
+							BooleanValue booleanValue = (BooleanValue)leafValue;
+							if(booleanValue == BooleanValue.FALSE) {
+								String arr[] = {};
+								return arr;
 							}
 						}
-					} catch (SQLException e) {
-						e.printStackTrace();
 					}
+				} catch (SQLException e) {
+					e.printStackTrace();
 				}
-				else
-					return new ArrayList<>();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
