@@ -65,8 +65,8 @@ public class SelectVisitorImpl implements SelectVisitor {
 		List <Node> nodeList = new ArrayList <>();
 		List <SelectItem> selectItem = arg0.getSelectItems();
 		List <String> columnList = new ArrayList <>();
-		for (SelectItem selItem : selectItem) {
-			ProjectItemImpl prjImp = new ProjectItemImpl(null);
+		for (SelectItem selItem : selectItem) {						
+			ProjectItemImpl prjImp = new ProjectItemImpl(leftNode.eval().getTableName());
 			selItem.accept(prjImp);
 			Node prjNode = prjImp.getSelectItemNode();
 			List <String> tempList = prjImp.getSelectColumnList();
@@ -86,7 +86,7 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//STEP 6: SET DISTINCT
 		
 		//STEP 7: SET LIMIT
-	}
+}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
 		CartesianOperatorNode cartesianOperatorNode= new CartesianOperatorNode();

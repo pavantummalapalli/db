@@ -3,6 +3,7 @@ package edu.buffalo.cse562;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,22 +32,22 @@ public class CartesianProduct {
 		CreateTable table2 = TableUtils.getTableSchemaMap().get(relationNode2.eval().getTableName());
 		SqlIterator sqlIterator1 = new SqlIterator(table1, null);
 		String newTableName = relationNode1.eval().getTableName() + "x" + relationNode2.eval().getTableName();
-		List<String> colVals1, colVals2;
+		String[] colVals1, colVals2;
 		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals1 = sqlIterator1.next()) != null) {
 				SqlIterator sqlIterator2 = new SqlIterator(table2, null);
 				while((colVals2 = sqlIterator2.next()) != null) {
-					colVals1.addAll(colVals2);
-					Iterator<String> it = colVals1.iterator();
-					while(it.hasNext()) {
-						String value = it.next();
-						if(it.hasNext())
-							pw.print(value + "|");
-						else
-							pw.println(value);
+					int i;
+					for(i=0; i<colVals1.length; i++) {
+						pw.print(colVals1[i] + "|");
 					}
+					for(i=1; i<colVals2.length; i++) {
+						pw.print(colVals2[i-1] + "|");
+					}
+					if(colVals2.length > 0)
+						pw.println(colVals2[i-1]);
 				}
 				sqlIterator2.close();
 			}
