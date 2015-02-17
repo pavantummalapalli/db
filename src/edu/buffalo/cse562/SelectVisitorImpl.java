@@ -10,6 +10,7 @@ import net.sf.jsqlparser.statement.select.Union;
 import edu.buffalo.cse562.queryplan.CartesianOperatorNode;
 import edu.buffalo.cse562.queryplan.ExpressionNode;
 import edu.buffalo.cse562.queryplan.Node;
+import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.UnionOperatorNode;
 
 public class SelectVisitorImpl implements SelectVisitor {
@@ -41,6 +42,9 @@ public class SelectVisitorImpl implements SelectVisitor {
 		ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
 		expressionNode.setChildNode(leftNode);
 		
+		ProjectNode projectNode = new ProjectNode(arg0.getSelectItems());
+		projectNode.setChildNode(expressionNode);	
+		this.node = projectNode.eval();
 	}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
