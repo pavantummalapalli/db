@@ -33,8 +33,6 @@ public class SelectQueryEvaluator implements SelectItemVisitor{
 		// TODO Auto-generated method stub
 		System.out.println("Null Value");
 	}
-
-	
 	
 	public SPUJAEval getEvaluator(){
 		return evaluator;

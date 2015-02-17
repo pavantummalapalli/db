@@ -2,7 +2,7 @@ package edu.buffalo.cse562.queryplan;
 
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 
-public class CartesianOperatorNode implements Node{
+public class CartesianOperatorNode implements Operator{
 	
 	private EqualsTo expression;
 	private Node relationNode1;

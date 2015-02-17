@@ -1,5 +1,6 @@
 package edu.buffalo.cse562;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.jsqlparser.statement.select.Join;
@@ -7,12 +8,13 @@ import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectVisitor;
 import net.sf.jsqlparser.statement.select.Union;
 import edu.buffalo.cse562.queryplan.CartesianOperatorNode;
+import edu.buffalo.cse562.queryplan.ExpressionNode;
 import edu.buffalo.cse562.queryplan.Node;
-import edu.buffalo.cse562.queryplan.ProjectNode;
+import edu.buffalo.cse562.queryplan.UnionOperatorNode;
 
 public class SelectVisitorImpl implements SelectVisitor {
 
-	private ProjectNode node;
+	private Node node;
 	
 	public Node getQueryPlanTreeRoot(){
 		return node;
@@ -36,8 +38,9 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//left Node is the root Node which stores the entire cartesian joins
 		//Now apply select filters using where items
 		//No premature optimization will be done at this level
-		//TODO where item handling
-		//arg0.getWhere().
+		ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
+		expressionNode.setChildNode(leftNode);
+		
 	}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
@@ -49,8 +52,15 @@ public class SelectVisitorImpl implements SelectVisitor {
 
 	@Override
 	public void visit(Union arg0) {
-		
+		UnionOperatorNode node = new UnionOperatorNode();
+		List<Node> nodesList = new ArrayList<>();
 		arg0.getPlainSelects();
-		// TODO Auto-generated method stub
+		for(PlainSelect select: (List<PlainSelect>)arg0.getPlainSelects()){
+			SelectVisitorImpl impl = new  SelectVisitorImpl();
+			select.accept(impl);
+			nodesList.add(impl.getQueryPlanTreeRoot());
+		}
+		node.setChildNodes(nodesList);
+		this.node=node;
 	}
 }
