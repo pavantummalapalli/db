@@ -10,12 +10,14 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SelectVisitor;
 import net.sf.jsqlparser.statement.select.Union;
 import edu.buffalo.cse562.queryplan.CartesianOperatorNode;
 import edu.buffalo.cse562.queryplan.ExpressionNode;
+import edu.buffalo.cse562.queryplan.ExtendedProjectNode;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.UnionOperatorNode;
@@ -62,7 +64,8 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//STEP 3: SET GROUP BY CLAUSE AND PROCESS AGGREGATES
 		List groupByColumns = arg0.getGroupByColumnReferences();
 		List<String> groupByList = new LinkedList<>();
-		boolean extendedMode=false;
+		boolean extendedMode = false;
+		ExtendedProjectNode epn = new ExtendedProjectNode();
 		if(groupByColumns!=null && groupByColumns.size()>0){
 			extendedMode=true;
 			for(Column column:(List<Column>)groupByColumns){
@@ -73,15 +76,11 @@ public class SelectVisitorImpl implements SelectVisitor {
 					wholeCoumnName=column.getWholeColumnName();
 				groupByList.add(wholeCoumnName);
 			}
+			epn.setGroupByList(groupByList);
 		}
-		//STEP 4: SET HAVING CLAUSE
-		if(arg0.getHaving()!=null){
-			
-		}
-		
-		//STEP 5: SET SELECT PROJECTION
+					
+		//STEP 4: SET SELECT PROJECTION
 		ProjectNode projectNode = new ProjectNode();
-		List <Node> nodeList = new ArrayList <>();
 		List <SelectItem> selectItem = arg0.getSelectItems();
 		List <String> columnList = new ArrayList <>();
 		List <Function> functionList = new ArrayList <>();
@@ -91,30 +90,42 @@ public class SelectVisitorImpl implements SelectVisitor {
 			selItem.accept(prjImp);
 			Node prjNode = prjImp.getSelectItemNode();
 			List <String> tempList = prjImp.getSelectColumnList();
-			if (prjNode != null) {
-				nodeList.add(prjNode);
-			}
 			if (tempList != null && tempList.size() > 0) {
 				columnList.addAll(tempList);
 			}
 			if (prjImp.getFunctionList() != null && !prjImp.getFunctionList().isEmpty()) {
 				functionList.addAll(prjImp.getFunctionList());
-			} 
+			}
 		}
 		projectNode.setColumnList(columnList);
-		projectNode.setChildNode(node);
-		projectNode.setNodeList(nodeList);	
-		projectNode.setFunctionList(functionList);
-		node=projectNode;
+		//If extended mode is true then query is of type select a,sum(a) from B group by a
+		if(extendedMode){
+			epn.setFunctionList(functionList);
+			epn.setChildNode(node);
+			node=epn;
+			//STEP 4: SET HAVING CLAUSE
+			if(arg0.getHaving()!=null){
+				ExpressionNode expressionNode = new ExpressionNode(arg0.getHaving());
+				expressionNode.setChildNode(node);
+				node=expressionNode;
+			}
+		}
+		//Else query is select sum(a) from B
+		else{
+			projectNode.setFunctionList(functionList);
+			projectNode.setChildNode(node);
+			node=projectNode;
+		}
+		
 		//STEP 7: SET ORDER BY
-		
+		List<OrderByElement> orderByElements =  (List<OrderByElement>)arg0.getOrderByElements();
+		projectNode.setOrderByElements(orderByElements);
 		//STEP 6: SET DISTINCT
-		
+		projectNode.setDistinctOnElements(arg0.getDistinct());
 		//STEP 7: SET LIMIT
-		
+		projectNode.setLimit(arg0.getLimit());
+		node=projectNode;
 	}
-	
-	
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
 		CartesianOperatorNode cartesianOperatorNode= new CartesianOperatorNode();

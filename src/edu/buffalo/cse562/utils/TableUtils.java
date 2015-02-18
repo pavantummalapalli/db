@@ -3,7 +3,6 @@ package edu.buffalo.cse562.utils;
 import java.util.HashMap;
 import java.util.Map;
 
-import javafx.scene.control.Tab;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.CreateTable;

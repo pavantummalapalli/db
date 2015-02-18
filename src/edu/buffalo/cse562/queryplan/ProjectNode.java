@@ -9,15 +9,42 @@ import java.util.Map;
 
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import net.sf.jsqlparser.statement.select.Distinct;
+import net.sf.jsqlparser.statement.select.Limit;
+import net.sf.jsqlparser.statement.select.OrderByElement;
 
 public class ProjectNode implements Node {
 
 	private List <String> columnList;
 	private List <Function> functionList;
-	private List <Node> nodeList;
+	private Limit limit;
+	private Distinct distinctOnElements;
+	private List<OrderByElement> orderByElements;
 	private Node childNode;
 	private String preferredAliasName;
 	
+	
+	public void setOrderByElements(List<OrderByElement> orderByElements) {
+		this.orderByElements = orderByElements;
+	}
+	
+	public List<OrderByElement> getOrderByElements() {
+		return orderByElements;
+	}
+	
+	public void setLimit(Limit limit) {
+		this.limit = limit;
+	}
+	public Limit getLimit() {
+		return limit;
+	}
+	public void setDistinctOnElements(Distinct distinctOnElements) {
+		this.distinctOnElements = distinctOnElements;
+	}
+	public Distinct getDistinctOnElements() {
+		return distinctOnElements;
+	}
+
 	public void setPreferredAliasName(String preferredAliasName) {
 		this.preferredAliasName = preferredAliasName;
 	}
@@ -38,21 +65,13 @@ public class ProjectNode implements Node {
 		this.columnList = columnList;
 	}
 
-	public List<Function> getFunctionList() {
-		return functionList;
-	}
-
-	public void setFunctionList(List<Function> functionList) {
-		this.functionList = functionList;
-	}
-
-	public List<Node> getNodeList() {
-		return nodeList;
-	}
-
-	public void setNodeList(List<Node> nodeList) {
-		this.nodeList = nodeList;
-	}
+//	public List<Node> getNodeList() {
+//		return nodeList;
+//	}
+//
+//	public void setNodeList(List<Node> nodeList) {
+//		this.nodeList = nodeList;
+//	}
 
 	public Node getChildNode() {
 		return childNode;
@@ -60,6 +79,13 @@ public class ProjectNode implements Node {
 	public void setChildNode(Node childNode) {
 		this.childNode = childNode;
 	}	
+	public List<Function> getFunctionList() {
+		return functionList;
+	}
+
+	public void setFunctionList(List<Function> functionList) {
+		this.functionList = functionList;
+	}
 	
 	@Override
 	public RelationNode eval() {
@@ -79,20 +105,20 @@ public class ProjectNode implements Node {
 				columnIndexMap.put(columnDef.getColumnName(), cnt++);
 			}
 			if (columnList != null && !columnList.isEmpty()) {				
-				//TODO later bind System.out with PrintWriter and show output.
-				StringBuilder sb = new StringBuilder();
+				//TODO later bind System.out with PrintWriter and show output.				
 				while((rowVal = bufferedReader.readLine()) != null) {
+					StringBuilder sb = new StringBuilder();
 					if (rowVal.trim().isEmpty()) continue;	
 					String[] colVals = rowVal.split("\\|");
 					for (String column : columnList) {
-						sb.append(columnIndexMap.get(column) + "|");
+						sb.append(colVals[columnIndexMap.get(column)] + "|");
 					}
 					if (sb.length() > 0) {
 						System.out.println(sb.substring(0, sb.length() - 1).toString());
-					}
+					}					
 				}
 			} else if (functionList != null && !functionList.isEmpty()){
-				
+				//TODO function evaluation.
 			}	
 			bufferedReader.close();
 			fileReader.close();
