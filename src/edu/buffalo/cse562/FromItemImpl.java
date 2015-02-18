@@ -23,6 +23,8 @@ public class FromItemImpl implements FromItemVisitor {
 	public void visit(Table table) {
 		File filePath = new File(TableUtils.getDataDir() + File.separator + table.getName() + ".dat");
 		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName());
+		if(table.getAlias()==null)
+			table.setAlias(table.getName());
 		node = new RelationNode(table.getName(),table.getAlias(),filePath,schema);
 		tableList.add(table.getName());
 	}
@@ -34,6 +36,7 @@ public class FromItemImpl implements FromItemVisitor {
 		subselect.getSelectBody().accept(selectVistor);
 		ProjectNode tempNode = (ProjectNode)selectVistor.getQueryPlanTreeRoot();
 		tempNode.setPreferredAliasName(subselect.getAlias());
+		node=tempNode;
 	}
 
 	@Override

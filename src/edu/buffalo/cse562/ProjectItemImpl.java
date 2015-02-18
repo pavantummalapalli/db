@@ -21,8 +21,8 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	private Node node;
 	
 	//not using right now.
-	private List <String> tableList;
-	private Map <String, String> columnTableMap;
+	//private List <String> tableList;
+	//private Map <String, String> columnTableMap;
 	
 	private List <String> columnList;
 
@@ -30,8 +30,8 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	
 	public ProjectItemImpl(List <String> tableList, Map <String, String> columnTableMap) {
 		// TODO Auto-generated constructor stub
-		this.tableList = tableList;
-		this.columnTableMap = columnTableMap;
+		//this.tableList = tableList;
+		//this.columnTableMap = columnTableMap;
 		
 		//TODO on demand init
 		this.columnList = new ArrayList<>();

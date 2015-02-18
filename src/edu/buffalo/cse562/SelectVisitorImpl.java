@@ -2,10 +2,12 @@ package edu.buffalo.cse562;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
@@ -22,14 +24,14 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class SelectVisitorImpl implements SelectVisitor {
 
 	private Node node;
+	private Map<String,String> columnTableMap;
 	
 	public Node getQueryPlanTreeRoot(){
 		return node;
-	}
-	
-	private Map <String, String> columnTableMap;
+	}	
 	
 	//This is the heart of the solution. The query plan root node will be extracted from here
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void visit(PlainSelect arg0) {
 		//STEP 1 : SET FROM CLAUSE
@@ -57,14 +59,22 @@ public class SelectVisitorImpl implements SelectVisitor {
 		}
 		//STEP 3: SET GROUP BY CLAUSE AND PROCESS AGGREGATES
 		List groupByColumns = arg0.getGroupByColumnReferences();
+		List<String> groupByList = new LinkedList<>();
 		boolean extendedMode=false;
 		if(groupByColumns!=null && groupByColumns.size()>0){
 			extendedMode=true;
+			for(Column column:(List<Column>)groupByColumns){
+				String wholeCoumnName;
+				if(column.getTable()==null ||column.getTable().getName()==null||column.getTable().getName().isEmpty())
+					wholeCoumnName =  TableUtils.resolveColumnTableName(columnTableMap, column);
+				else
+					wholeCoumnName=column.getWholeColumnName();
+				groupByList.add(wholeCoumnName);
+			}
 		}
 		//STEP 4: SET HAVING CLAUSE
-		
 		if(arg0.getHaving()!=null){
-			//arg0.getHa
+			
 		}
 		
 		//STEP 5: SET SELECT PROJECTION
@@ -99,6 +109,7 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//STEP 6: SET DISTINCT
 		
 		//STEP 7: SET LIMIT
+		
 	}
 	
 	

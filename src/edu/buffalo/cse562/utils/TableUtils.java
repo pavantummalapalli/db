@@ -3,6 +3,7 @@ package edu.buffalo.cse562.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public final class TableUtils {
@@ -28,5 +29,12 @@ public final class TableUtils {
 	
 	private TableUtils() {
 		
+	}
+	
+	public static String resolveColumnTableName(Map<String,String> columnTableMap,Column column){
+		if(column.getTable() ==null || column.getTable().getName()==null || column.getTable().getName().isEmpty()){
+			column.getTable().setName(columnTableMap.get(column.getColumnName()));
+		}
+		return column.getWholeColumnName();
 	}
 }

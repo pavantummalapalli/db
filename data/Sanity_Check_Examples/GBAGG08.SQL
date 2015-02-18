@@ -2,7 +2,7 @@ CREATE TABLE R (A int, B int);
 CREATE TABLE S (B int, C int);
 
 
-select * from R;
+--select A from R;
 
 SELECT Z.B FROM (select * from R,S) Z;
 
