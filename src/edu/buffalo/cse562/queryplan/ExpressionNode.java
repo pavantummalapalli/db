@@ -27,8 +27,9 @@ public class ExpressionNode implements Node {
 	public RelationNode eval() {
 		RelationNode relationNode = childNode.eval();
 		String tableName = relationNode.getTableName();
-		CreateTable table = TableUtils.getTableSchemaMap().get(tableName);
+		CreateTable table = relationNode.getSchema();
 		SqlIterator sqlIterator = new SqlIterator(table, expression);
+		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		String[] colVals;
 		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
@@ -49,6 +50,7 @@ public class ExpressionNode implements Node {
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
 		relationNode.setTableName(newTableName);
+		relationNode.setFilePath(file);
 		return relationNode;
 	}
 	

@@ -28,11 +28,12 @@ public class CartesianProduct {
 	}
 	
 	public RelationNode doCartesianProduct() {
-		CreateTable table1 = TableUtils.getTableSchemaMap().get(relationNode1.eval().getTableName());
-		CreateTable table2 = TableUtils.getTableSchemaMap().get(relationNode2.eval().getTableName());
+		CreateTable table1 = relationNode1.eval().getSchema();
+		CreateTable table2 = relationNode2.eval().getSchema();
 		SqlIterator sqlIterator1 = new SqlIterator(table1, null);
 		String newTableName = relationNode1.eval().getTableName() + "x" + relationNode2.eval().getTableName();
 		String[] colVals1, colVals2;
+		//TODO point the file to a temp location
 		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
@@ -61,9 +62,9 @@ public class CartesianProduct {
 		CreateTable newTable = new CreateTable();
 		newTable.setTable(new Table(null, newTableName));
 		newTable.setColumnDefinitions(list1);
+		//TODO put the table name in a temp hash map
 		TableUtils.getTableSchemaMap().put(newTableName, newTable);
-		RelationNode relationNode = new RelationNode(newTableName, null);
+		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
 		return relationNode;
 	}
-
 }

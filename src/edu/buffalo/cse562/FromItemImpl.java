@@ -1,11 +1,16 @@
 package edu.buffalo.cse562;
 
+import java.io.File;
+
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import edu.buffalo.cse562.queryplan.Node;
+import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.RelationNode;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class FromItemImpl implements FromItemVisitor {
 
@@ -13,7 +18,9 @@ public class FromItemImpl implements FromItemVisitor {
 
 	@Override
 	public void visit(Table table) {
-		node = new RelationNode(table.getName(),table.getAlias());
+		File filePath = new File(TableUtils.getDataDir() + File.separator + table.getName() + ".dat");
+		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName());
+		node = new RelationNode(table.getName(),table.getAlias(),filePath,schema);
 	}
 
 	@Override
@@ -21,7 +28,8 @@ public class FromItemImpl implements FromItemVisitor {
 		// TODO Auto-generated method stub
 		SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 		subselect.getSelectBody().accept(selectVistor);
-		node = selectVistor.getQueryPlanTreeRoot();
+		ProjectNode tempNode = (ProjectNode)selectVistor.getQueryPlanTreeRoot();
+		tempNode.setPreferredAliasName(subselect.getAlias());
 	}
 
 	@Override

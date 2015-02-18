@@ -86,7 +86,7 @@ public class SelectVisitorImpl implements SelectVisitor {
 		//STEP 6: SET DISTINCT
 		
 		//STEP 7: SET LIMIT
-}
+	}
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
 		CartesianOperatorNode cartesianOperatorNode= new CartesianOperatorNode();

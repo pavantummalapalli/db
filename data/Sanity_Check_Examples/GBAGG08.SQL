@@ -2,7 +2,11 @@ CREATE TABLE R (A int, B int);
 CREATE TABLE S (B int, C int);
 
 
-SELECT Z.A, SUM(C) FROM R Z, S WHERE R.B = S.B GROUP BY A;
+select * from R;
+
+SELECT Z.B FROM (select * from R,S) Z;
+
+SELECT Z.A, SUM(C) FROM R as Z, S WHERE R.B = S.B GROUP BY A;
 
 SELECT A, SUM(C) FROM R, S WHERE R.B = S.B GROUP BY A;
 SELECT A, R.B, SUM(C) FROM R, S WHERE R.B = S.B GROUP BY A, R.B;
