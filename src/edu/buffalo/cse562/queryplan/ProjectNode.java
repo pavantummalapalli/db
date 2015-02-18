@@ -5,8 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
-import net.sf.jsqlparser.statement.create.table.CreateTable;
-
 public class ProjectNode implements Node {
 
 	private List <String> columnList;
@@ -69,10 +67,5 @@ public class ProjectNode implements Node {
 		if(relationNode.getTableName()==null || relationNode.getTableName().isEmpty())
 			relationNode.setTableName(preferredAliasName);
 		return relationNode;
-	}
-	
-	private CreateTable updateTableColumnDefinitions(CreateTable table){
-		//TODO update column definitions
-		return table;
 	}
 }

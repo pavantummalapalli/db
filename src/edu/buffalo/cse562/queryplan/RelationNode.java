@@ -3,6 +3,7 @@ package edu.buffalo.cse562.queryplan;
 import java.io.File;
 
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import edu.buffalo.cse562.ExtendedCreateTable;
 
 public class RelationNode implements Node {
 	
@@ -15,9 +16,12 @@ public class RelationNode implements Node {
 	
 	public RelationNode(String tableName,String aliasName,File filePath,CreateTable schema){
 		this.tableName = tableName;
-		this.aliasName = aliasName;
+		if(aliasName!=null && !aliasName.isEmpty())
+			this.aliasName = aliasName;
+		else
+			this.aliasName=tableName;
 		this.filePath=filePath;
-		this.schema=schema;
+		this.schema=new ExtendedCreateTable(schema,aliasName);
 	}
 	
 	public void setSchema(CreateTable schema) {
@@ -38,7 +42,6 @@ public class RelationNode implements Node {
 	
 	@Override
 	public RelationNode eval() {
-		// TODO Auto-generated method stub
 		return this;
 	}
 	
@@ -51,6 +54,7 @@ public class RelationNode implements Node {
 	}
 	
 	public void setAliasName(String aliasName) {
+		((ExtendedCreateTable)schema).setAlias(aliasName);
 		this.aliasName = aliasName;
 	}
 	
