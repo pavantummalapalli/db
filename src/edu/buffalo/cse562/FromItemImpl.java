@@ -1,6 +1,8 @@
 package edu.buffalo.cse562;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -15,12 +17,14 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class FromItemImpl implements FromItemVisitor {
 
 	private Node node;
-
+	private List <String> tableList = new ArrayList<>();
+	
 	@Override
 	public void visit(Table table) {
 		File filePath = new File(TableUtils.getDataDir() + File.separator + table.getName() + ".dat");
 		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName());
 		node = new RelationNode(table.getName(),table.getAlias(),filePath,schema);
+		tableList.add(table.getName());
 	}
 
 	@Override
@@ -36,6 +40,9 @@ public class FromItemImpl implements FromItemVisitor {
 	public void visit(SubJoin subjoin) {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("Subjoin not supported");
+	}
+	public List<String> getTableList() {
+		return tableList;
 	}
 	
 	public Node getFromItemNode(){

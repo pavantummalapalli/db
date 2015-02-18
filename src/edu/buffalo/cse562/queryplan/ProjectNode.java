@@ -5,11 +5,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class ProjectNode implements Node {
 
 	private List <String> columnList;
+	private List <Function> functionList;
 	private List <Node> nodeList;
 	private Node childNode;
 	private String preferredAliasName;
@@ -32,6 +34,14 @@ public class ProjectNode implements Node {
 
 	public void setColumnList(List<String> columnList) {
 		this.columnList = columnList;
+	}
+
+	public List<Function> getFunctionList() {
+		return functionList;
+	}
+
+	public void setFunctionList(List<Function> functionList) {
+		this.functionList = functionList;
 	}
 
 	public List<Node> getNodeList() {

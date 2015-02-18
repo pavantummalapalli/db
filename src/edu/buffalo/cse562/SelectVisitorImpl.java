@@ -1,8 +1,12 @@
 package edu.buffalo.cse562;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectItem;
@@ -13,6 +17,7 @@ import edu.buffalo.cse562.queryplan.ExpressionNode;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.UnionOperatorNode;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class SelectVisitorImpl implements SelectVisitor {
 
@@ -21,6 +26,8 @@ public class SelectVisitorImpl implements SelectVisitor {
 	public Node getQueryPlanTreeRoot(){
 		return node;
 	}
+	
+	private Map <String, String> columnTableMap;
 	
 	//This is the heart of the solution. The query plan root node will be extracted from here
 	@Override
@@ -65,8 +72,10 @@ public class SelectVisitorImpl implements SelectVisitor {
 		List <Node> nodeList = new ArrayList <>();
 		List <SelectItem> selectItem = arg0.getSelectItems();
 		List <String> columnList = new ArrayList <>();
-		for (SelectItem selItem : selectItem) {						
-			ProjectItemImpl prjImp = new ProjectItemImpl(leftNode.eval().getTableName());
+		List <Function> functionList = new ArrayList <>();
+		for (SelectItem selItem : selectItem) {
+			List <String> tableList = visitor.getTableList();
+			ProjectItemImpl prjImp = new ProjectItemImpl(tableList, columnTableMap);
 			selItem.accept(prjImp);
 			Node prjNode = prjImp.getSelectItemNode();
 			List <String> tempList = prjImp.getSelectColumnList();
@@ -76,10 +85,14 @@ public class SelectVisitorImpl implements SelectVisitor {
 			if (tempList != null && tempList.size() > 0) {
 				columnList.addAll(tempList);
 			}
+			if (prjImp.getFunctionList() != null && !prjImp.getFunctionList().isEmpty()) {
+				functionList.addAll(prjImp.getFunctionList());
+			} 
 		}
 		projectNode.setColumnList(columnList);
 		projectNode.setChildNode(node);
 		projectNode.setNodeList(nodeList);	
+		projectNode.setFunctionList(functionList);
 		node=projectNode;
 		//STEP 7: SET ORDER BY
 		
@@ -87,6 +100,8 @@ public class SelectVisitorImpl implements SelectVisitor {
 		
 		//STEP 7: SET LIMIT
 	}
+	
+	
 	
 	private Node buildCartesianOperatorNode(Node node,Node node1){
 		CartesianOperatorNode cartesianOperatorNode= new CartesianOperatorNode();
@@ -107,5 +122,16 @@ public class SelectVisitorImpl implements SelectVisitor {
 		}
 		node.setChildNodes(nodesList);
 		this.node=node;
+	}
+	
+	private Map <String, String> mapColumnAndTable(List <String> tableList) {
+		columnTableMap = new HashMap <>();
+		for (String table : tableList) {
+			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table).getColumnDefinitions();
+			for (ColumnDefinition columnDef : colDefList) {
+				columnTableMap.put(columnDef.getColumnName(), table);
+			}
+		}	
+		return columnTableMap;
 	}
 }
