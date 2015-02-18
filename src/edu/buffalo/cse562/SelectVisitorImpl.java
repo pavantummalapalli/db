@@ -44,9 +44,11 @@ public class SelectVisitorImpl implements SelectVisitor {
 				FromItemImpl tempVisitor = new FromItemImpl();
 				join.getRightItem().accept(tempVisitor);
 				Node rightNode =  tempVisitor.getFromItemNode();
+				visitor.getTableList().addAll(tempVisitor.getTableList());
 				leftNode = buildCartesianOperatorNode(leftNode, rightNode);
 			}
 		}
+		columnTableMap =mapColumnAndTable(visitor.getTableList());
 		node=leftNode;
 		//left Node is the root Node which stores the entire cartesian joins
 		//Now apply select filters using where items

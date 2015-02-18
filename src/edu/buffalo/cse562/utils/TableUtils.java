@@ -3,7 +3,9 @@ package edu.buffalo.cse562.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import javafx.scene.control.Tab;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public final class TableUtils {
@@ -33,7 +35,9 @@ public final class TableUtils {
 	
 	public static String resolveColumnTableName(Map<String,String> columnTableMap,Column column){
 		if(column.getTable() ==null || column.getTable().getName()==null || column.getTable().getName().isEmpty()){
-			column.getTable().setName(columnTableMap.get(column.getColumnName()));
+			Table table = new Table();
+			table.setName(columnTableMap.get(column.getColumnName()));
+			column.setTable(table);
 		}
 		return column.getWholeColumnName();
 	}

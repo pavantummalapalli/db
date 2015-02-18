@@ -35,7 +35,7 @@ public class FromItemImpl implements FromItemVisitor {
 		SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 		subselect.getSelectBody().accept(selectVistor);
 		ProjectNode tempNode = (ProjectNode)selectVistor.getQueryPlanTreeRoot();
-		tempNode.setPreferredAliasName(subselect.getAlias());
+		tableList.add(subselect.getAlias());
 		node=tempNode;
 	}
 

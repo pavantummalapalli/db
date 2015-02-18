@@ -4,7 +4,7 @@ CREATE TABLE S (B int, C int);
 
 --select A from R;
 
-SELECT Z.B FROM (select * from R,S) Z;
+--SELECT Z.B FROM (select * from R,S) Z;
 
 SELECT Z.A, SUM(C) FROM R as Z, S WHERE R.B = S.B GROUP BY A;
 
