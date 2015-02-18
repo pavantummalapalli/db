@@ -21,6 +21,7 @@ public class FromItemImpl implements FromItemVisitor {
 		File filePath = new File(TableUtils.getDataDir() + File.separator + table.getName() + ".dat");
 		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName());
 		node = new RelationNode(table.getName(),table.getAlias(),filePath,schema);
+		System.out.println(TableUtils.getTableSchemaMap().get(table.getName()));
 	}
 
 	@Override

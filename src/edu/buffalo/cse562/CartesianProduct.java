@@ -17,28 +17,31 @@ import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class CartesianProduct {
-	Node relationNode1;
-	Node relationNode2;
+	Node node1;
+	Node node2;
 	Expression expression;
-	public CartesianProduct(Node relationNode1, Node relationNode2,
+	public CartesianProduct(Node node1, Node node2,
 			EqualsTo expression) {
-		this.relationNode1 = relationNode1;
-		this.relationNode2 = relationNode2;
+		this.node1 = node1;
+		this.node2 = node2;
 		this.expression = expression;
 	}
 	
 	public RelationNode doCartesianProduct() {
-		CreateTable table1 = relationNode1.eval().getSchema();
-		CreateTable table2 = relationNode2.eval().getSchema();
-		SqlIterator sqlIterator1 = new SqlIterator(table1, null);
-		String newTableName = relationNode1.eval().getTableName() + "x" + relationNode2.eval().getTableName();
+		RelationNode relationNode1 = node1.eval();
+		RelationNode relationNode2 = node2.eval();
+		CreateTable table1 = relationNode1.getTable();
+		CreateTable table2 = relationNode2.getTable();
+		File dataFile1 = relationNode1.getFile();
+		File dataFile2 = relationNode2.getFile();
+		SqlIterator sqlIterator1 = new SqlIterator(table1, null, dataFile1);
+		String newTableName = node1.eval().getTableName() + "x" + node2.eval().getTableName();
 		String[] colVals1, colVals2;
-		//TODO point the file to a temp location
-		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
+		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals1 = sqlIterator1.next()) != null) {
-				SqlIterator sqlIterator2 = new SqlIterator(table2, null);
+				SqlIterator sqlIterator2 = new SqlIterator(table2, null, dataFile2);
 				while((colVals2 = sqlIterator2.next()) != null) {
 					int i;
 					for(i=0; i<colVals1.length; i++) {
@@ -63,7 +66,7 @@ public class CartesianProduct {
 		newTable.setTable(new Table(null, newTableName));
 		newTable.setColumnDefinitions(list1);
 		//TODO put the table name in a temp hash map
-		TableUtils.getTableSchemaMap().put(newTableName, newTable);
+		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
 		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
 		return relationNode;
 	}

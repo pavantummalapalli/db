@@ -8,32 +8,32 @@ public class RelationNode implements Node {
 	
 	private String tableName;
 	private String aliasName;
-	private File filePath;
-	private CreateTable schema;
+	private File file;
+	private CreateTable table;
 	
 	public RelationNode(){}
 	
-	public RelationNode(String tableName,String aliasName,File filePath,CreateTable schema){
+	public RelationNode(String tableName,String aliasName,File file,CreateTable table){
 		this.tableName = tableName;
 		this.aliasName = aliasName;
-		this.filePath=filePath;
-		this.schema=schema;
+		this.file=file;
+		this.table=table;
 	}
 	
-	public void setSchema(CreateTable schema) {
-		this.schema = schema;
+	public void setTable(CreateTable table) {
+		this.table = table;
 	}
 	
-	public CreateTable getSchema() {
-		return schema;
+	public CreateTable getTable() {
+		return table;
 	}
 	
-	public void setFilePath(File filePath) {
-		this.filePath = filePath;
+	public void setFile(File file) {
+		this.file = file;
 	}
 	
-	public File getFilePath() {
-		return filePath;
+	public File getFile() {
+		return file;
 	}
 	
 	@Override

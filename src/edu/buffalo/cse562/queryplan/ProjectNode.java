@@ -54,7 +54,7 @@ public class ProjectNode implements Node {
 		RelationNode relationNode = childNode.eval();
 		try {
 			//FileReader fileReader = new FileReader(TableUtils.getDataDir() + File.separator + tableName + ".dat");
-			FileReader fileReader = new FileReader(relationNode.getFilePath());
+			FileReader fileReader = new FileReader(relationNode.getFile());
 			BufferedReader bufferedReader = new BufferedReader(fileReader);
 			String rowVal;
 			while((rowVal = bufferedReader.readLine()) != null) {
