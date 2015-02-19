@@ -108,14 +108,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				expressionNode.setChildNode(node);
 				node=expressionNode;
 			}
+			projectNode.setChildNode(epn);
 		}
 		//Else query is select sum(a) from B
 		else{
 			projectNode.setFunctionList(functionList);
 			projectNode.setChildNode(node);
-			node=projectNode;
 		}
-		
 		//STEP 7: SET ORDER BY
 		List<OrderByElement> orderByElements =  (List<OrderByElement>)arg0.getOrderByElements();
 		if(orderByElements!=null && orderByElements.size()>0)
@@ -202,9 +201,11 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	
 	public Function resolveFunction(Function function) {
 		ExpressionResolver resolver = new ExpressionResolver(this);
+		if(function.getParameters()!=null){
 		Iterator<Expression> expressionIterator = function.getParameters().getExpressions().iterator();
 		while(expressionIterator.hasNext())
 			resolver.resolveExpression(expressionIterator.next());
+		}
 		return function;
 	}
 

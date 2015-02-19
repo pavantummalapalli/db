@@ -3,6 +3,8 @@ package edu.buffalo.cse562.queryplan;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -24,7 +26,7 @@ public class ExpressionNode implements Node {
 		String tableName = relationNode.getTableName();
 		CreateTable table = relationNode.getTable();
 		File dataFile = relationNode.getFile();
-		SqlIterator sqlIterator = new SqlIterator(table, expression, dataFile);
+		SqlIterator sqlIterator = new SqlIterator(table, new ArrayList <>(Arrays.asList(expression)), dataFile,null);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		String[] colVals;

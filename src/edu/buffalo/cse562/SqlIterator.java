@@ -6,9 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.DateValue;
@@ -26,17 +28,21 @@ public class SqlIterator extends Eval {
 	//Schema Info, Expression and relation to be declared
 		FileReader fileReader;
 		BufferedReader bufferedReader;
-		Expression expression;
+		List <Expression> expressionList;
 		CreateTable table;
 		HashMap<String, Integer> columnMapping;
 		File dataFile;
 		private String[] colVals;
-		
-		public SqlIterator(CreateTable table, Expression expression, File dataFile) {
-			this.expression = expression;
+		private List <String> groupByList;
+		private List <ExpressionEvaluator> expressionEvaluatorList;
+			
+		public SqlIterator(CreateTable table, List <Expression> expression, File dataFile, List <String> groupByList) {
+			this.expressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
 			this.dataFile = dataFile;
+			this.groupByList = groupByList;
+			
 			open();
 		}
 		
@@ -46,6 +52,19 @@ public class SqlIterator extends Eval {
 		
 		public void setColVals(String[] colVals) {
 			this.colVals = colVals;
+		}
+		
+		@Override
+		public LeafValue eval(net.sf.jsqlparser.expression.Function function) throws SQLException {
+			if(function.getName().equalsIgnoreCase("SUM")){
+				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
+				String eval = getLeafValue(eval(exp));
+				
+			}
+			else if(function.getName().equalsIgnoreCase("AVG")){
+				
+			}
+			return super.eval(function);
 		}
 		
 		@Override
@@ -76,6 +95,13 @@ public class SqlIterator extends Eval {
 					ColumnDefinition cd = iterator.next();
 					columnMapping.put(cd.getColumnName(), index++);
 				}
+				if(expressionList!=null && expressionList.size()>0){
+					expressionEvaluatorList = new ArrayList<>(expressionList.size());
+					for (int i = 0; i < expressionList.size(); i++) {
+						expressionEvaluatorList.add(new ExpressionEvaluator(table));
+					}
+				}
+				//expressionEvaluator = new ExpressionEvaluator(table);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -111,8 +137,10 @@ public class SqlIterator extends Eval {
 				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
 				try {
-					if(expression != null) {
-						LeafValue leafValue = eval(expression);
+					
+					if(expressionList != null){
+						int count = 0;
+						LeafValue leafValue =expressionEvaluatorList.get(count).evaluateExpression(expressionList.get(count), colVals, groupByList);
 						if(leafValue instanceof BooleanValue) {
 							BooleanValue booleanValue = (BooleanValue)leafValue;
 							if(booleanValue == BooleanValue.FALSE) {
@@ -123,7 +151,33 @@ public class SqlIterator extends Eval {
 							String[] arr = new String[1];
 							arr[0] = getLeafValue(leafValue);
 							return arr;
-						}
+							}
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			return colVals;
+		}
+		
+		public String[] nextAggregate() {
+			try {
+				String row = bufferedReader.readLine();
+				if(row == null || row.trim().isEmpty())
+					return null;
+				//TODO: detect n trim spaces
+				colVals = row.split("\\|");
+				try {
+					
+					if(expressionList != null){
+						int count = 0;
+						for (Expression expression : expressionList) {
+							LeafValue leafValue =expressionEvaluatorList.get(count).evaluateExpression(expression, colVals, groupByList);
+							count++;
+						}	
 					}
 				} catch (SQLException e) {
 					e.printStackTrace();
@@ -142,5 +196,9 @@ public class SqlIterator extends Eval {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+		
+		public Map<String,Object> getAggregateData(int index) {
+			return expressionEvaluatorList.get(index).getCalculatedData();
 		}
 }
