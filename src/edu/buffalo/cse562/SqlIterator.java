@@ -30,12 +30,14 @@ public class SqlIterator extends Eval {
 		Expression expression;
 		CreateTable table;
 		HashMap<String, Integer> columnMapping;
+		File dataFile;
 		private String[] colVals;
 		
-		public SqlIterator(CreateTable table, Expression expression) {
+		public SqlIterator(CreateTable table, Expression expression, File dataFile) {
 			this.expression = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
+			this.dataFile = dataFile;
 			open();
 		}
 		
@@ -66,7 +68,7 @@ public class SqlIterator extends Eval {
 		public void open() {
 			try {
 				String tableName = table.getTable().getName();
-				fileReader = new FileReader(TableUtils.getDataDir() + File.separator + tableName + ".dat");
+				fileReader = new FileReader(dataFile);
 				bufferedReader = new BufferedReader(fileReader);
 				List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 				Iterator<ColumnDefinition> iterator = colDefns.iterator();
@@ -85,6 +87,7 @@ public class SqlIterator extends Eval {
 				String row = bufferedReader.readLine();
 				if(row == null || row.trim().isEmpty())
 					return null;
+				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
 				try {
 					if(expression != null) {

@@ -1,5 +1,7 @@
 package edu.buffalo.cse562;
 
+import java.io.File;
+
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class Main {
@@ -23,7 +25,25 @@ public class Main {
 			}
 		}
 		TableUtils.setDataDir(dataDir);
+		TableUtils.setTempDataDir(dataDir + File.separator + "temp");
+		createTempFolder();
 		new StatementReader().readSqlFile(dataDir, sqlFiles);
+		//removeTempFolder();
+	}
+
+	private static void createTempFolder() {
+		new File(TableUtils.getTempDataDir()).mkdir();
+	}
+
+	private static void removeTempFolder() {
+		File file = new File(TableUtils.getTempDataDir());
+		if(file.exists()) {
+			File[] files = file.listFiles();
+			for(File f:files) {
+				f.delete();
+			}
+		}
+		file.delete();
 	}
 
 	private static void printUsage() {

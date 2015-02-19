@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.buffalo.cse562.SqlIterator;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -98,11 +97,11 @@ public class ProjectNode implements Node {
 		RelationNode relationNode = childNode.eval();
 		
 		try {
-			FileReader fileReader = new FileReader(relationNode.getFilePath());
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
-			
+			//FileReader fileReader = new FileReader(TableUtils.getDataDir() + File.separator + tableName + ".dat");
+			FileReader fileReader = new FileReader(relationNode.getFile());
+			BufferedReader bufferedReader = new BufferedReader(fileReader);			
 			String rowVal;
-			List <ColumnDefinition> columnDefList = relationNode.getSchema().getColumnDefinitions();
+			List <ColumnDefinition> columnDefList = relationNode.getTable().getColumnDefinitions();
 			Map <String, Integer> columnIndexMap = new HashMap <>();
 			
 			int cnt = 0;
