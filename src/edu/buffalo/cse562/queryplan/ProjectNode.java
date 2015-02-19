@@ -13,10 +13,13 @@ import java.util.Map;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.utils.TableUtils;
+
 
 public class ProjectNode implements Node {
 
@@ -28,7 +31,6 @@ public class ProjectNode implements Node {
 	private Node childNode;
 	
 	private String preferredAliasName;
-	
 	
 	public void setOrderByElements(List<OrderByElement> orderByElements) {
 		this.orderByElements = orderByElements;
@@ -172,5 +174,17 @@ public class ProjectNode implements Node {
 		if(relationNode.getTableName()==null || relationNode.getTableName().isEmpty())
 			relationNode.setTableName(preferredAliasName);
 		return relationNode;
+	}
+
+	@Override
+	public CreateTable evalSchema() {
+		CreateTable table = new CreateTable();
+		List columnDef = new ArrayList();
+		if(columnList!=null && columnList.size()>0)
+			columnDef = TableUtils.convertColumnNameToColumnDefinitions(columnList);
+		if(functionList!=null && functionList.size()>0)
+			columnDef.addAll(TableUtils.convertFunctionNameToColumnDefinitions(functionList));
+		table.setColumnDefinitions(columnDef);
+		return table;
 	}
 }

@@ -1,6 +1,7 @@
 package edu.buffalo.cse562.queryplan;
 
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.CartesianProduct;
 
 public class CartesianOperatorNode implements Operator{
@@ -26,9 +27,14 @@ public class CartesianOperatorNode implements Operator{
 	}
 	public Node getRelationNode2() {
 		return relationNode2;
-	}	
+	}
 	public RelationNode eval(){
 		CartesianProduct cartesianProduct = new CartesianProduct(relationNode1, relationNode2, expression); 
 		return cartesianProduct.doCartesianProduct();
+	}
+	@Override
+	public CreateTable evalSchema() {
+		CartesianProduct cartesianProduct = new CartesianProduct(relationNode1, relationNode2, expression);
+		return cartesianProduct.evalSchema();
 	}
 }

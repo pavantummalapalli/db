@@ -16,11 +16,12 @@ public class RelationNode implements Node {
 	
 	public RelationNode(String tableName,String aliasName,File file,CreateTable table){
 		this.tableName = tableName;
-		if(aliasName!=null && !aliasName.isEmpty())
-			this.aliasName = aliasName;
-		else
-			this.aliasName=tableName;
 		this.file=file;
+//		if(aliasName!=null && !aliasName.isEmpty())
+//			this.aliasName = aliasName;
+//		else
+//			this.aliasName=tableName;
+//		this.file=file;
 		this.table=new ExtendedCreateTable(table,aliasName);
 	}
 	
@@ -60,5 +61,10 @@ public class RelationNode implements Node {
 	
 	public String getAliasName() {
 		return aliasName;
+	}
+
+	@Override
+	public CreateTable evalSchema() {
+		return table;
 	}
 }

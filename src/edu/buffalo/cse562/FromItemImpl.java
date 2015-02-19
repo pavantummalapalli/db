@@ -19,6 +19,9 @@ public class FromItemImpl implements FromItemVisitor {
 	private Node node;
 	private List <String> tableList = new ArrayList<>();
 	
+	public FromItemImpl(){
+	}
+	
 	@Override
 	public void visit(Table table) {
 		File filePath = new File(TableUtils.getDataDir() + File.separator + table.getName() + ".dat");
@@ -35,7 +38,8 @@ public class FromItemImpl implements FromItemVisitor {
 		SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 		subselect.getSelectBody().accept(selectVistor);
 		ProjectNode tempNode = (ProjectNode)selectVistor.getQueryPlanTreeRoot();
-		tableList.add(subselect.getAlias());
+		//tableList.add(subselect.getAlias());
+		//queryDomain.getQueryDomainTableSchemaMap().put(subselect.getAlias(), tempNode.evalSchema());
 		node=tempNode;
 	}
 
@@ -44,6 +48,7 @@ public class FromItemImpl implements FromItemVisitor {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("Subjoin not supported");
 	}
+	
 	public List<String> getTableList() {
 		return tableList;
 	}

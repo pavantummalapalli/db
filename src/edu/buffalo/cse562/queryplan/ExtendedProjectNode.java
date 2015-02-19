@@ -1,8 +1,11 @@
 package edu.buffalo.cse562.queryplan;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import edu.buffalo.cse562.utils.TableUtils;
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class ExtendedProjectNode implements Node {
 
@@ -37,5 +40,17 @@ public class ExtendedProjectNode implements Node {
 
 	public void setFunctionList(List<Function> functionList) {
 		this.functionList = functionList;
+	}
+	
+	@Override
+	public CreateTable evalSchema() {
+		CreateTable table = new CreateTable();
+		List columnDef = new ArrayList();
+		if(groupByList!=null && groupByList.size()>0)
+			columnDef = TableUtils.convertColumnNameToColumnDefinitions(groupByList);
+		if(functionList!=null && functionList.size()>0)
+			columnDef.addAll(TableUtils.convertFunctionNameToColumnDefinitions(functionList));
+		table.setColumnDefinitions(columnDef);
+		return table;
 	}
 }

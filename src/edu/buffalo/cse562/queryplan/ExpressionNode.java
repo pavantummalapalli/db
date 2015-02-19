@@ -12,7 +12,6 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class ExpressionNode implements Node {
 
 	private Expression expression;
-	private Node evaluatedNode;
 	private Node childNode;
 	
 	public ExpressionNode(Expression expression) {
@@ -56,5 +55,10 @@ public class ExpressionNode implements Node {
 	}
 	public Node getChildNode() {
 		return childNode;
+	}
+
+	@Override
+	public CreateTable evalSchema() {
+		return childNode.evalSchema();
 	}
 }
