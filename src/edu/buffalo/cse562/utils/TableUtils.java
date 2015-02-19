@@ -3,6 +3,8 @@ package edu.buffalo.cse562.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public final class TableUtils {
@@ -37,5 +39,14 @@ public final class TableUtils {
 
 	public static void setTempDataDir(String tempDataDir) {
 		TableUtils.tempDataDir = tempDataDir;
+	}
+	
+	public static String resolveColumnTableName(Map<String,String> columnTableMap,Column column){
+		if(column.getTable() ==null || column.getTable().getName()==null || column.getTable().getName().isEmpty()){
+			Table table = new Table();
+			table.setName(columnTableMap.get(column.getColumnName()));
+			column.setTable(table);
+		}
+		return column.getWholeColumnName();
 	}
 }

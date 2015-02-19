@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.Expression;
@@ -60,11 +59,12 @@ public class CartesianProduct {
 			e.printStackTrace();
 		}
 		sqlIterator1.close();
-		List<ColumnDefinition> list1 = table1.getColumnDefinitions();
-		list1.addAll(table2.getColumnDefinitions());
+		List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
+		newList.addAll(table1.getColumnDefinitions());
+		newList.addAll(table2.getColumnDefinitions());
 		CreateTable newTable = new CreateTable();
 		newTable.setTable(new Table(null, newTableName));
-		newTable.setColumnDefinitions(list1);
+		newTable.setColumnDefinitions(newList);
 		//TODO put the table name in a temp hash map
 		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
 		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);

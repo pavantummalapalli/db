@@ -2,18 +2,14 @@ package edu.buffalo.cse562;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.buffalo.cse562.utils.TableUtils;
 import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
@@ -21,18 +17,11 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
-import net.sf.jsqlparser.parser.CCJSqlParser;
-import net.sf.jsqlparser.parser.ParseException;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectBody;
-import net.sf.jsqlparser.statement.select.Union;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class SqlIterator extends Eval {
 	//Schema Info, Expression and relation to be declared
@@ -98,6 +87,7 @@ public class SqlIterator extends Eval {
 				String row = bufferedReader.readLine();
 				if(row == null || row.trim().isEmpty())
 					return null;
+				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
 				try {
 					if(expression != null) {

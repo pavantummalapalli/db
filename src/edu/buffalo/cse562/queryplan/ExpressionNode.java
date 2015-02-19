@@ -3,15 +3,11 @@ package edu.buffalo.cse562.queryplan;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.Iterator;
-import java.util.List;
 
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.SqlIterator;
 import edu.buffalo.cse562.utils.TableUtils;
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
-import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class ExpressionNode implements Node {
 

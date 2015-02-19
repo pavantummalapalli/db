@@ -2,12 +2,15 @@ CREATE TABLE R (A int, B int);
 CREATE TABLE S (B int, C int);
 
 
-select * from R;
+--select A from R;
 
-SELECT Z.B FROM (select * from R,S) Z;
+--SELECT Z.B FROM (select * from R,S) Z;
+
+SELECT R.B, SUM(A * C) FROM R, S WHERE R.B = S.B GROUP BY A, R.B, C ORDER BY A ASC,B DESC;
 
 SELECT Z.A, SUM(C) FROM R as Z, S WHERE R.B = S.B GROUP BY A;
 
 SELECT A, SUM(C) FROM R, S WHERE R.B = S.B GROUP BY A;
 SELECT A, R.B, SUM(C) FROM R, S WHERE R.B = S.B GROUP BY A, R.B;
 SELECT R.B, SUM(A * C) FROM R, S WHERE R.B = S.B GROUP BY A, R.B, C;
+
