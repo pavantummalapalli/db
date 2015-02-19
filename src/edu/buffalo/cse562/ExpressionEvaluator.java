@@ -47,7 +47,7 @@ public class ExpressionEvaluator extends Eval {
 	public String getGroupByValueKey() throws SQLException{
 		StringBuffer key = new StringBuffer("");
 		for(String groupByColumn : groupByList)
-			key.append(getLeafValue(eval(convertStringToColumn(groupByColumn)))+",");
+			key.append(getLeafValue(eval(convertStringToColumn(groupByColumn)))+"|");
 		return key.substring(0,key.length()-1);
 	}
 	
