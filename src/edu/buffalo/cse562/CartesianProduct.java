@@ -3,6 +3,7 @@ package edu.buffalo.cse562;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.Expression;
@@ -29,7 +30,7 @@ public class CartesianProduct {
 		CreateTable table1 = relationNode1.eval().getSchema();
 		CreateTable table2 = relationNode2.eval().getSchema();
 		SqlIterator sqlIterator1 = new SqlIterator(table1, null);
-		String newTableName = relationNode1.eval().getTableName() + "x" + relationNode2.eval().getTableName();
+		String newTableName = getNewTableName(table1, table2);
 		String[] colVals1, colVals2;
 		//TODO point the file to a temp location
 		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
@@ -64,5 +65,21 @@ public class CartesianProduct {
 		TableUtils.getTableSchemaMap().put(newTableName, newTable);
 		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
 		return relationNode;
+	}
+	
+	private String getNewTableName(CreateTable table1,CreateTable table2){
+		return table1.getTable().getName() + "x" + table2.getTable().getName();
+	}
+	
+	public CreateTable evalSchema(){
+		CreateTable table1 = relationNode1.evalSchema();
+		CreateTable table2 = relationNode2.evalSchema();
+		CreateTable table = new CreateTable();
+		table.setTable(new Table());
+		List<ColumnDefinition> list = new LinkedList<>();
+		list.addAll(table1.getColumnDefinitions());
+		list.addAll(table2.getColumnDefinitions());
+		table.setColumnDefinitions(list);
+		return table;
 	}
 }

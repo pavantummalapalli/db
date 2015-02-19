@@ -16,10 +16,6 @@ public class RelationNode implements Node {
 	
 	public RelationNode(String tableName,String aliasName,File filePath,CreateTable schema){
 		this.tableName = tableName;
-		if(aliasName!=null && !aliasName.isEmpty())
-			this.aliasName = aliasName;
-		else
-			this.aliasName=tableName;
 		this.filePath=filePath;
 		this.schema=new ExtendedCreateTable(schema,aliasName);
 	}
@@ -60,5 +56,10 @@ public class RelationNode implements Node {
 	
 	public String getAliasName() {
 		return aliasName;
+	}
+
+	@Override
+	public CreateTable evalSchema() {
+		return schema;
 	}
 }

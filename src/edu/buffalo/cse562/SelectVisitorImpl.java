@@ -23,7 +23,7 @@ import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.UnionOperatorNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
-public class SelectVisitorImpl implements SelectVisitor {
+public class SelectVisitorImpl implements SelectVisitor{
 
 	private Node node;
 	private Map<String,String> columnTableMap;

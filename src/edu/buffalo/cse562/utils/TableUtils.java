@@ -1,11 +1,15 @@
 package edu.buffalo.cse562.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
-import javafx.scene.control.Tab;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public final class TableUtils {
@@ -15,6 +19,14 @@ public final class TableUtils {
 
 	public static Map<String, CreateTable> getTableSchemaMap() {
 		return tableSchemaMap;
+	}
+	
+	public static List <ColumnDefinition> getColumnDefinitionForTable(String tableName,Map <String, CreateTable> tempTableSchemaMap){
+		CreateTable cd = tableSchemaMap.get(tableName);
+		if(cd ==null && tempTableSchemaMap !=null){
+			return tempTableSchemaMap.get(tableName).getColumnDefinitions();
+		}
+		return cd.getColumnDefinitions();
 	}
 
 	public static void setTableSchemaMap(Map<String, CreateTable> tableSchemaMap) {
@@ -29,7 +41,7 @@ public final class TableUtils {
 		TableUtils.dataDir = dataDir;
 	}
 	
-	private TableUtils() {
+	public TableUtils() {
 		
 	}
 	
@@ -40,5 +52,27 @@ public final class TableUtils {
 			column.setTable(table);
 		}
 		return column.getWholeColumnName();
+	}
+	
+	public static List<ColumnDefinition> convertColumnNameToColumnDefinitions(List<String> columnList){
+		List<ColumnDefinition> defList = new ArrayList<ColumnDefinition>();
+		Iterator<String> iteratorColumnList = columnList.iterator();
+		while(iteratorColumnList.hasNext()){
+			ColumnDefinition def =  new ColumnDefinition();
+			def.setColumnName(iteratorColumnList.next());
+			defList.add(def);
+		}
+		return defList;
+	}
+	
+	public static List<ColumnDefinition> convertFunctionNameToColumnDefinitions(List<Function> functionList){
+		List<ColumnDefinition> defList = new ArrayList<ColumnDefinition>();
+		Iterator<Function> iteratorColumnList = functionList.iterator();
+		while(iteratorColumnList.hasNext()){
+			ColumnDefinition def =  new ColumnDefinition();
+			def.setColumnName(iteratorColumnList.next().toString());
+			defList.add(def);
+		}
+		return defList;
 	}
 }
