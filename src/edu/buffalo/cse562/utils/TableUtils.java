@@ -16,6 +16,7 @@ public final class TableUtils {
 	
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
+	private static String tempDataDir;
 
 	public static Map<String, CreateTable> getTableSchemaMap() {
 		return tableSchemaMap;
@@ -43,6 +44,14 @@ public final class TableUtils {
 	
 	public TableUtils() {
 		
+	}
+
+	public static String getTempDataDir() {
+		return tempDataDir;
+	}
+
+	public static void setTempDataDir(String tempDataDir) {
+		TableUtils.tempDataDir = tempDataDir;
 	}
 	
 	public static String resolveColumnTableName(Map<String,String> columnTableMap,Column column){

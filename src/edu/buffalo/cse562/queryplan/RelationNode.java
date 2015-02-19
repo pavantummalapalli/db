@@ -9,31 +9,36 @@ public class RelationNode implements Node {
 	
 	private String tableName;
 	private String aliasName;
-	private File filePath;
-	private CreateTable schema;
+	private File file;
+	private CreateTable table;
 	
 	public RelationNode(){}
 	
-	public RelationNode(String tableName,String aliasName,File filePath,CreateTable schema){
+	public RelationNode(String tableName,String aliasName,File file,CreateTable table){
 		this.tableName = tableName;
-		this.filePath=filePath;
-		this.schema=new ExtendedCreateTable(schema,aliasName);
+		this.file=file;
+//		if(aliasName!=null && !aliasName.isEmpty())
+//			this.aliasName = aliasName;
+//		else
+//			this.aliasName=tableName;
+//		this.file=file;
+		this.table=new ExtendedCreateTable(table,aliasName);
 	}
 	
-	public void setSchema(CreateTable schema) {
-		this.schema = schema;
+	public void setTable(CreateTable table) {
+		this.table = table;
 	}
 	
-	public CreateTable getSchema() {
-		return schema;
+	public CreateTable getTable() {
+		return table;
 	}
 	
-	public void setFilePath(File filePath) {
-		this.filePath = filePath;
+	public void setFile(File file) {
+		this.file = file;
 	}
 	
-	public File getFilePath() {
-		return filePath;
+	public File getFile() {
+		return file;
 	}
 	
 	@Override
@@ -50,7 +55,7 @@ public class RelationNode implements Node {
 	}
 	
 	public void setAliasName(String aliasName) {
-		((ExtendedCreateTable)schema).setAlias(aliasName);
+		((ExtendedCreateTable)table).setAlias(aliasName);
 		this.aliasName = aliasName;
 	}
 	
@@ -60,6 +65,6 @@ public class RelationNode implements Node {
 
 	@Override
 	public CreateTable evalSchema() {
-		return schema;
+		return table;
 	}
 }

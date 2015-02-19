@@ -3,6 +3,7 @@ package edu.buffalo.cse562;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,28 +17,32 @@ import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class CartesianProduct {
-	Node relationNode1;
-	Node relationNode2;
+	Node node1;
+	Node node2;
 	Expression expression;
-	public CartesianProduct(Node relationNode1, Node relationNode2,
+	public CartesianProduct(Node node1, Node node2,
 			EqualsTo expression) {
-		this.relationNode1 = relationNode1;
-		this.relationNode2 = relationNode2;
+		this.node1 = node1;
+		this.node2 = node2;
 		this.expression = expression;
 	}
 	
 	public RelationNode doCartesianProduct() {
-		CreateTable table1 = relationNode1.eval().getSchema();
-		CreateTable table2 = relationNode2.eval().getSchema();
-		SqlIterator sqlIterator1 = new SqlIterator(table1, null);
+		RelationNode relationNode1 = node1.eval();
+		RelationNode relationNode2 = node2.eval();
+		CreateTable table1 = relationNode1.getTable();
+		CreateTable table2 = relationNode2.getTable();
+		File dataFile1 = relationNode1.getFile();
+		File dataFile2 = relationNode2.getFile();
+		SqlIterator sqlIterator1 = new SqlIterator(table1, null, dataFile1);
+		//String newTableName = node1.eval().getTableName() + "x" + node2.eval().getTableName();
 		String newTableName = getNewTableName(table1, table2);
 		String[] colVals1, colVals2;
-		//TODO point the file to a temp location
-		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
+		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals1 = sqlIterator1.next()) != null) {
-				SqlIterator sqlIterator2 = new SqlIterator(table2, null);
+				SqlIterator sqlIterator2 = new SqlIterator(table2, null, dataFile2);
 				while((colVals2 = sqlIterator2.next()) != null) {
 					int i;
 					for(i=0; i<colVals1.length; i++) {
@@ -56,13 +61,14 @@ public class CartesianProduct {
 			e.printStackTrace();
 		}
 		sqlIterator1.close();
-		List<ColumnDefinition> list1 = table1.getColumnDefinitions();
-		list1.addAll(table2.getColumnDefinitions());
+		List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
+		newList.addAll(table1.getColumnDefinitions());
+		newList.addAll(table2.getColumnDefinitions());
 		CreateTable newTable = new CreateTable();
 		newTable.setTable(new Table(null, newTableName));
-		newTable.setColumnDefinitions(list1);
+		newTable.setColumnDefinitions(newList);
 		//TODO put the table name in a temp hash map
-		TableUtils.getTableSchemaMap().put(newTableName, newTable);
+		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
 		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
 		return relationNode;
 	}
@@ -72,8 +78,8 @@ public class CartesianProduct {
 	}
 	
 	public CreateTable evalSchema(){
-		CreateTable table1 = relationNode1.evalSchema();
-		CreateTable table2 = relationNode2.evalSchema();
+		CreateTable table1 = node1.evalSchema();
+		CreateTable table2 = node2.evalSchema();
 		CreateTable table = new CreateTable();
 		table.setTable(new Table());
 		List<ColumnDefinition> list = new LinkedList<>();

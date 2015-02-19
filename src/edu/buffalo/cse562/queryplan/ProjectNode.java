@@ -4,10 +4,16 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
@@ -21,6 +27,7 @@ public class ProjectNode implements Node {
 	private Distinct distinctOnElements;
 	private List<OrderByElement> orderByElements;
 	private Node childNode;
+	
 	private String preferredAliasName;
 	
 	public void setOrderByElements(List<OrderByElement> orderByElements) {
@@ -89,14 +96,70 @@ public class ProjectNode implements Node {
 	@Override
 	public RelationNode eval() {
 		RelationNode relationNode = childNode.eval();
+		
 		try {
 			//FileReader fileReader = new FileReader(TableUtils.getDataDir() + File.separator + tableName + ".dat");
-			FileReader fileReader = new FileReader(relationNode.getFilePath());
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			FileReader fileReader = new FileReader(relationNode.getFile());
+			BufferedReader bufferedReader = new BufferedReader(fileReader);			
 			String rowVal;
-			while((rowVal = bufferedReader.readLine()) != null) {
-				System.out.println(rowVal);
+			List <ColumnDefinition> columnDefList = relationNode.getTable().getColumnDefinitions();
+			Map <String, Integer> columnIndexMap = new HashMap <>();
+			
+			int cnt = 0;
+			for (ColumnDefinition columnDef : columnDefList) {
+				columnIndexMap.put(columnDef.getColumnName(), cnt++);
 			}
+			
+			List <String[]> projectList = new ArrayList <>();
+			while((rowVal = bufferedReader.readLine()) != null) {
+				if (rowVal.trim().isEmpty()) continue;
+				String[] colVals = rowVal.split("\\|");
+				for (int i = 0; i < colVals.length; i++) {
+					colVals[i] = colVals[i].trim();
+				}
+				projectList.add(colVals);
+			}
+			
+			if (columnList != null && !columnList.isEmpty()) {				
+
+				Collections.sort(projectList, new Comparator<String[]>() {
+					@Override
+					public int compare(String[] o1, String[] o2) {						
+						for (OrderByElement element : orderByElements) {
+							boolean isAsc = element.isAsc();
+							String orderByColumnName = element.toString();						
+							if (!isAsc) 
+								orderByColumnName = orderByColumnName.split(" ")[0].trim();
+							int index = columnIndexMap.get(orderByColumnName);							
+							String val1 = o1[index];
+							String val2 = o2[index];
+							if (val1.equals(val2)) continue;
+							return isAsc ? val1.compareTo(val2) : val2.compareTo(val1);
+						}
+						return 0;
+					}					
+				});
+				//TODO distinct	and Column resolution is not +nt.
+				long offset = (limit == null ? Integer.MAX_VALUE : limit.getRowCount());				
+				for (int i = 0; i < Math.min(offset, projectList.size()); i++) {
+					String[] rowArr = projectList.get(i);
+					for (int j = 0; j < columnList.size() - 1; j++) {
+						String column = columnList.get(j);
+						int index = columnIndexMap.get(column);
+						System.out.print(rowArr[index] + "|");						
+					}	
+					if (columnList.size() > 0) {
+						int index = columnIndexMap.get(columnList.get(columnList.size() - 1));
+						System.out.println(rowArr[index]);
+					}
+				}
+				
+			} else if (functionList != null && !functionList.isEmpty()) {
+				for (Function func : functionList) {
+					List <Expression> expressionList = func.getParameters().getExpressions();
+					//SqlIterator sqlIter = new SqlIterator( expression)
+				}				
+			}	
 			bufferedReader.close();
 			fileReader.close();
 		} catch (IOException e) {

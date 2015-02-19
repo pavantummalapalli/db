@@ -1,4 +1,0 @@
-CREATE TABLE R (A int, B int);
-CREATE TABLE S (C int,D int);
-
-SELECT A FROM R,S WHERE A > 3;

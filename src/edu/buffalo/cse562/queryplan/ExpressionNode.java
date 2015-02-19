@@ -22,12 +22,13 @@ public class ExpressionNode implements Node {
 	public RelationNode eval() {
 		RelationNode relationNode = childNode.eval();
 		String tableName = relationNode.getTableName();
-		CreateTable table = relationNode.getSchema();
-		SqlIterator sqlIterator = new SqlIterator(table, expression);
+		CreateTable table = relationNode.getTable();
+		File dataFile = relationNode.getFile();
+		SqlIterator sqlIterator = new SqlIterator(table, expression, dataFile);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		String[] colVals;
-		File file = new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat");
+		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals = sqlIterator.next()) != null) {
@@ -45,7 +46,7 @@ public class ExpressionNode implements Node {
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
 		relationNode.setTableName(newTableName);
-		relationNode.setFilePath(file);
+		relationNode.setFile(file);
 		return relationNode;
 	}
 	

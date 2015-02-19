@@ -22,7 +22,8 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	
 	//not using right now.
 	//private List <String> tableList;
-	//private Map <String, String> columnTableMap;
+	
+	private Map <String, String> columnTableMap;
 	
 	private List <String> columnList;
 
@@ -31,7 +32,7 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	public ProjectItemImpl(List <String> tableList, Map <String, String> columnTableMap) {
 		// TODO Auto-generated constructor stub
 		//this.tableList = tableList;
-		//this.columnTableMap = columnTableMap;
+		this.columnTableMap = columnTableMap;
 		
 		//TODO on demand init
 		this.columnList = new ArrayList<>();
@@ -55,7 +56,14 @@ public class ProjectItemImpl implements SelectItemVisitor {
 		//TODO
 		Expression expression = selectExpressionItem.getExpression();
 		if (expression instanceof Column) {
-			columnList.add(((Column) expression).getWholeColumnName());
+			Column column = (Column)expression;
+			String columnStr = column.getWholeColumnName();
+			String resolvedColumn = columnStr;
+			
+			if (column.getTable() == null || column.getTable().getName() == null || column.getTable().getName().isEmpty()) {
+				resolvedColumn = columnTableMap.get(columnStr) + DOT_STR + columnStr;
+			}	
+			columnList.add(resolvedColumn);
 		} else if (expression instanceof Function) {
 			functionList.add((Function)expression);
 		}
