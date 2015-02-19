@@ -34,7 +34,7 @@ public class CartesianProduct {
 		CreateTable table2 = relationNode2.getTable();
 		File dataFile1 = relationNode1.getFile();
 		File dataFile2 = relationNode2.getFile();
-		SqlIterator sqlIterator1 = new SqlIterator(table1, null, dataFile1);
+		SqlIterator sqlIterator1 = new SqlIterator(table1, null, dataFile1,null);
 		//String newTableName = node1.eval().getTableName() + "x" + node2.eval().getTableName();
 		String newTableName = getNewTableName(table1, table2);
 		String[] colVals1, colVals2;
@@ -42,7 +42,7 @@ public class CartesianProduct {
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals1 = sqlIterator1.next()) != null) {
-				SqlIterator sqlIterator2 = new SqlIterator(table2, null, dataFile2);
+				SqlIterator sqlIterator2 = new SqlIterator(table2, null, dataFile2,null);
 				while((colVals2 = sqlIterator2.next()) != null) {
 					int i;
 					for(i=0; i<colVals1.length; i++) {
