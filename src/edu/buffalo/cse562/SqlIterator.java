@@ -66,7 +66,6 @@ public class SqlIterator extends Eval {
 		
 		public void open() {
 			try {
-				String tableName = table.getTable().getName();
 				fileReader = new FileReader(dataFile);
 				bufferedReader = new BufferedReader(fileReader);
 				List<ColumnDefinition> colDefns = table.getColumnDefinitions();
