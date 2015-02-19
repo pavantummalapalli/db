@@ -161,7 +161,10 @@ public class ProjectNode implements Node {
 					List <Expression> expressionList = func.getParameters().getExpressions();
 					for (Expression expr : expressionList) {
 						SqlIterator sqlIter = new SqlIterator(relationNode.getTable(), expr, relationNode.getFile());
-						String[] exprArr = sqlIter.next();
+						String[] exprArr = {};
+						while ((exprArr = sqlIter.next()) != null) {
+							System.out.println(exprArr[0]);
+						}
 					}
 				}	
 			}	
