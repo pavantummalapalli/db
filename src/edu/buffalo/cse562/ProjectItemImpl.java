@@ -15,15 +15,19 @@ import edu.buffalo.cse562.queryplan.QueryDomain;
 
 public class ProjectItemImpl implements SelectItemVisitor {
 	
-	private Node node;
 	private List <String> columnList;
 	private List <Function> functionList;
+	private List <Expression> expressionList;
 	private QueryDomain queryDomain;
 	
 	public ProjectItemImpl(QueryDomain queryDomain) {
 		this.columnList = new ArrayList<>();
 		this.functionList = new ArrayList <>();
 		this.queryDomain=queryDomain;
+	}
+	
+	public List<Expression> getExpressionList() {
+		return expressionList;
 	}
 	
 	@Override
@@ -47,6 +51,8 @@ public class ProjectItemImpl implements SelectItemVisitor {
 			columnList.add(queryDomain.resolveColumn(column).getWholeColumnName());
 		} else if (expression instanceof Function) {
 			functionList.add((Function)expression);
+		}else if (expression instanceof Expression) {
+			System.out.println(expression.toString());
 		}
 	}
 	
@@ -62,10 +68,6 @@ public class ProjectItemImpl implements SelectItemVisitor {
 			}
 		}
 	}*/
-	
-	public Node getSelectItemNode() {
-		return node;
-	}
 	
 	public List <String> getSelectColumnList() {
 		return columnList;

@@ -25,12 +25,20 @@ public class ProjectNode implements Node {
 
 	private List <String> columnList;
 	private List <Function> functionList;
+	private List <Expression> expressionList;
 	private Limit limit;
 	private Distinct distinctOnElements;
 	private List<OrderByElement> orderByElements;
 	private Node childNode;
-	
 	private String preferredAliasName;
+	
+	public void setExpressionList(List<Expression> expressionList) {
+		this.expressionList = expressionList;
+	}
+	
+	public List<Expression> getExpressionList() {
+		return expressionList;
+	}
 	
 	public void setOrderByElements(List<OrderByElement> orderByElements) {
 		this.orderByElements = orderByElements;
