@@ -21,7 +21,6 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import edu.buffalo.cse562.utils.TableUtils;
 
 public class SqlIterator extends Eval {
 	//Schema Info, Expression and relation to be declared
@@ -50,17 +49,17 @@ public class SqlIterator extends Eval {
 		}
 		
 		@Override
-		public LeafValue eval(Column arg0) throws SQLException {
+		public LeafValue eval(Column arg0) throws SQLException {			
 			int index = columnMapping.get(arg0.getWholeColumnName());
 			List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 			ColDataType dataType = colDefns.get(index).getColDataType();
-			if(dataType.getDataType().equals("int"))
+			if(dataType.getDataType().equalsIgnoreCase("int"))
 				return new LongValue(colVals[index]);
-			else if(dataType.getDataType().equals("date"))
+			else if(dataType.getDataType().equalsIgnoreCase("date"))
 				return new DateValue(colVals[index]);
-			else if(dataType.getDataType().equals("string"))
+			else if(dataType.getDataType().equalsIgnoreCase("string"))
 				return new StringValue(colVals[index]);
-			else if(dataType.getDataType().equals("double"))
+			else if(dataType.getDataType().equalsIgnoreCase("double"))
 				return new DoubleValue(colVals[index]);
 			return null;
 		}
@@ -82,6 +81,28 @@ public class SqlIterator extends Eval {
 			}
 		}
 		
+		public String getLeafValue(LeafValue leafValue) {
+			if (leafValue instanceof DoubleValue)
+				return String.valueOf(((DoubleValue) leafValue).getValue());
+			else if (leafValue instanceof LongValue)
+				return String.valueOf(((LongValue) leafValue).getValue());
+			else if (leafValue instanceof StringValue)
+				return ((StringValue) leafValue).getValue();
+			else if (leafValue instanceof DateValue)
+				return String.valueOf(((DateValue) leafValue).getDate());
+			//TODO throw Unsupported 
+			return "";
+		}
+		public String getLeafValue(LongValue leafValue) {
+			return String.valueOf(leafValue.getValue());
+		}
+		public String getLeafValue(StringValue leafValue) {
+			return leafValue.getValue();
+		}
+		public String getLeafValue(DateValue leafValue) {
+			return String.valueOf(leafValue.getDate());
+		}
+		
 		public String[] next() {
 			try {
 				String row = bufferedReader.readLine();
@@ -98,6 +119,10 @@ public class SqlIterator extends Eval {
 								String arr[] = {};
 								return arr;
 							}
+						} else {
+							String[] arr = new String[1];
+							arr[0] = getLeafValue(leafValue);
+							return arr;
 						}
 					}
 				} catch (SQLException e) {
@@ -118,53 +143,4 @@ public class SqlIterator extends Eval {
 				e.printStackTrace();
 			}
 		}
-		
-		/*public static void main(String args[]) throws FileNotFoundException {
-			String ipDir = "D:/DB/Local/db/data/Sanity_Check_Examples/111.SQL";
-			File file = new File(ipDir);
-			if(file.isFile()) {
-				FileInputStream fileInputStream = new FileInputStream(file);
-				CCJSqlParser parser = new CCJSqlParser(fileInputStream);
-				try {
-					Statement statement;
-					Expression expression = null;
-					CreateTable createTable = null;
-					while((statement = parser.Statement()) != null) {
-						System.out.println("Statement : " + statement);
-						if(statement instanceof CreateTable) {
-							CreateTable ct = (CreateTable)statement;
-							List<CreateTable> coldefns = ct.getColumnDefinitions();
-							List<CreateTable> indexes = ct.getIndexes();
-							Table newTable = ct.getTable();
-							String alias = newTable.getAlias();
-							String schemaName = newTable.getSchemaName();
-							createTable = ct;
-						}
-						else if(statement instanceof Select) {
-							Select select = (Select)statement;
-							SelectBody selectBody = select.getSelectBody();
-							if(selectBody instanceof PlainSelect) {
-								PlainSelect plainSelect = (PlainSelect)selectBody;
-								expression = plainSelect.getWhere();
-								System.out.println();
-							}
-							else if(selectBody instanceof Union) {
-								Union union = (Union)selectBody;
-								System.out.println();
-							}
-						}
-					}
-					TableUtils.setDataDir("D:/DB/Local/db/data/Sanity_Check_Examples/data");
-					SqlIterator iterator = new SqlIterator(createTable, expression);
-					List<String> values;
-					while((values = iterator.next()) != null) {
-						System.out.println(values);
-					}
-					iterator.close();
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}
-			}
-		}*/
-
 }
