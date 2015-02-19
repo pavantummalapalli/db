@@ -16,6 +16,7 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
+import edu.buffalo.cse562.SqlIterator;
 
 public class ProjectNode implements Node {
 
@@ -156,8 +157,11 @@ public class ProjectNode implements Node {
 			} else if (functionList != null && !functionList.isEmpty()) {
 				for (Function func : functionList) {
 					List <Expression> expressionList = func.getParameters().getExpressions();
-					//SqlIterator sqlIter = new SqlIterator( expression)
-				}				
+					for (Expression expr : expressionList) {
+						SqlIterator sqlIter = new SqlIterator(relationNode.getTable(), expr, relationNode.getFile());
+						String[] exprArr = sqlIter.next();
+					}
+				}	
 			}	
 			bufferedReader.close();
 			fileReader.close();
