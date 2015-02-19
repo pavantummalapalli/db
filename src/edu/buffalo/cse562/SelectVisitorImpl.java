@@ -2,12 +2,17 @@ package edu.buffalo.cse562;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.xml.internal.messaging.saaj.util.TeeInputStream;
+
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
@@ -20,11 +25,13 @@ import edu.buffalo.cse562.queryplan.ExpressionNode;
 import edu.buffalo.cse562.queryplan.ExtendedProjectNode;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
+import edu.buffalo.cse562.queryplan.QueryDomain;
 import edu.buffalo.cse562.queryplan.UnionOperatorNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
-public class SelectVisitorImpl implements SelectVisitor{
+public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 
+	private static String DOT_STR = ".";
 	private Node node;
 	private Map<String,String> columnTableMap;
 	
@@ -57,7 +64,7 @@ public class SelectVisitorImpl implements SelectVisitor{
 		//No premature optimization will be done at this level
 		//STEP 2 : SET WHERE CLAUSE
 		if(arg0.getWhere()!=null){
-			ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
+			ExpressionNode expressionNode = new ExpressionNode(new ExpressionResolver(this).resolveExpression(arg0.getWhere()));
 			expressionNode.setChildNode(node);
 			node=expressionNode;
 		}
@@ -86,7 +93,7 @@ public class SelectVisitorImpl implements SelectVisitor{
 		List <Function> functionList = new ArrayList <>();
 		for (SelectItem selItem : selectItem) {
 			List <String> tableList = visitor.getTableList();
-			ProjectItemImpl prjImp = new ProjectItemImpl(tableList, columnTableMap);
+			ProjectItemImpl prjImp = new ProjectItemImpl(this);
 			selItem.accept(prjImp);
 			Node prjNode = prjImp.getSelectItemNode();
 			List <String> tempList = prjImp.getSelectColumnList();
@@ -97,6 +104,7 @@ public class SelectVisitorImpl implements SelectVisitor{
 				functionList.addAll(prjImp.getFunctionList());
 			}
 		}
+		resolveFunctionList(functionList);
 		projectNode.setColumnList(columnList);
 		//If extended mode is true then query is of type select a,sum(a) from B group by a
 		if(extendedMode){
@@ -105,7 +113,7 @@ public class SelectVisitorImpl implements SelectVisitor{
 			node=epn;
 			//STEP 4: SET HAVING CLAUSE
 			if(arg0.getHaving()!=null){
-				ExpressionNode expressionNode = new ExpressionNode(arg0.getHaving());
+				ExpressionNode expressionNode = new ExpressionNode(new ExpressionResolver(this).resolveExpression(arg0.getHaving()));
 				expressionNode.setChildNode(node);
 				node=expressionNode;
 			}
@@ -119,10 +127,11 @@ public class SelectVisitorImpl implements SelectVisitor{
 		
 		//STEP 7: SET ORDER BY
 		List<OrderByElement> orderByElements =  (List<OrderByElement>)arg0.getOrderByElements();
-		projectNode.setOrderByElements(orderByElements);
+		if(orderByElements!=null && orderByElements.size()>0)
+			projectNode.setOrderByElements(resolveOrderByElements(orderByElements));	
 		//STEP 6: SET DISTINCT
 		projectNode.setDistinctOnElements(arg0.getDistinct());
-		//STEP 7: SET LIMIT
+		//STEP 7: SET LIMIT		
 		projectNode.setLimit(arg0.getLimit());
 		node=projectNode;
 	}
@@ -156,6 +165,52 @@ public class SelectVisitorImpl implements SelectVisitor{
 				columnTableMap.put(columnDef.getColumnName(), table);
 			}
 		}	
+		return columnTableMap;
+	}
+
+	@Override
+	public Column resolveColumn(Column column) {
+		String columnStr = column.getWholeColumnName();
+//		String resolvedColumn = columnStr;
+		if (column.getTable() == null || column.getTable().getName() == null || column.getTable().getName().isEmpty()) {
+			Table table;
+			if(column.getTable() !=null)
+				table = column.getTable(); 
+			else
+				table = new Table();
+			table.setName(columnTableMap.get(columnStr));
+			return column;
+			//resolvedColumn = columnTableMap.get(columnStr) + DOT_STR + columnStr;
+		}	
+		return column;
+	}
+	
+	public List<Function> resolveFunctionList(List<Function> functionList){
+		Iterator<Function> iterator =  functionList.iterator();
+		while(iterator.hasNext())
+			resolveFunction(iterator.next());
+		return functionList;
+	}
+	
+	public List<OrderByElement> resolveOrderByElements(List<OrderByElement> orderByElement){
+		ExpressionResolver resolver = new ExpressionResolver(this);
+		Iterator<OrderByElement> iterator = orderByElement.iterator();
+		while(iterator.hasNext()){
+			resolver.resolveExpression(iterator.next().getExpression());
+		}
+		return orderByElement;
+	}
+	
+	public Function resolveFunction(Function function) {
+		ExpressionResolver resolver = new ExpressionResolver(this);
+		Iterator<Expression> expressionIterator = function.getParameters().getExpressions().iterator();
+		while(expressionIterator.hasNext())
+			resolver.resolveExpression(expressionIterator.next());
+		return function;
+	}
+
+	@Override
+	public Map<String, String> getColumnTableMap() {
 		return columnTableMap;
 	}
 }

@@ -51,7 +51,7 @@ public class SqlIterator extends Eval {
 		
 		@Override
 		public LeafValue eval(Column arg0) throws SQLException {
-			int index = columnMapping.get(arg0.getColumnName());
+			int index = columnMapping.get(arg0.getWholeColumnName());
 			List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 			ColDataType dataType = colDefns.get(index).getColDataType();
 			if(dataType.getDataType().equals("int"))
