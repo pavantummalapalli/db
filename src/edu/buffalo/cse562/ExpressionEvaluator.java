@@ -206,26 +206,49 @@ public class ExpressionEvaluator extends Eval {
 					value= (int)value + 1;
 				calculatedData.put(key,value);
 			}
-			return new LeafValue() {
-				
-				@Override
-				public long toLong() throws InvalidLeaf {
-					// TODO Auto-generated method stub
-					return 0;
-				}
-				
-				@Override
-				public double toDouble() throws InvalidLeaf {
-					// TODO Auto-generated method stub
-					return 0;
-				}
-			};
+			else if(function.getName().equalsIgnoreCase("DATE")){
+				 List args = function.getParameters().getExpressions();
+				 if (args.size() != 1) {
+					 throw new SQLException("DATE() takes exactly one argument");
+				 }
+				 //Date date = ;
+				 DateValue dateValue = new ExtendedDateValue(eval((Expression)args.get(0)).toString());
+				 //dateValue.setValue(date);
+				 return dateValue;
+			}
 		}
 		catch(InvalidLeaf e){
 			e.printStackTrace();
 		}
-		return super.eval(function);
+		return new LeafValue() {
+			@Override
+			public long toLong() throws InvalidLeaf {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+			@Override
+			public double toDouble() throws InvalidLeaf {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+		};
 	}
+	
+//	@Override
+//	public Type escalateNumeric(Type lhs, Type rhs)
+//			/*  71:    */     throws SQLException
+//			/*  72:    */   {
+//			/*  73: 48 */     if ((lhs == Type.DATE) && 
+//			/*  74: 49 */       (rhs == Type.DATE)) {
+//			/*  75: 49 */       return Type.DATE;
+//			/*  76:    */     }
+//			/*  77: 51 */     if ((assertNumeric(lhs) == Type.DOUBLE) || 
+//			/*  78: 52 */       (assertNumeric(rhs) == Type.DOUBLE)) {
+//			/*  79: 53 */       return Type.DOUBLE;
+//			/*  80:    */     }
+//			/*  81: 55 */     return Type.LONG;
+//			/*  82:    */   }
+//	
 	
 	public LeafValue evaluateExpression(Expression exp,String []colVals,List<String> groupByList) throws SQLException{
 		this.colVals=colVals;
@@ -245,7 +268,7 @@ public class ExpressionEvaluator extends Eval {
 		if(dataType.getDataType().equalsIgnoreCase("int"))
 			return new LongValue(colVals[index]);
 		else if(dataType.getDataType().equalsIgnoreCase("date"))
-			return new DateValue(" "+colVals[index]+" ");
+			return new ExtendedDateValue(" "+colVals[index]+" ");
 		else if(dataType.getDataType().equalsIgnoreCase("string"))
 			return new StringValue(colVals[index]);
 		else if(dataType.getDataType().equalsIgnoreCase("double"))
@@ -274,4 +297,38 @@ public class ExpressionEvaluator extends Eval {
 		return String.valueOf(leafValue.getDate());
 	}
 
+//	@Override
+//	 public LeafValue cmp(BinaryExpression e, CmpOp op)
+//			 /* 265:    */     throws SQLException
+//			 /* 266:    */   {
+//			 /* 267:    */     try
+//			 /* 268:    */     {
+//			 /* 269:157 */       LeafValue lhs = eval(e.getLeftExpression());
+//			 /* 270:158 */       LeafValue rhs = eval(e.getRightExpression());
+//			 /* 271:159 */       if ((lhs == null) || (rhs == null)) {
+//			 /* 272:159 */         return null;
+//			 /* 273:    */       }
+//			 					boolean ret;
+//			 /* 277:162 */       switch (escalateNumeric(getType(lhs), getType(rhs)))
+//			 /* 278:    */       {
+//			 /* 279:    */       case DOUBLE: 
+//			 /* 280:164 */         ret = op.op(lhs.toDouble(), rhs.toDouble());
+//			 /* 281:165 */         break;
+//			 /* 282:    */       case LONG: 
+//			 /* 283:167 */         ret = op.op(lhs.toLong(), rhs.toLong());
+//			 /* 284:168 */         break;
+//			 /* 285:    */       case : 
+//			 /* 286:170 */         ret = op.op(lhs.toLong(), rhs.toLong());
+//			 /* 287:171 */         break;
+//			 /* 288:    */       default: 
+//			 /* 289:173 */         throw new SQLException("Invalid type escalation");
+//			 /* 290:    */       }
+//			 /* 292:175 */       return ret ? BooleanValue.TRUE : BooleanValue.FALSE;
+//			 /* 293:    */     }
+//			 /* 294:    */     catch (LeafValue.InvalidLeaf ex)
+//			 /* 295:    */     {
+//			 /* 296:177 */       throw new SQLException("Invalid leaf value", ex);
+//			 /* 297:    */     }
+//			 /* 298:    */   }
+	
 }
