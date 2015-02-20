@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,8 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Distinct;
@@ -129,10 +133,13 @@ public class ProjectNode implements Node {
 			String rowVal;
 			List<ColumnDefinition> columnDefList = relationNode.getTable().getColumnDefinitions();
 			Map<String, Integer> columnIndexMap = new HashMap<>();
+			Map<String, ColumnDefinition> columnDefnMap = new HashMap<>();
+			List<String> functionTypeList = new ArrayList<>();
 
 			int cnt = 0;
 			for (ColumnDefinition columnDef : columnDefList) {
 				columnIndexMap.put(columnDef.getColumnName(), cnt++);
+				columnDefnMap.put(columnDef.getColumnName(), columnDef);
 			}
 
 			List<String[]> projectList = new ArrayList<>();
@@ -219,7 +226,17 @@ public class ProjectNode implements Node {
 					Map<String, Object> aggDataMap = sqlIter.getAggregateData(i);
 					
 					for (String key : aggDataMap.keySet()) {
-						sb.append(aggDataMap.get(key) + "|");
+						Object val = aggDataMap.get(key);
+						sb.append(val);
+						sb.append("|");
+						if(val instanceof String) 
+							functionTypeList.add("string");
+						else if(val instanceof Long || val instanceof Integer)
+							functionTypeList.add("int");
+						else if(val instanceof Double)
+							functionTypeList.add("double");
+						else if(val instanceof DateValue || val instanceof Date)
+							functionTypeList.add("date");
 					}						
 				}
 				if (sb.length() > 0) {
@@ -229,19 +246,38 @@ public class ProjectNode implements Node {
 						pw.println(sb.substring(0, sb.length() - 1));
 				}
 			}
-			if (parentNode == false) 
+			if (parentNode == false) {
+				pw.close();
 				relationNode.setFile(file);
-			
+				List<ColumnDefinition> newList = new ArrayList<>();
+				for(String column : columnList) {
+					ColumnDefinition cd = columnDefnMap.get(column);
+					newList.add(cd);
+				}
+				int k=0;
+				for(Function funcName : functionList) {
+					ColumnDefinition cd = new ColumnDefinition();
+					cd.setColumnName(funcName.toString());
+					ColDataType cdt = new ColDataType();
+					cdt.setDataType(functionTypeList.get(k));
+					cd.setColDataType(cdt);
+					newList.add(cd);
+					k++;
+				}
+				if (preferredAliasName != null && preferredAliasName.isEmpty() == false)
+					relationNode.setAliasName(preferredAliasName);
+				if (relationNode.getTableName() == null || relationNode.getTableName().isEmpty())
+					relationNode.setTableName(preferredAliasName);
+				CreateTable newTable = new CreateTable();
+				newTable.setTable(new Table(null, preferredAliasName));
+				newTable.setColumnDefinitions(newList);
+				relationNode.setTable(newTable);
+			}
 			bufferedReader.close();
 			fileReader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (preferredAliasName != null && preferredAliasName.isEmpty() == false)
-			relationNode.setAliasName(preferredAliasName);
-		if (relationNode.getTableName() == null || relationNode.getTableName().isEmpty())
-			relationNode.setTableName(preferredAliasName);
-		
 		return relationNode;
 	}
 
