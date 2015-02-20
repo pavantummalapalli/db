@@ -63,7 +63,9 @@ public class ExpressionVisitorImpl implements ExpressionVisitor {
 	public void visit(Function paramFunction) {
 		// TODO Auto-generated method stub
 		try{
-		resolveExpressionList(paramFunction.getParameters().getExpressions());
+			if(paramFunction.getParameters()==null)
+				return;
+			resolveExpressionList(paramFunction.getParameters().getExpressions());
 		}
 		catch(Exception e){
 			throw new RuntimeException(e);
@@ -71,6 +73,8 @@ public class ExpressionVisitorImpl implements ExpressionVisitor {
 	}
 
 	public void resolveExpressionList(List list) {
+		if(list==null)
+			return;
 		try{
 		for(Expression exp : (List<Expression>)list)
 			exp.accept(this);
@@ -242,8 +246,15 @@ public class ExpressionVisitorImpl implements ExpressionVisitor {
 	@Override
 	public void visit(CaseExpression paramCaseExpression) {
 		// TODO Auto-generated method stub
-		paramCaseExpression.getElseExpression().accept(this);
-		paramCaseExpression.getSwitchExpression().accept(this);
+		if(paramCaseExpression.getElseExpression()!=null)
+			paramCaseExpression.getElseExpression().accept(this);
+		if(paramCaseExpression.getSwitchExpression()!=null)
+			paramCaseExpression.getSwitchExpression().accept(this);
+		List<WhenClause> list =paramCaseExpression.getWhenClauses(); 
+		if(list!=null){
+			for(WhenClause clause: list)
+				clause.accept(this);
+		}
 	}
 
 	@Override

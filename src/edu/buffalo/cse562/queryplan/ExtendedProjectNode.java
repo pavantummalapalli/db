@@ -50,8 +50,8 @@ public class ExtendedProjectNode implements Node {
 		List<String> functionTypeList = new ArrayList<>();
 		int cnt = 0;
 		for (ColumnDefinition columnDef : columnDefList) {
-			columnIndexMap.put(columnDef.getColumnName().toUpperCase(), cnt++);
-			columnDefnMap.put(columnDef.getColumnName().toUpperCase(), columnDef);
+			columnIndexMap.put(columnDef.getColumnName(), cnt++);
+			columnDefnMap.put(columnDef.getColumnName(), columnDef);
 		}
 
 		List<Expression> expressionList = TableUtils.convertSelectExpressionItemIntoExpressions( functionList);
@@ -84,7 +84,7 @@ public class ExtendedProjectNode implements Node {
 							functionTypeList.add("string");
 						else if(val instanceof Long || val instanceof Integer)
 							functionTypeList.add("int");
-						else if(val instanceof Number)
+						else if(val instanceof Double)
 							functionTypeList.add("double");
 						else if(val instanceof DateValue || val instanceof Date)
 							functionTypeList.add("date");

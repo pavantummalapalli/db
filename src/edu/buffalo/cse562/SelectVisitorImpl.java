@@ -185,7 +185,9 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 
 	@Override
 	public Column resolveColumn(Column column) {
-		String columnStr = column.getWholeColumnName().toUpperCase();
+		column.setColumnName(column.getColumnName().toUpperCase());
+		if(column.getTable().getAlias()!=null)
+			column.getTable().setAlias(column.getTable().getAlias().toUpperCase());
 //		String resolvedColumn = columnStr;
 		if (column.getTable() == null || column.getTable().getName() == null || column.getTable().getName().isEmpty()) {
 			Table table;
@@ -193,12 +195,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				table = column.getTable(); 
 			else
 				table = new Table();
-			table.setName(columnTableMap.get(columnStr.toUpperCase()));
+			table.setName(columnTableMap.get(column.getWholeColumnName().toUpperCase()));
 			return column;
 			//resolvedColumn = columnTableMap.get(columnStr) + DOT_STR + columnStr;
 		} else {
 			column.getTable().setName(column.getTable().getName().toUpperCase());
 		}
+		
 		return column;
 	}
 	
