@@ -138,8 +138,8 @@ public class ProjectNode implements Node {
 
 			int cnt = 0;
 			for (ColumnDefinition columnDef : columnDefList) {
-  				columnIndexMap.put(columnDef.getColumnName(), cnt++);
-				columnDefnMap.put(columnDef.getColumnName(), columnDef);
+  				columnIndexMap.put(columnDef.getColumnName().toUpperCase(), cnt++);
+				columnDefnMap.put(columnDef.getColumnName().toUpperCase(), columnDef);
 			}
 
 			List<String[]> projectList = new ArrayList<>();

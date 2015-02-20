@@ -86,7 +86,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 					wholeCoumnName =  TableUtils.resolveColumnTableName(columnTableMap, column);
 				else
 					wholeCoumnName=column.getWholeColumnName();
-				groupByList.add(wholeCoumnName);
+				groupByList.add(wholeCoumnName.toUpperCase());
 			}
 			epn.setGroupByList(groupByList);
 		}
