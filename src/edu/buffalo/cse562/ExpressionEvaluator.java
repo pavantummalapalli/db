@@ -210,11 +210,8 @@ public class ExpressionEvaluator extends Eval {
 				calculatedData.put(key,value);
 			}
 			else if(function.getName().equalsIgnoreCase("DATE")){
-				 List args = function.getParameters().getExpressions();
-				 if (args.size() != 1) {
-					 throw new SQLException("DATE() takes exactly one argument");
-				 }
-				 DateValue dateValue = new ExtendedDateValue(eval((Expression)args.get(0)).toString());
+				 Expression dateValueParam = (Expression)function.getParameters().getExpressions().get(0);
+				 DateValue dateValue = new ExtendedDateValue(eval(dateValueParam).toString());
 				 return dateValue;
 			}
 		}
