@@ -1,8 +1,10 @@
 package edu.buffalo.cse562.queryplan;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,7 +32,16 @@ public class ProjectNode implements Node {
 	private List<OrderByElement> orderByElements;
 	private Node childNode;
 	private String preferredAliasName;
+	private boolean isParentNode = true;
 
+	public boolean isParentNode() {
+		return isParentNode;
+	}
+	
+	public void setParentNode(boolean isParentNode) {
+		this.isParentNode = isParentNode;
+	}
+	
 	public void setExpressionList(List<Expression> expressionList) {
 		this.expressionList = expressionList;
 	}
@@ -135,7 +146,15 @@ public class ProjectNode implements Node {
 				}
 				projectList.add(colVals);
 			}
-
+			File file = null;
+			PrintWriter pw = null;
+			
+			if (isParentNode == false) {
+				String newTableName = relationNode.getTableName() + "_new";
+				file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
+				pw = new PrintWriter(file);
+			}	
+			
 			if (columnList != null && !columnList.isEmpty()) {
 				if(orderByElements!=null && orderByElements.size()>0){
 				Collections.sort(projectList, new Comparator<String[]>() {
@@ -169,11 +188,18 @@ public class ProjectNode implements Node {
 					for (int j = 0; j < columnList.size() - 1; j++) {
 						String column = columnList.get(j);
 						int index = columnIndexMap.get(column);
-						System.out.print(rowArr[index] + "|");
+						if (isParentNode)
+							System.out.print(rowArr[index] + "|");
+						else
+							pw.print(rowArr[index] + "|");
+							
 					}
 					if (columnList.size() > 0) {
 						int index = columnIndexMap.get(columnList.get(columnList.size() - 1));
-						System.out.println(rowArr[index]);
+						if (isParentNode)
+							System.out.println(rowArr[index]);
+						else
+							pw.println(rowArr[index]);
 					}
 				}
 
@@ -198,9 +224,15 @@ public class ProjectNode implements Node {
 					}						
 				}
 				if (sb.length() > 0) {
-					System.out.println(sb.substring(0, sb.length() - 1));
+					if (isParentNode)
+						System.out.println(sb.substring(0, sb.length() - 1));
+					else
+						pw.println(sb.substring(0, sb.length() - 1));
 				}
 			}
+			if (isParentNode == false) 
+				relationNode.setFile(file);
+			
 			bufferedReader.close();
 			fileReader.close();
 		} catch (IOException e) {
@@ -210,6 +242,7 @@ public class ProjectNode implements Node {
 			relationNode.setAliasName(preferredAliasName);
 		if (relationNode.getTableName() == null || relationNode.getTableName().isEmpty())
 			relationNode.setTableName(preferredAliasName);
+		
 		return relationNode;
 	}
 

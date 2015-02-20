@@ -7,4 +7,4 @@
 **/*.dat
 **/*.SQL
 /bin/
-**/data/
+/data/*
