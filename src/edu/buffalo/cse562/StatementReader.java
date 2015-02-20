@@ -12,6 +12,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class StatementReader {
 
+	String query = "";
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
 			for (int i=0;i<sqlfiles.length;i++) {
@@ -21,6 +22,7 @@ public class StatementReader {
 				
 				while ((statement = parser.Statement()) != null) {
 					if (statement instanceof Select) {
+						query = statement.toString();
 						SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 						((Select)statement).getSelectBody().accept(selectVistor);
 						Node node = selectVistor.getQueryPlanTreeRoot();
@@ -37,7 +39,7 @@ public class StatementReader {
 				}
 			}
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}
 	}
 }

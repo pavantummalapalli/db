@@ -122,10 +122,12 @@ public class SqlIterator {
 							}
 					}
 				} catch (SQLException e) {
-					e.printStackTrace();
+					throw new RuntimeException("SQLException in SQLIterator next method 1", e); 
+					//e.printStackTrace();
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
+				throw new RuntimeException("IOException in SQLIterator next method 2 ", e);
 			}
 			
 			return colVals;
@@ -148,10 +150,12 @@ public class SqlIterator {
 						}	
 					}
 				} catch (SQLException e) {
-					e.printStackTrace();
+					throw new RuntimeException("SQLException in nextAggregate method ", e);
+					//e.printStackTrace();
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException("Exception while closing SQLIterator close method ", e);
+				//e.printStackTrace();
 			}
 			
 			return colVals;
@@ -162,7 +166,8 @@ public class SqlIterator {
 				bufferedReader.close();
 				fileReader.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException("Exception while closing SQLIterator close method ", e);
+				//e.printStackTrace();
 			}
 		}
 		

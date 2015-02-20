@@ -22,6 +22,7 @@ public class ExpressionResolver extends Eval {
 			eval(exp);
 		} catch (SQLException e) {
 			//Ignore the error. Just don't resolve the expression anymore
+			throw new RuntimeException("SQLEXception in ExpressionResolver resolveExpression ", e);
 		}
 		return exp;
 	}

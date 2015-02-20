@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.buffalo.cse562.SqlIterator;
-import edu.buffalo.cse562.utils.TableUtils;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -18,6 +16,8 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExtendedProjectNode implements Node {
 
@@ -77,6 +77,9 @@ public class ExtendedProjectNode implements Node {
 						Object val = aggDataMap.get(key);
 						sb.append("|");
 						sb.append(val);
+						if (val == null) {
+							throw new RuntimeException(" VAL IS NULL. aggDataMap  " + aggDataMap + "   ");
+						}
 						if(val instanceof String) 
 							functionTypeList.add("string");
 						else if(val instanceof Long || val instanceof Integer)
@@ -111,7 +114,8 @@ public class ExtendedProjectNode implements Node {
 				newTable.setColumnDefinitions(newList);
 				relationNode.setTable(newTable);
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
+				throw new RuntimeException("FileNotFound exception ", e);
 			}
 		}
 		return relationNode;

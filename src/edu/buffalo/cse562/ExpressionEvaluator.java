@@ -247,13 +247,14 @@ public class ExpressionEvaluator extends Eval {
 		int index = columnMapping.get(arg0.getWholeColumnName().toUpperCase());
 		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 		ColDataType dataType = colDefns.get(index).getColDataType();
+		String data = dataType.getDataType().toLowerCase();
 		if(dataType.getDataType().equalsIgnoreCase("int"))
 			return new LongValue(colVals[index]);
 		else if(dataType.getDataType().equalsIgnoreCase("date"))
 			return new ExtendedDateValue(" "+colVals[index]+" ");
-		else if(dataType.getDataType().equalsIgnoreCase("string"))
+		else if(dataType.getDataType().equalsIgnoreCase("string") || dataType.getDataType().contains("char"))
 			return new StringValue(" " + colVals[index] + " ");
-		else if(dataType.getDataType().equalsIgnoreCase("double"))
+		else if(dataType.getDataType().equalsIgnoreCase("double") || dataType.getDataType().equalsIgnoreCase("decimal"))
 			return new DoubleValue(colVals[index]);
 		return null;
 	}

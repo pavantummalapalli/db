@@ -179,7 +179,9 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 			table.setName(columnTableMap.get(columnStr.toUpperCase()));
 			return column;
 			//resolvedColumn = columnTableMap.get(columnStr) + DOT_STR + columnStr;
-		}	
+		} else {
+			column.getTable().setName(column.getTable().getName().toUpperCase());
+		}
 		return column;
 	}
 	
