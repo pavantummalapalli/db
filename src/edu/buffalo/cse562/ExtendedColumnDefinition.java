@@ -56,14 +56,21 @@ public class ExtendedColumnDefinition extends ColumnDefinition {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return alias+DOT_STR+cd.toString();
+		if(alias!=null){
+			return alias+DOT_STR+getPlainColumnName(cd);
+		}
+		return cd.getColumnName();
 	}
 	
 	public String getPlainColumnName(ColumnDefinition cd){
 		if(cd instanceof ExtendedColumnDefinition){
-			return getPlainColumnName(cd);
+			return getPlainColumnName(((ExtendedColumnDefinition) cd).getInnerColumnDefinitionInstance());
 		}
 		else
 			return cd.getColumnName();
+	}
+	
+	private ColumnDefinition getInnerColumnDefinitionInstance(){
+		return cd;
 	}
 }

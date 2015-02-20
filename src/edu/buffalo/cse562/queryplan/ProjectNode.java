@@ -138,7 +138,7 @@ public class ProjectNode implements Node {
 
 			int cnt = 0;
 			for (ColumnDefinition columnDef : columnDefList) {
-				columnIndexMap.put(columnDef.getColumnName(), cnt++);
+  				columnIndexMap.put(columnDef.getColumnName(), cnt++);
 				columnDefnMap.put(columnDef.getColumnName(), columnDef);
 			}
 
@@ -271,7 +271,8 @@ public class ProjectNode implements Node {
 				CreateTable newTable = new CreateTable();
 				newTable.setTable(new Table(null, preferredAliasName));
 				newTable.setColumnDefinitions(newList);
-				relationNode.setTable(newTable);
+				RelationNode relationNode1= new RelationNode(preferredAliasName,preferredAliasName,file,newTable);
+				relationNode1.setTable(newTable);
 			}
 			bufferedReader.close();
 			fileReader.close();
