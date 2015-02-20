@@ -29,10 +29,10 @@ public class StatementReader {
 						try {
 							CreateTable createTableStmt = (CreateTable) statement;
 							String tableName = createTableStmt.getTable().getName();
-							TableUtils.getTableSchemaMap().put(tableName, createTableStmt);
+							TableUtils.getTableSchemaMap().put(tableName.toUpperCase(), createTableStmt);
 						} catch (Exception ex) {	
 							throw new RuntimeException("CREATE TABLE THROW NEW EXCEPTION : " + statement, ex);
-						}	
+						}
 					}
 				}
 			}
