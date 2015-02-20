@@ -158,9 +158,9 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	private Map <String, String> mapColumnAndTable(List <Table> tableList) {
 		columnTableMap = new HashMap <>();
 		for (Table table : tableList) {
-			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table.getName()).getColumnDefinitions();
+			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table.getName().toUpperCase()).getColumnDefinitions();
 			for (ColumnDefinition columnDef : colDefList) {
-				columnTableMap.put(columnDef.getColumnName(), table.getAlias());
+				columnTableMap.put(columnDef.getColumnName(), table.getAlias().toUpperCase());
 			}
 		}	
 		return columnTableMap;
@@ -168,7 +168,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 
 	@Override
 	public Column resolveColumn(Column column) {
-		String columnStr = column.getWholeColumnName();
+		String columnStr = column.getWholeColumnName().toUpperCase();
 //		String resolvedColumn = columnStr;
 		if (column.getTable() == null || column.getTable().getName() == null || column.getTable().getName().isEmpty()) {
 			Table table;
@@ -176,7 +176,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				table = column.getTable(); 
 			else
 				table = new Table();
-			table.setName(columnTableMap.get(columnStr));
+			table.setName(columnTableMap.get(columnStr.toUpperCase()));
 			return column;
 			//resolvedColumn = columnTableMap.get(columnStr) + DOT_STR + columnStr;
 		}	
