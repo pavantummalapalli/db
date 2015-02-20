@@ -157,6 +157,11 @@ public class ProjectNode implements Node {
 					}
 				});
 				}
+				//Expand column during runtime
+				if(columnList.size()==1 && columnList.get(0).equals("*")){
+					columnList.remove(0);
+					columnList.addAll(columnIndexMap.keySet());
+				}
 				// TODO distinct and Column resolution is not +nt.
 				long offset = (limit == null ? Integer.MAX_VALUE : limit.getRowCount());
 				for (int i = 0; i < Math.min(offset, projectList.size()); i++) {

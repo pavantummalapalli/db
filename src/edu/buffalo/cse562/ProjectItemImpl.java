@@ -10,7 +10,6 @@ import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitor;
-import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.QueryDomain;
 
 public class ProjectItemImpl implements SelectItemVisitor {
@@ -32,8 +31,7 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	
 	@Override
 	public void visit(AllColumns allColumns) {
-		// TODO Auto-generated method stub
-		columnList = null;		
+		columnList.add(allColumns.toString());
 	}
 
 	@Override
@@ -72,6 +70,7 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	public List <String> getSelectColumnList() {
 		return columnList;
 	}
+	
 	public List <Function> getFunctionList() {
 		return functionList;
 	}

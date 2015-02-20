@@ -19,12 +19,10 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
-import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
-public class SqlIterator extends Eval {
+public class SqlIterator {
 	//Schema Info, Expression and relation to be declared
 		FileReader fileReader;
 		BufferedReader bufferedReader;
@@ -52,35 +50,6 @@ public class SqlIterator extends Eval {
 		
 		public void setColVals(String[] colVals) {
 			this.colVals = colVals;
-		}
-		
-		@Override
-		public LeafValue eval(net.sf.jsqlparser.expression.Function function) throws SQLException {
-			if(function.getName().equalsIgnoreCase("SUM")){
-				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
-				String eval = getLeafValue(eval(exp));
-				
-			}
-			else if(function.getName().equalsIgnoreCase("AVG")){
-				
-			}
-			return super.eval(function);
-		}
-		
-		@Override
-		public LeafValue eval(Column arg0) throws SQLException {			
-			int index = columnMapping.get(arg0.getWholeColumnName());
-			List<ColumnDefinition> colDefns = table.getColumnDefinitions();
-			ColDataType dataType = colDefns.get(index).getColDataType();
-			if(dataType.getDataType().equalsIgnoreCase("int"))
-				return new LongValue(colVals[index]);
-			else if(dataType.getDataType().equalsIgnoreCase("date"))
-				return new DateValue(colVals[index]);
-			else if(dataType.getDataType().equalsIgnoreCase("string"))
-				return new StringValue(colVals[index]);
-			else if(dataType.getDataType().equalsIgnoreCase("double"))
-				return new DoubleValue(colVals[index]);
-			return null;
 		}
 		
 		public void open() {
