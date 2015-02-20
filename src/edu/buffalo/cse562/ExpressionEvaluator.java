@@ -40,7 +40,7 @@ public class ExpressionEvaluator extends Eval {
 		int index = 0;
 		while(iterator.hasNext()) {
 			ColumnDefinition cd = iterator.next();
-			columnMapping.put(cd.getColumnName(), index++);
+			columnMapping.put(cd.getColumnName().toUpperCase(), index++);
 		}
 	}
 	
@@ -239,13 +239,13 @@ public class ExpressionEvaluator extends Eval {
 	
 	@Override
 	public LeafValue eval(Column arg0) throws SQLException {			
-		int index = columnMapping.get(arg0.getWholeColumnName());
+		int index = columnMapping.get(arg0.getWholeColumnName().toUpperCase());
 		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 		ColDataType dataType = colDefns.get(index).getColDataType();
 		if(dataType.getDataType().equalsIgnoreCase("int"))
 			return new LongValue(colVals[index]);
 		else if(dataType.getDataType().equalsIgnoreCase("date"))
-			return new DateValue(colVals[index]);
+			return new DateValue(" "+colVals[index]+" ");
 		else if(dataType.getDataType().equalsIgnoreCase("string"))
 			return new StringValue(colVals[index]);
 		else if(dataType.getDataType().equalsIgnoreCase("double"))
