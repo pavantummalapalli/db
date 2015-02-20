@@ -34,7 +34,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	
 	public Node getQueryPlanTreeRoot(){
 		return node;
-	}	
+	}
+	
+	private void removeParentFlag(Node node){
+		if(node instanceof ProjectNode){
+			((ProjectNode)node).setParentNode(false);
+		}
+	}
 	
 	//This is the heart of the solution. The query plan root node will be extracted from here
 	@SuppressWarnings("rawtypes")
@@ -44,12 +50,14 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		FromItemImpl visitor = new FromItemImpl();
 		arg0.getFromItem().accept(visitor);
 		Node leftNode = visitor.getFromItemNode();
+		removeParentFlag(leftNode);
 		List<Join> joins=arg0.getJoins();
 		if(joins!=null && joins.size()>0){
 			for(Join join:joins){
 				FromItemImpl tempVisitor = new FromItemImpl();
 				join.getRightItem().accept(tempVisitor);
 				Node rightNode =  tempVisitor.getFromItemNode();
+				removeParentFlag(rightNode);
 				visitor.getTableList().addAll(tempVisitor.getTableList());
 				leftNode = buildCartesianOperatorNode(leftNode, rightNode);
 			}

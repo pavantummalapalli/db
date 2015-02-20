@@ -22,6 +22,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class ProjectNode implements Node {
 
+	private boolean parentNode;
 	private List<String> columnList;
 	private List<Function> functionList;
 	private List<Expression> expressionList;
@@ -30,7 +31,16 @@ public class ProjectNode implements Node {
 	private List<OrderByElement> orderByElements;
 	private Node childNode;
 	private String preferredAliasName;
-
+	
+	
+	public void setParentNode(boolean parentNode) {
+		this.parentNode = parentNode;
+	}
+	
+	public boolean isParentNode() {
+		return parentNode;
+	}
+	
 	public void setExpressionList(List<Expression> expressionList) {
 		this.expressionList = expressionList;
 	}
