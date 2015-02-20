@@ -18,6 +18,7 @@ public class StatementReader {
 				File file = new File(sqlfiles[i]);
 				CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
 				Statement statement;
+				
 				while ((statement = parser.Statement()) != null) {
 					if (statement instanceof Select) {
 						SelectVisitorImpl selectVistor=new SelectVisitorImpl();
@@ -25,9 +26,13 @@ public class StatementReader {
 						Node node = selectVistor.getQueryPlanTreeRoot();
 						node.eval();
 					} else if (statement instanceof CreateTable) {
-						CreateTable createTableStmt = (CreateTable) statement;
-						String tableName = createTableStmt.getTable().getName();
-						TableUtils.getTableSchemaMap().put(tableName, createTableStmt);
+						try {
+							CreateTable createTableStmt = (CreateTable) statement;
+							String tableName = createTableStmt.getTable().getName();
+							TableUtils.getTableSchemaMap().put(tableName, createTableStmt);
+						} catch (Exception ex) {	
+							throw new RuntimeException("CREATE TABLE THROW NEW EXCEPTION : " + statement, ex);
+						}	
 					}
 				}
 			}

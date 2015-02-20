@@ -45,6 +45,7 @@ public class UnionOperatorNode implements Operator {
 			//TODO remove it.
 			e.printStackTrace();
 		}
+		out.close();
 		//TODO as of now returning nothing. Just printing.
 		return null;
 	}
