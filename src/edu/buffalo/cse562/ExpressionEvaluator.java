@@ -46,8 +46,11 @@ public class ExpressionEvaluator extends Eval {
 	
 	public String getGroupByValueKey() throws SQLException{
 		StringBuffer key = new StringBuffer("");
-		for(String groupByColumn : groupByList)
-			key.append(getLeafValue(eval(convertStringToColumn(groupByColumn)))+"|");
+		for(String groupByColumn : groupByList) {
+			Column temp = convertStringToColumn(groupByColumn.toUpperCase());
+			LeafValue leafValue = eval(temp);
+			key.append(getLeafValue(leafValue)+"|");
+		}	
 		return key.substring(0,key.length()-1);
 	}
 	
@@ -119,19 +122,19 @@ public class ExpressionEvaluator extends Eval {
 						avg.value  = (((Double) avg.value * avg.count + evaluatedValue.toLong()))/ ++avg.count;
 					}
 					tempAverageMap.put(key, avg);
-					calculatedData.put(key,avg.value);					
+					calculatedData.put(key, avg.value);					
 				}
 				else if(evaluatedValue instanceof DoubleValue){
 					if(value==null){
 						avg = new Average();
-						value = evaluatedValue.toDouble();
+						avg.value = evaluatedValue.toDouble();
 						avg.count=1;
 					}
 					else{
 						avg.value  = (((Double)avg.value ) * avg.count + evaluatedValue.toDouble())/++avg.count;
 					}
 					tempAverageMap.put(key, avg);
-					calculatedData.put(key,value);
+					calculatedData.put(key, avg.value);
 				}
 				else {
 					value=0;
@@ -211,9 +214,7 @@ public class ExpressionEvaluator extends Eval {
 				 if (args.size() != 1) {
 					 throw new SQLException("DATE() takes exactly one argument");
 				 }
-				 //Date date = ;
 				 DateValue dateValue = new ExtendedDateValue(eval((Expression)args.get(0)).toString());
-				 //dateValue.setValue(date);
 				 return dateValue;
 			}
 		}
@@ -233,22 +234,6 @@ public class ExpressionEvaluator extends Eval {
 			}
 		};
 	}
-	
-//	@Override
-//	public Type escalateNumeric(Type lhs, Type rhs)
-//			/*  71:    */     throws SQLException
-//			/*  72:    */   {
-//			/*  73: 48 */     if ((lhs == Type.DATE) && 
-//			/*  74: 49 */       (rhs == Type.DATE)) {
-//			/*  75: 49 */       return Type.DATE;
-//			/*  76:    */     }
-//			/*  77: 51 */     if ((assertNumeric(lhs) == Type.DOUBLE) || 
-//			/*  78: 52 */       (assertNumeric(rhs) == Type.DOUBLE)) {
-//			/*  79: 53 */       return Type.DOUBLE;
-//			/*  80:    */     }
-//			/*  81: 55 */     return Type.LONG;
-//			/*  82:    */   }
-//	
 	
 	public LeafValue evaluateExpression(Expression exp,String []colVals,List<String> groupByList) throws SQLException{
 		this.colVals=colVals;
@@ -270,7 +255,7 @@ public class ExpressionEvaluator extends Eval {
 		else if(dataType.getDataType().equalsIgnoreCase("date"))
 			return new ExtendedDateValue(" "+colVals[index]+" ");
 		else if(dataType.getDataType().equalsIgnoreCase("string"))
-			return new StringValue(colVals[index]);
+			return new StringValue(" " + colVals[index] + " ");
 		else if(dataType.getDataType().equalsIgnoreCase("double"))
 			return new DoubleValue(colVals[index]);
 		return null;
@@ -296,39 +281,4 @@ public class ExpressionEvaluator extends Eval {
 	public String getLeafValue(DateValue leafValue) {
 		return String.valueOf(leafValue.getDate());
 	}
-
-//	@Override
-//	 public LeafValue cmp(BinaryExpression e, CmpOp op)
-//			 /* 265:    */     throws SQLException
-//			 /* 266:    */   {
-//			 /* 267:    */     try
-//			 /* 268:    */     {
-//			 /* 269:157 */       LeafValue lhs = eval(e.getLeftExpression());
-//			 /* 270:158 */       LeafValue rhs = eval(e.getRightExpression());
-//			 /* 271:159 */       if ((lhs == null) || (rhs == null)) {
-//			 /* 272:159 */         return null;
-//			 /* 273:    */       }
-//			 					boolean ret;
-//			 /* 277:162 */       switch (escalateNumeric(getType(lhs), getType(rhs)))
-//			 /* 278:    */       {
-//			 /* 279:    */       case DOUBLE: 
-//			 /* 280:164 */         ret = op.op(lhs.toDouble(), rhs.toDouble());
-//			 /* 281:165 */         break;
-//			 /* 282:    */       case LONG: 
-//			 /* 283:167 */         ret = op.op(lhs.toLong(), rhs.toLong());
-//			 /* 284:168 */         break;
-//			 /* 285:    */       case : 
-//			 /* 286:170 */         ret = op.op(lhs.toLong(), rhs.toLong());
-//			 /* 287:171 */         break;
-//			 /* 288:    */       default: 
-//			 /* 289:173 */         throw new SQLException("Invalid type escalation");
-//			 /* 290:    */       }
-//			 /* 292:175 */       return ret ? BooleanValue.TRUE : BooleanValue.FALSE;
-//			 /* 293:    */     }
-//			 /* 294:    */     catch (LeafValue.InvalidLeaf ex)
-//			 /* 295:    */     {
-//			 /* 296:177 */       throw new SQLException("Invalid leaf value", ex);
-//			 /* 297:    */     }
-//			 /* 298:    */   }
-	
 }
