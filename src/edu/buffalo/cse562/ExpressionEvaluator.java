@@ -250,13 +250,13 @@ public class ExpressionEvaluator extends Eval {
 		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 		ColDataType dataType = colDefns.get(index).getColDataType();
 		String data = dataType.getDataType().toLowerCase();
-		if(dataType.getDataType().equalsIgnoreCase("int"))
+		if(data.equalsIgnoreCase("int"))
 			return new LongValue(colVals[index]);
-		else if(dataType.getDataType().equalsIgnoreCase("date"))
+		else if(data.equalsIgnoreCase("date"))
 			return new ExtendedDateValue(" "+colVals[index]+" ");
-		else if(dataType.getDataType().equalsIgnoreCase("string") || dataType.getDataType().contains("char"))
+		else if(data.equalsIgnoreCase("string") || data.contains("char"))
 			return new StringValue(" " + colVals[index] + " ");
-		else if(dataType.getDataType().equalsIgnoreCase("double") || dataType.getDataType().equalsIgnoreCase("decimal"))
+		else if(data.equalsIgnoreCase("double") || data.equalsIgnoreCase("decimal"))
 			return new DoubleValue(colVals[index]);
 		return null;
 	}
