@@ -27,7 +27,7 @@ public class StatementReader {
 					} else if (statement instanceof CreateTable) {
 						CreateTable createTableStmt = (CreateTable) statement;
 						String tableName = createTableStmt.getTable().getName();
-						TableUtils.getTableSchemaMap().put(tableName, createTableStmt);
+						TableUtils.getTableSchemaMap().put(tableName.toUpperCase(), createTableStmt);
 					}
 				}
 			}

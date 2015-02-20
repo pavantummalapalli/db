@@ -1,5 +1,8 @@
 package edu.buffalo.cse562.utils;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,6 +21,30 @@ public final class TableUtils {
 	private static String dataDir;
 	private static String tempDataDir;
 
+	private static class TableFileFilter implements FileFilter{
+		
+		private String tableName;
+		
+		public TableFileFilter(String tableName) {
+			this.tableName = tableName.toUpperCase();
+		}
+		
+		@Override
+		public boolean accept(File pathname) {
+			if(pathname.isFile() && pathname.getName().toUpperCase().split("\\.")[0].equalsIgnoreCase(tableName))
+				return true;
+			return false;
+		}
+	}
+	
+	public  static File getAssociatedTableFile(String tableName){
+		TableFileFilter filter = new TableFileFilter(tableName);
+		File file = new File(TableUtils.getDataDir());
+		File[]  files = file.listFiles(filter);
+		if(files.length==0)
+			throw new RuntimeException("File Not Found : " + tableName.toUpperCase());
+		return files[0];
+	}
 	public static Map<String, CreateTable> getTableSchemaMap() {
 		return tableSchemaMap;
 	}
