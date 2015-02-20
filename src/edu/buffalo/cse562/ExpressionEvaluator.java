@@ -46,8 +46,11 @@ public class ExpressionEvaluator extends Eval {
 	
 	public String getGroupByValueKey() throws SQLException{
 		StringBuffer key = new StringBuffer("");
-		for(String groupByColumn : groupByList)
-			key.append(getLeafValue(eval(convertStringToColumn(groupByColumn)))+"|");
+		for(String groupByColumn : groupByList) {
+			Column temp = convertStringToColumn(groupByColumn.toUpperCase());
+			LeafValue leafValue = eval(temp);
+			key.append(getLeafValue(leafValue)+"|");
+		}	
 		return key.substring(0,key.length()-1);
 	}
 	
@@ -119,19 +122,19 @@ public class ExpressionEvaluator extends Eval {
 						avg.value  = (((Double) avg.value * avg.count + evaluatedValue.toLong()))/ ++avg.count;
 					}
 					tempAverageMap.put(key, avg);
-					calculatedData.put(key,avg.value);					
+					calculatedData.put(key, avg.value);					
 				}
 				else if(evaluatedValue instanceof DoubleValue){
 					if(value==null){
 						avg = new Average();
-						value = evaluatedValue.toDouble();
+						avg.value = evaluatedValue.toDouble();
 						avg.count=1;
 					}
 					else{
 						avg.value  = (((Double)avg.value ) * avg.count + evaluatedValue.toDouble())/++avg.count;
 					}
 					tempAverageMap.put(key, avg);
-					calculatedData.put(key,value);
+					calculatedData.put(key, avg.value);
 				}
 				else {
 					value=0;
@@ -205,7 +208,9 @@ public class ExpressionEvaluator extends Eval {
 				else
 					value= (int)value + 1;
 				calculatedData.put(key,value);
-			}
+			} 
+			else if (function.getName().equalsIgnoreCase("DATE"))
+				return super.eval(function);
 			return new LeafValue() {
 				
 				@Override
@@ -247,7 +252,7 @@ public class ExpressionEvaluator extends Eval {
 		else if(dataType.getDataType().equalsIgnoreCase("date"))
 			return new DateValue(" "+colVals[index]+" ");
 		else if(dataType.getDataType().equalsIgnoreCase("string"))
-			return new StringValue(colVals[index]);
+			return new StringValue(" " + colVals[index] + " ");
 		else if(dataType.getDataType().equalsIgnoreCase("double"))
 			return new DoubleValue(colVals[index]);
 		return null;

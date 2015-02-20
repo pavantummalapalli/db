@@ -84,7 +84,7 @@ public final class TableUtils {
 	public static String resolveColumnTableName(Map<String,String> columnTableMap,Column column){
 		if(column.getTable() ==null || column.getTable().getName()==null || column.getTable().getName().isEmpty()){
 			Table table = new Table();
-			table.setName(columnTableMap.get(column.getColumnName()));
+			table.setName(columnTableMap.get(column.getColumnName().toUpperCase()));
 			column.setTable(table);
 		}
 		return column.getWholeColumnName();
