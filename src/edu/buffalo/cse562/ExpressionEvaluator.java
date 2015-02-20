@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.management.RuntimeErrorException;
+
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
@@ -216,7 +218,7 @@ public class ExpressionEvaluator extends Eval {
 			}
 		}
 		catch(InvalidLeaf e){
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		return new LeafValue() {
 			@Override

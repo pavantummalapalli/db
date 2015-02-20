@@ -71,7 +71,7 @@ public class SqlIterator {
 				}
 				//expressionEvaluator = new ExpressionEvaluator(table);
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		
@@ -128,8 +128,9 @@ public class SqlIterator {
 			} catch (IOException e) {
 				//e.printStackTrace();
 				throw new RuntimeException("IOException in SQLIterator next method 2 ", e);
-			}
-			
+		
+				
+			} 
 			return colVals;
 		}
 		
@@ -167,8 +168,7 @@ public class SqlIterator {
 				fileReader.close();
 			} catch (IOException e) {
 				throw new RuntimeException("Exception while closing SQLIterator close method ", e);
-				//e.printStackTrace();
-			}
+			}	
 		}
 		
 		public Map<String,Object> getAggregateData(int index) {

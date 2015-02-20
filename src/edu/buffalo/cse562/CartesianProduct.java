@@ -58,7 +58,7 @@ public class CartesianProduct {
 			}
 			pw.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		sqlIterator1.close();
 		List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
