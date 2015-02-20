@@ -51,7 +51,7 @@ public class ExtendedColumnDefinition extends ColumnDefinition {
 		if(alias!=null){
 			return alias.toUpperCase()+DOT_STR+getPlainColumnName(cd);
 		}else
-			return cd.getColumnName();
+			return cd.getColumnName().toUpperCase();
 	}
 	@Override
 	public String toString() {
@@ -59,7 +59,7 @@ public class ExtendedColumnDefinition extends ColumnDefinition {
 		if(alias!=null){
 			return alias.toUpperCase()+DOT_STR+getPlainColumnName(cd);
 		}
-		return cd.getColumnName();
+		return cd.getColumnName().toUpperCase();
 	}
 	
 	public String getPlainColumnName(ColumnDefinition cd){
@@ -67,7 +67,7 @@ public class ExtendedColumnDefinition extends ColumnDefinition {
 			return getPlainColumnName(((ExtendedColumnDefinition) cd).getInnerColumnDefinitionInstance());
 		}
 		else
-			return cd.getColumnName();
+			return cd.getColumnName().toUpperCase();
 	}
 	
 	private ColumnDefinition getInnerColumnDefinitionInstance(){
