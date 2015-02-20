@@ -49,7 +49,7 @@ public class ExtendedColumnDefinition extends ColumnDefinition {
 	public String getColumnName() {
 		// TODO Auto-generated method stub
 		if(alias!=null){
-			return alias+DOT_STR+getPlainColumnName(cd);
+			return alias.toUpperCase()+DOT_STR+getPlainColumnName(cd);
 		}else
 			return cd.getColumnName();
 	}
@@ -57,7 +57,7 @@ public class ExtendedColumnDefinition extends ColumnDefinition {
 	public String toString() {
 		// TODO Auto-generated method stub
 		if(alias!=null){
-			return alias+DOT_STR+getPlainColumnName(cd);
+			return alias.toUpperCase()+DOT_STR+getPlainColumnName(cd);
 		}
 		return cd.getColumnName();
 	}

@@ -15,7 +15,7 @@ public class RelationNode implements Node {
 	public RelationNode(){}
 	
 	public RelationNode(String tableName,String aliasName,File file,CreateTable table){
-		this.tableName = tableName;
+		this.tableName = tableName.toUpperCase();
 		this.file=file;
 //		if(aliasName!=null && !aliasName.isEmpty())
 //			this.aliasName = aliasName;
