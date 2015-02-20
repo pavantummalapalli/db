@@ -277,7 +277,7 @@ public class ProjectNode implements Node {
 			bufferedReader.close();
 			fileReader.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		return relationNode;
 	}

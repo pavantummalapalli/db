@@ -71,7 +71,7 @@ public class SqlIterator {
 				}
 				//expressionEvaluator = new ExpressionEvaluator(table);
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		
@@ -122,10 +122,10 @@ public class SqlIterator {
 							}
 					}
 				} catch (SQLException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 			return colVals;
@@ -148,10 +148,10 @@ public class SqlIterator {
 						}	
 					}
 				} catch (SQLException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			
 			return colVals;
@@ -162,7 +162,7 @@ public class SqlIterator {
 				bufferedReader.close();
 				fileReader.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		

@@ -42,8 +42,7 @@ public class UnionOperatorNode implements Operator {
 				fileReader.close();
 			}
 		} catch (IOException e) {
-			//TODO remove it.
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		out.close();
 		//TODO as of now returning nothing. Just printing.

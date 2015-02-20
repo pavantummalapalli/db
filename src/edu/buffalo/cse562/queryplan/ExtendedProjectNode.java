@@ -111,7 +111,7 @@ public class ExtendedProjectNode implements Node {
 				newTable.setColumnDefinitions(newList);
 				relationNode.setTable(newTable);
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		return relationNode;

@@ -43,7 +43,7 @@ public class ExpressionNode implements Node {
 			}
 			pw.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
