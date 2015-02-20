@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -15,6 +14,7 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SelectVisitor;
 import net.sf.jsqlparser.statement.select.Union;
@@ -69,16 +69,24 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		//No premature optimization will be done at this level
 		//STEP 2 : SET WHERE CLAUSE
 		if(arg0.getWhere()!=null){
-			ExpressionNode expressionNode = new ExpressionNode(new ExpressionResolver(this).resolveExpression(arg0.getWhere()));
+			arg0.getWhere().accept(new ExpressionVisitorImpl(this));
+			ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
 			expressionNode.setChildNode(node);
 			node=expressionNode;
 		}
+		
 		//STEP 3: SET GROUP BY CLAUSE AND PROCESS AGGREGATES
+		ProjectNode projectNode = new ProjectNode();
+		List <SelectItem> selectItem = arg0.getSelectItems();
+		ProjectItemImpl prjImp = new ProjectItemImpl(this);
+		for (SelectItem selItem : selectItem) {
+			selItem.accept(prjImp);
+		}
 		List groupByColumns = arg0.getGroupByColumnReferences();
 		List<String> groupByList = new LinkedList<>();
 		boolean extendedMode = false;
 		ExtendedProjectNode epn = new ExtendedProjectNode();
-		if(groupByColumns!=null && groupByColumns.size()>0){
+		if((groupByColumns!=null && groupByColumns.size()>0) || isAggregateFunctionInSelecItem(prjImp.getExpressionList())){
 			extendedMode=true;
 			for(Column column:(List<Column>)groupByColumns){
 				String wholeCoumnName;
@@ -90,29 +98,20 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 			}
 			epn.setGroupByList(groupByList);
 		}
-					
+		
+		resolveSelectItemExpressionList(prjImp.getExpressionList());
+	
 		//STEP 4: SET SELECT PROJECTION
-		ProjectNode projectNode = new ProjectNode();
-		List <SelectItem> selectItem = arg0.getSelectItems();
-		ProjectItemImpl prjImp = new ProjectItemImpl(this);
-		for (SelectItem selItem : selectItem) {
-			selItem.accept(prjImp);
-		}
-		List <String> columnList = prjImp.getSelectColumnList();
-		List <Function> functionList = prjImp.getFunctionList();
-		List <Expression> expressionList = prjImp.getExpressionList();
-		resolveFunctionList(functionList);
-		projectNode.setColumnList(columnList);
-		projectNode.setExpressionList(expressionList);
 		//If extended mode is true then query is of type select a,sum(a) from B group by a
 		if(extendedMode){
-			epn.setFunctionList(functionList);
-			columnList.addAll(resolveFunctionListToColumnList(functionList));
+			List<SelectExpressionItem> items = extractAggregateFunctionsFromSelectExpressionItems(prjImp.getExpressionList()); 
+			epn.setFunctionList(items);
 			epn.setChildNode(node);
 			node=epn;
 			//STEP 4: SET HAVING CLAUSE
 			if(arg0.getHaving()!=null){
-				ExpressionNode expressionNode = new ExpressionNode(new ExpressionResolver(this).resolveExpression(arg0.getHaving()));
+				arg0.getHaving().accept(new ExpressionVisitorImpl(this));
+				ExpressionNode expressionNode = new ExpressionNode(arg0.getHaving());
 				expressionNode.setChildNode(node);
 				node=expressionNode;
 			}
@@ -120,7 +119,6 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		}
 		//Else query is select sum(a) from B
 		else{
-			projectNode.setFunctionList(functionList);
 			projectNode.setChildNode(node);
 		}
 		//STEP 7: SET ORDER BY
@@ -134,6 +132,18 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		node=projectNode;
 	}
 	
+	private boolean isAggregateFunctionInSelecItem(List<SelectExpressionItem> items) {
+		for(SelectExpressionItem item:items){
+			if(item.getExpression() instanceof Function){
+				Function function = (Function)item.getExpression();
+				if(!isFunctionAggregate(function)){
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	private Node buildCartesianOperatorNode(Node node,Node node1){
 		CartesianOperatorNode cartesianOperatorNode= new CartesianOperatorNode();
 		cartesianOperatorNode.setRelationNode1(node);
@@ -165,6 +175,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		}	
 		return columnTableMap;
 	}
+	
+	public boolean isFunctionAggregate(Function function){
+		if(!function.getName().equalsIgnoreCase("DATE")){
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public Column resolveColumn(Column column) {
@@ -185,6 +202,18 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		return column;
 	}
 	
+	public List<SelectExpressionItem> extractAggregateFunctionsFromSelectExpressionItems(List<SelectExpressionItem> selectExpressionItemsList){
+		List<SelectExpressionItem> items = new ArrayList<SelectExpressionItem>();
+		for(SelectExpressionItem item : selectExpressionItemsList){
+			if(item.getExpression() instanceof Function){
+				Function function = (Function)item.getExpression();
+				if(isFunctionAggregate(function))
+					items.add(item);
+			}
+		}
+		return items;
+	}
+	
 	public List<String> resolveFunctionListToColumnList(List<Function> functionList){
 		List<String> functionStringList = new ArrayList<String>();
 		Iterator<Function> iterator =  functionList.iterator();
@@ -193,32 +222,22 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		return functionStringList;
 	}
 	
-	public List<Function> resolveFunctionList(List<Function> functionList){
-		Iterator<Function> iterator =  functionList.iterator();
-		while(iterator.hasNext())
-			resolveFunction(iterator.next());
-		return functionList;
+	public void resolveSelectItemExpressionList(List<SelectExpressionItem> items){
+		ExpressionVisitorImpl impl = new ExpressionVisitorImpl(this);
+		for(SelectExpressionItem item : items){
+			item.getExpression().accept(impl);
+		}
 	}
 	
 	public List<OrderByElement> resolveOrderByElements(List<OrderByElement> orderByElement){
-		ExpressionResolver resolver = new ExpressionResolver(this);
+		ExpressionVisitorImpl resolver = new ExpressionVisitorImpl(this);
 		Iterator<OrderByElement> iterator = orderByElement.iterator();
 		while(iterator.hasNext()){
-			resolver.resolveExpression(iterator.next().getExpression());
+			iterator.next().getExpression().accept(resolver);
 		}
 		return orderByElement;
 	}
 	
-	public Function resolveFunction(Function function) {
-		ExpressionResolver resolver = new ExpressionResolver(this);
-		if(function.getParameters()!=null){
-		Iterator<Expression> expressionIterator = function.getParameters().getExpressions().iterator();
-		while(expressionIterator.hasNext())
-			resolver.resolveExpression(expressionIterator.next());
-		}
-		return function;
-	}
-
 	@Override
 	public Map<String, String> getColumnTableMap() {
 		return columnTableMap;

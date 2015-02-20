@@ -16,16 +16,16 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import edu.buffalo.cse562.SqlIterator;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExtendedProjectNode implements Node {
 
-	private List <Function> functionList;
+	private List <SelectExpressionItem> functionList;
 	private List <String> groupByList;
 	private Expression havingExpression;
 	private Node childNode;
-	private Expression expression;
 	private String delimiter = "~~";//delimiter to be decided
 	
 	public void setHavingExpression(Expression havingExpression) {
@@ -54,7 +54,7 @@ public class ExtendedProjectNode implements Node {
 			columnDefnMap.put(columnDef.getColumnName().toUpperCase(), columnDef);
 		}
 
-		List<Expression> expressionList = (List<Expression>) (List<?>) functionList;
+		List<Expression> expressionList = TableUtils.convertSelectExpressionItemIntoExpressions( functionList);
 		SqlIterator sqlIter = new SqlIterator(relationNode.getTable(), expressionList, relationNode.getFile(),
 				groupByList);
 
@@ -98,9 +98,13 @@ public class ExtendedProjectNode implements Node {
 					newList.add(cd);
 				}
 				int k=0;
-				for(Function funcName : functionList) {
+				for(SelectExpressionItem funcName : functionList) {
 					ColumnDefinition cd = new ColumnDefinition();
-					cd.setColumnName(funcName.toString());
+					Function func =(Function)funcName.getExpression(); 
+					if(funcName.getAlias()!=null && !funcName.getAlias().isEmpty())
+						cd.setColumnName(funcName.getAlias());
+					else
+						cd.setColumnName(funcName.toString());
 					ColDataType cdt = new ColDataType();
 					cdt.setDataType(functionTypeList.get(k));
 					cd.setColDataType(cdt);
@@ -129,31 +133,23 @@ public class ExtendedProjectNode implements Node {
 		return groupByList;
 	}
 	
-	public List<Function> getFunctionList() {
+	public List<SelectExpressionItem> getFunctionList() {
 		return functionList;
 	}
 
-	public void setFunctionList(List<Function> functionList) {
+	public void setFunctionList(List<SelectExpressionItem> functionList) {
 		this.functionList = functionList;
-	}
-	
-	public Expression getExpression() {
-		return expression;
-	}
-	
-	public void setExpression(Expression expression) {
-		this.expression = expression;
 	}
 	
 	@Override
 	public CreateTable evalSchema() {
 		CreateTable table = new CreateTable();
-		List columnDef = new ArrayList();
-		if(groupByList!=null && groupByList.size()>0)
-			columnDef = TableUtils.convertColumnNameToColumnDefinitions(groupByList);
-		if(functionList!=null && functionList.size()>0)
-			columnDef.addAll(TableUtils.convertFunctionNameToColumnDefinitions(functionList));
-		table.setColumnDefinitions(columnDef);
+//		List columnDef = new ArrayList();
+//		if(groupByList!=null && groupByList.size()>0)
+//			columnDef = TableUtils.convertColumnNameToColumnDefinitions(groupByList);
+//		if(functionList!=null && functionList.size()>0)
+//			columnDef.addAll(TableUtils.convertFunctionNameToColumnDefinitions(functionList));
+//		table.setColumnDefinitions(columnDef);
 		return table;
 	}
 }

@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.management.RuntimeErrorException;
-
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
@@ -16,10 +14,10 @@ import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExpressionEvaluator extends Eval {
 	
@@ -29,10 +27,19 @@ public class ExpressionEvaluator extends Eval {
 	private HashMap<String,Object> calculatedData = new HashMap <String, Object>();
 	private HashMap <String, Average> tempAverageMap = new HashMap <>();
 	private List<String> groupByList;
+	private boolean aggregateModeOn;
 		
 	private class Average {
 		Double value;
 		int count;
+	}
+	
+	public void setAggregateModeOn(boolean aggregateModeOn) {
+		this.aggregateModeOn = aggregateModeOn;
+	}
+	
+	public boolean isAggregateModeOn() {
+		return aggregateModeOn;
 	}
 	
 	public ExpressionEvaluator(CreateTable table){
@@ -57,17 +64,7 @@ public class ExpressionEvaluator extends Eval {
 	}
 	
 	private Column convertStringToColumn(String columnStr){
-		String [] splitColumnNames = columnStr.split("\\.");
-		Column column = new Column();
-		if(splitColumnNames.length==2){
-			column.setColumnName(splitColumnNames[1]);
-			column.setTable(new Table());
-			column.getTable().setName(splitColumnNames[0]);
-		}
-		else{
-			column.setColumnName(splitColumnNames[0]);
-		}
-		return column;
+		return TableUtils.convertStringToColumn(columnStr);
 	}
 	
 	@Override

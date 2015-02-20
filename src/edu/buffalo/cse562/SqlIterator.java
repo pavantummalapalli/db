@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
@@ -24,6 +23,7 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SqlIterator {
 	//Schema Info, Expression and relation to be declared
+		private boolean aggregateModeOn;
 		FileReader fileReader;
 		BufferedReader bufferedReader;
 		List <Expression> expressionList;
@@ -42,6 +42,14 @@ public class SqlIterator {
 			this.groupByList = groupByList;
 			
 			open();
+		}
+		
+		public void setAggregateModeOn(boolean aggregateModeOn) {
+			this.aggregateModeOn = aggregateModeOn;
+		}
+		
+		public boolean isAggregateModeOn() {
+			return aggregateModeOn;
 		}
 		
 		public String[] getColVals() {
@@ -104,34 +112,21 @@ public class SqlIterator {
 					return null;
 				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
-				try {
-					
-					if(expressionList != null){
-						int count = 0;
-						LeafValue leafValue =expressionEvaluatorList.get(count).evaluateExpression(expressionList.get(count), colVals, groupByList);
-						if(leafValue instanceof BooleanValue) {
-							BooleanValue booleanValue = (BooleanValue)leafValue;
-							if(booleanValue == BooleanValue.FALSE) {
-								String arr[] = {};
-								return arr;
-							}
-						} else {
-							String[] arr = new String[1];
-							arr[0] = getLeafValue(leafValue);
-							return arr;
-							}
-					}
-				} catch (SQLException e) {
-					throw new RuntimeException("SQLException in SQLIterator next method 1", e); 
-					//e.printStackTrace();
+				String [] resolvedValues = new String[expressionList.size()];
+				int count = 0;
+				for (Expression expression : expressionList) {
+					LeafValue leafValue = expressionEvaluatorList.get(count).evaluateExpression(expression, colVals, null);
+					resolvedValues[count++] = getLeafValue(leafValue);
 				}
+				return resolvedValues;
+			}
+			catch (SQLException e) {
+				throw new RuntimeException("SQLException in SQLIterator next method 1", e); 
+				//e.printStackTrace();
 			} catch (IOException e) {
 				//e.printStackTrace();
 				throw new RuntimeException("IOException in SQLIterator next method 2 ", e);
-		
-				
 			} 
-			return colVals;
 		}
 		
 		public String[] nextAggregate() {

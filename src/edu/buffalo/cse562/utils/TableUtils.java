@@ -2,18 +2,20 @@ package edu.buffalo.cse562.utils;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 
 public final class TableUtils {
 	
@@ -35,6 +37,20 @@ public final class TableUtils {
 				return true;
 			return false;
 		}
+	}
+	
+	public static Column convertStringToColumn(String columnStr){
+		String [] splitColumnNames = columnStr.split("\\.");
+		Column column = new Column();
+		if(splitColumnNames.length==2){
+			column.setColumnName(splitColumnNames[1]);
+			column.setTable(new Table());
+			column.getTable().setName(splitColumnNames[0]);
+		}
+		else{
+			column.setColumnName(splitColumnNames[0]);
+		}
+		return column;
 	}
 	
 	public  static File getAssociatedTableFile(String tableName){
@@ -99,6 +115,42 @@ public final class TableUtils {
 			defList.add(def);
 		}
 		return defList;
+	}
+	
+	public static List<Expression> convertSelectExpressionItemIntoExpressions(Collection<SelectExpressionItem> expressionList) {
+		List<Expression> items = new ArrayList<Expression>();
+		for (SelectExpressionItem expression : expressionList) {
+			items.add(expression.getExpression());
+		}
+		return items;
+	}
+	
+	public static List<SelectExpressionItem> convertColumnIntoSelectExpressionItem(
+			Collection<String> columnList) {
+		List<SelectExpressionItem> items = new ArrayList<SelectExpressionItem>();
+		for (String column : columnList) {
+			SelectExpressionItem item = new SelectExpressionItem();
+			item.setExpression(TableUtils.convertStringToColumn(column));
+			items.add(item);
+		}
+		return items;
+	}
+	
+	public static List<String> convertSelectExpressionItemIntoColumnString(Collection<SelectExpressionItem> expressionList) {
+		List<String> items = new ArrayList<String>();
+		for (SelectExpressionItem expression : expressionList) {
+			Column column;
+			if(expression.getExpression() instanceof Column){
+				column = (Column)expression.getExpression();
+			}else{
+				column = new Column();
+				column.setColumnName(expression.getExpression().toString());
+			}
+			if(expression.getAlias()!=null)
+				column.setColumnName(expression.getAlias());
+			items.add(column.getWholeColumnName().toUpperCase());
+		}
+		return items;
 	}
 	
 	public static List<ColumnDefinition> convertFunctionNameToColumnDefinitions(List<Function> functionList){

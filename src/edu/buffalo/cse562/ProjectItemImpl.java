@@ -3,9 +3,7 @@ package edu.buffalo.cse562;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
@@ -16,7 +14,7 @@ public class ProjectItemImpl implements SelectItemVisitor {
 	
 	private List <String> columnList;
 	private List <Function> functionList;
-	private List <Expression> expressionList;
+	private List <SelectExpressionItem> expressionList = new ArrayList<SelectExpressionItem>();
 	private QueryDomain queryDomain;
 	
 	public ProjectItemImpl(QueryDomain queryDomain) {
@@ -25,7 +23,7 @@ public class ProjectItemImpl implements SelectItemVisitor {
 		this.queryDomain=queryDomain;
 	}
 	
-	public List<Expression> getExpressionList() {
+	public List<SelectExpressionItem> getExpressionList() {
 		return expressionList;
 	}
 	
@@ -36,22 +34,12 @@ public class ProjectItemImpl implements SelectItemVisitor {
 
 	@Override
 	public void visit(AllTableColumns allTableColumns) {
-		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not supported as of now.");
 	}
 
 	@Override
 	public void visit(SelectExpressionItem selectExpressionItem) {
-		//TODO
-		Expression expression = selectExpressionItem.getExpression();
-		if (expression instanceof Column) {
-			Column column = (Column)expression;
-			columnList.add(queryDomain.resolveColumn(column).getWholeColumnName());
-		} else if (expression instanceof Function) {
-			functionList.add((Function)expression);
-		}else if (expression instanceof Expression) {
-			System.out.println(expression.toString());
-		}
+		expressionList.add(selectExpressionItem);
 	}
 	
 	/*private void getColumnList() {
@@ -67,11 +55,11 @@ public class ProjectItemImpl implements SelectItemVisitor {
 		}
 	}*/
 	
-	public List <String> getSelectColumnList() {
-		return columnList;
-	}
-	
-	public List <Function> getFunctionList() {
-		return functionList;
-	}
+//	public List <String> getSelectColumnList() {
+//		return columnList;
+//	}
+//	
+//	public List <Function> getFunctionList() {
+//		return functionList;
+//	}
 }
