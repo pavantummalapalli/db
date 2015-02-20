@@ -12,7 +12,7 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
 public class UnionOperatorNode implements Operator {
 
 	private List<Node> childNodes;
-
+	
 	public void setChildNodes(List<Node> childNodes) {
 		this.childNodes = childNodes;
 	}
@@ -23,6 +23,7 @@ public class UnionOperatorNode implements Operator {
 
 	@Override
 	public RelationNode eval() {
+
 		// TODO Auto-generated method stub
 		PrintWriter out = new PrintWriter(System.out);
 		try {
@@ -43,7 +44,8 @@ public class UnionOperatorNode implements Operator {
 		} catch (IOException e) {
 			//TODO remove it.
 			e.printStackTrace();
-		}	
+		}
+		//TODO as of now returning nothing. Just printing.
 		return null;
 	}
 

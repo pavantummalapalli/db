@@ -39,6 +39,69 @@ public class AggregateTest extends BaseTest {
 		}
 	}
 
+	@Test
+	public void testGroupByAggregateFunction() throws IOException, SQLException {
+		for (int i = 1; i < 13; i++) {
+			String value = i + "";
+			if (i < 10) {
+				value = "0" + value;
+			}
+			String path = filePath + "GBAGG" + value + ".SQL";
+			File file = new File(path);
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line = "";
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				if (line.startsWith("SELECT")) {
+					executeQuery(line);
+				}
+			}
+			reader.close();
+		}
+	}
+	
+	@Test
+	public void testTableFunction() throws IOException, SQLException {
+		for (int i = 1; i < 9; i++) {
+			String value = i + "";
+			if (i < 10) {
+				value = "0" + value;
+			}
+			String path = filePath + "TABLE" + value + ".SQL";
+			File file = new File(path);
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line = "";
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				if (line.startsWith("SELECT")) {
+					executeQuery(line);
+				}
+			}
+			reader.close();
+		}
+	}
+	
+	@Test
+	public void testUnionFunction() throws IOException, SQLException {
+		for (int i = 1; i < 3; i++) {
+			String value = i + "";
+			if (i < 10) {
+				value = "0" + value;
+			}
+			String path = filePath + "UNION" + value + ".SQL";
+			File file = new File(path);
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line = "";
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				if (line.startsWith("SELECT")) {
+					executeQuery(line);
+				}
+			}
+			reader.close();
+		}
+	}
+	
 	private void executeQuery(String query) throws SQLException, ConnectException {		
 		
 		connection = getConnectionForMYSQL();

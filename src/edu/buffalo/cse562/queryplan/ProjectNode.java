@@ -24,6 +24,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class ProjectNode implements Node {
 
+	private boolean parentNode = true;
 	private List<String> columnList;
 	private List<Function> functionList;
 	private List<Expression> expressionList;
@@ -31,15 +32,13 @@ public class ProjectNode implements Node {
 	private Distinct distinctOnElements;
 	private List<OrderByElement> orderByElements;
 	private Node childNode;
-	private String preferredAliasName;
-	private boolean isParentNode = true;
-
-	public boolean isParentNode() {
-		return isParentNode;
-	}
+	private String preferredAliasName;	
 	
-	public void setParentNode(boolean isParentNode) {
-		this.isParentNode = isParentNode;
+	public void setParentNode(boolean parentNode) {
+		this.parentNode = parentNode;
+	}
+	public boolean isParentNode() {
+		return parentNode;
 	}
 	
 	public void setExpressionList(List<Expression> expressionList) {
@@ -149,7 +148,7 @@ public class ProjectNode implements Node {
 			File file = null;
 			PrintWriter pw = null;
 			
-			if (isParentNode == false) {
+			if (parentNode == false) {
 				String newTableName = relationNode.getTableName() + "_new";
 				file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 				pw = new PrintWriter(file);
@@ -188,7 +187,7 @@ public class ProjectNode implements Node {
 					for (int j = 0; j < columnList.size() - 1; j++) {
 						String column = columnList.get(j);
 						int index = columnIndexMap.get(column);
-						if (isParentNode)
+						if (parentNode)
 							System.out.print(rowArr[index] + "|");
 						else
 							pw.print(rowArr[index] + "|");
@@ -196,7 +195,7 @@ public class ProjectNode implements Node {
 					}
 					if (columnList.size() > 0) {
 						int index = columnIndexMap.get(columnList.get(columnList.size() - 1));
-						if (isParentNode)
+						if (parentNode)
 							System.out.println(rowArr[index]);
 						else
 							pw.println(rowArr[index]);
@@ -224,13 +223,13 @@ public class ProjectNode implements Node {
 					}						
 				}
 				if (sb.length() > 0) {
-					if (isParentNode)
+					if (parentNode)
 						System.out.println(sb.substring(0, sb.length() - 1));
 					else
 						pw.println(sb.substring(0, sb.length() - 1));
 				}
 			}
-			if (isParentNode == false) 
+			if (parentNode == false) 
 				relationNode.setFile(file);
 			
 			bufferedReader.close();
