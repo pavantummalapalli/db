@@ -25,10 +25,10 @@ public class ExpressionEvaluator extends Eval {
 	private CreateTable table;
 	private HashMap<String, Integer> columnMapping = new HashMap <String, Integer> ();
 	private HashMap<String,Object> calculatedData = new HashMap <String, Object>();
+	private HashMap <String, Average> tempAverageMap = new HashMap <>();
 	private List<String> groupByList;
-	private Average avg = new Average();
-	
-	private class Average{
+		
+	private class Average {
 		Double value;
 		int count;
 	}
@@ -102,29 +102,35 @@ public class ExpressionEvaluator extends Eval {
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
 				String key=null;
+								
 				if(groupByList!=null && groupByList.size()>0){
 					key = getGroupByValueKey();
 				}
 				Object value= calculatedData.get(key);
+				Average avg = tempAverageMap.get(key);
 				
 				if(evaluatedValue instanceof LongValue){
 					if(value==null){
+						avg = new Average();
 						avg.value =(double)evaluatedValue.toLong();
 						avg.count=1;
 					}
 					else{
-						avg.value  = (((Double)avg.value ) * avg.count + evaluatedValue.toLong())/++avg.count;
+						avg.value  = (((Double) avg.value * avg.count + evaluatedValue.toLong()))/ ++avg.count;
 					}
-					value=avg;
-					calculatedData.put(key,avg.value);
+					tempAverageMap.put(key, avg);
+					calculatedData.put(key,avg.value);					
 				}
 				else if(evaluatedValue instanceof DoubleValue){
 					if(value==null){
+						avg = new Average();
 						value = evaluatedValue.toDouble();
+						avg.count=1;
 					}
 					else{
 						avg.value  = (((Double)avg.value ) * avg.count + evaluatedValue.toDouble())/++avg.count;
 					}
+					tempAverageMap.put(key, avg);
 					calculatedData.put(key,value);
 				}
 				else {

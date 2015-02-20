@@ -182,22 +182,27 @@ public class ProjectNode implements Node {
 						null);
 
 				while (sqlIter.nextAggregate() != null) {
-					// do nothing.
+					// do nothing. processing happening inside nextAggregate for all the exprList per row.
 				}
+				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < functionList.size(); i++) {
 					Map<String, Object> aggDataMap = sqlIter.getAggregateData(i);
+					
 					for (String key : aggDataMap.keySet()) {
-						System.out.println(aggDataMap.get(key));
-					}
+						sb.append(aggDataMap.get(key) + "|");
+					}						
 				}
-
+				if (sb.length() > 0) {
+					System.out.println(sb.substring(0, sb.length() - 1));
+				}
 			}
 			bufferedReader.close();
 			fileReader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		relationNode.setAliasName(preferredAliasName);
+		if (preferredAliasName != null && preferredAliasName.isEmpty() == false)
+			relationNode.setAliasName(preferredAliasName);
 		if (relationNode.getTableName() == null || relationNode.getTableName().isEmpty())
 			relationNode.setTableName(preferredAliasName);
 		return relationNode;

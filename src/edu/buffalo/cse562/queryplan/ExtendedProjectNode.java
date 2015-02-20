@@ -97,7 +97,7 @@ public class ExtendedProjectNode implements Node {
 				int k=0;
 				for(Function funcName : functionList) {
 					ColumnDefinition cd = new ColumnDefinition();
-					cd.setColumnName(funcName.getName());
+					cd.setColumnName(funcName.toString());
 					ColDataType cdt = new ColDataType();
 					cdt.setDataType(functionTypeList.get(k));
 					cd.setColDataType(cdt);

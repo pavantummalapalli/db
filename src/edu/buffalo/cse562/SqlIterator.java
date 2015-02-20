@@ -174,7 +174,7 @@ public class SqlIterator extends Eval {
 					if(expressionList != null){
 						int count = 0;
 						for (Expression expression : expressionList) {
-							LeafValue leafValue =expressionEvaluatorList.get(count).evaluateExpression(expression, colVals, groupByList);
+							LeafValue leafValue = expressionEvaluatorList.get(count).evaluateExpression(expression, colVals, groupByList);
 							count++;
 						}	
 					}

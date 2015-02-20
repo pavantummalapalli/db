@@ -55,7 +55,7 @@ public class RelationNode implements Node {
 	}
 	
 	public void setAliasName(String aliasName) {
-		((ExtendedCreateTable)table).setAlias(aliasName);
+		((ExtendedCreateTable) table).setAlias(aliasName);
 		this.aliasName = aliasName;
 	}
 	
