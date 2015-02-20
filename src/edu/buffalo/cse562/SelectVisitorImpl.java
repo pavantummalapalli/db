@@ -155,12 +155,12 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		this.node=node;
 	}
 	
-	private Map <String, String> mapColumnAndTable(List <String> tableList) {
+	private Map <String, String> mapColumnAndTable(List <Table> tableList) {
 		columnTableMap = new HashMap <>();
-		for (String table : tableList) {
-			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table).getColumnDefinitions();
+		for (Table table : tableList) {
+			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table.getName()).getColumnDefinitions();
 			for (ColumnDefinition columnDef : colDefList) {
-				columnTableMap.put(columnDef.getColumnName(), table);
+				columnTableMap.put(columnDef.getColumnName(), table.getAlias());
 			}
 		}	
 		return columnTableMap;

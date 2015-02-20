@@ -17,7 +17,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class FromItemImpl implements FromItemVisitor {
 
 	private Node node;
-	private List <String> tableList = new ArrayList<>();
+	private List <Table> tableList = new ArrayList<>();
 	
 	public FromItemImpl(){
 	}
@@ -29,7 +29,7 @@ public class FromItemImpl implements FromItemVisitor {
 		if(table.getAlias()==null)
 			table.setAlias(table.getName());
 		node = new RelationNode(table.getName(),table.getAlias(),filePath,schema);
-		tableList.add(table.getName());
+		tableList.add(table);
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public class FromItemImpl implements FromItemVisitor {
 		throw new RuntimeException("Subjoin not supported");
 	}
 	
-	public List<String> getTableList() {
+	public List<Table> getTableList() {
 		return tableList;
 	}
 	
