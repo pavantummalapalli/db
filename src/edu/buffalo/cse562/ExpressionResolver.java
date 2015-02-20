@@ -1,4 +1,4 @@
-package edu.buffalo.cse562;
+/*package edu.buffalo.cse562;
 
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -46,3 +46,4 @@ public class ExpressionResolver extends Eval {
 		return null;
 	}
 }
+*/

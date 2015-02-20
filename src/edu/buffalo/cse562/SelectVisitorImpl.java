@@ -69,7 +69,8 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		//No premature optimization will be done at this level
 		//STEP 2 : SET WHERE CLAUSE
 		if(arg0.getWhere()!=null){
-			ExpressionNode expressionNode = new ExpressionNode(new ExpressionResolver(this).resolveExpression(arg0.getWhere()));
+			arg0.getWhere().accept(new ExpressionVisitorImpl(this));
+			ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
 			expressionNode.setChildNode(node);
 			node=expressionNode;
 		}
@@ -112,7 +113,8 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 			node=epn;
 			//STEP 4: SET HAVING CLAUSE
 			if(arg0.getHaving()!=null){
-				ExpressionNode expressionNode = new ExpressionNode(new ExpressionResolver(this).resolveExpression(arg0.getHaving()));
+				arg0.getHaving().accept(new ExpressionVisitorImpl(this));
+				ExpressionNode expressionNode = new ExpressionNode(arg0.getHaving());
 				expressionNode.setChildNode(node);
 				node=expressionNode;
 			}
@@ -168,7 +170,9 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 
 	@Override
 	public Column resolveColumn(Column column) {
-		String columnStr = column.getWholeColumnName().toUpperCase();
+		column.setColumnName(column.getColumnName().toUpperCase());
+		if(column.getTable().getAlias()!=null)
+			column.getTable().setAlias(column.getTable().getAlias().toUpperCase());
 //		String resolvedColumn = columnStr;
 		if (column.getTable() == null || column.getTable().getName() == null || column.getTable().getName().isEmpty()) {
 			Table table;
@@ -176,12 +180,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				table = column.getTable(); 
 			else
 				table = new Table();
-			table.setName(columnTableMap.get(columnStr.toUpperCase()));
+			table.setName(columnTableMap.get(column.getWholeColumnName().toUpperCase()));
 			return column;
 			//resolvedColumn = columnTableMap.get(columnStr) + DOT_STR + columnStr;
 		} else {
 			column.getTable().setName(column.getTable().getName().toUpperCase());
 		}
+		
 		return column;
 	}
 	
@@ -194,30 +199,31 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	}
 	
 	public List<Function> resolveFunctionList(List<Function> functionList){
+		ExpressionVisitorImpl impl = new ExpressionVisitorImpl(this);
 		Iterator<Function> iterator =  functionList.iterator();
 		while(iterator.hasNext())
-			resolveFunction(iterator.next());
+			iterator.next().accept(impl);
 		return functionList;
 	}
 	
 	public List<OrderByElement> resolveOrderByElements(List<OrderByElement> orderByElement){
-		ExpressionResolver resolver = new ExpressionResolver(this);
+		ExpressionVisitorImpl impl = new ExpressionVisitorImpl(this);
 		Iterator<OrderByElement> iterator = orderByElement.iterator();
 		while(iterator.hasNext()){
-			resolver.resolveExpression(iterator.next().getExpression());
+			iterator.next().getExpression().accept(impl);
 		}
 		return orderByElement;
 	}
 	
-	public Function resolveFunction(Function function) {
-		ExpressionResolver resolver = new ExpressionResolver(this);
-		if(function.getParameters()!=null){
-		Iterator<Expression> expressionIterator = function.getParameters().getExpressions().iterator();
-		while(expressionIterator.hasNext())
-			resolver.resolveExpression(expressionIterator.next());
-		}
-		return function;
-	}
+//	public Function resolveFunction(Function function) {
+//		ExpressionResolver resolver = new ExpressionResolver(this);
+//		if(function.getParameters()!=null){
+//		Iterator<Expression> expressionIterator = function.getParameters().getExpressions().iterator();
+//		while(expressionIterator.hasNext())
+//			resolver.resolveExpression(expressionIterator.next());
+//		}
+//		return function;
+//	}
 
 	@Override
 	public Map<String, String> getColumnTableMap() {

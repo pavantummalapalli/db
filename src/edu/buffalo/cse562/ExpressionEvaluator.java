@@ -245,8 +245,9 @@ public class ExpressionEvaluator extends Eval {
 	}
 	
 	@Override
-	public LeafValue eval(Column arg0) throws SQLException {			
-		int index = columnMapping.get(arg0.getWholeColumnName().toUpperCase());
+	public LeafValue eval(Column arg0) throws SQLException {	
+		String value = arg0.getWholeColumnName().toUpperCase();
+		int index = columnMapping.get(value);
 		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 		ColDataType dataType = colDefns.get(index).getColDataType();
 		String data = dataType.getDataType().toLowerCase();
