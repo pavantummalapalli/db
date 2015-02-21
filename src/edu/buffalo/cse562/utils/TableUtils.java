@@ -9,13 +9,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+import edu.buffalo.cse562.ExtendedDateValue;
 
 public final class TableUtils {
 	
@@ -37,6 +43,33 @@ public final class TableUtils {
 				return true;
 			return false;
 		}
+	}
+	
+	public static LeafValue getLeafValue(String columnName,Map<String,Integer> columnMapping,String[]colVals,CreateTable table){
+		int index = columnMapping.get(columnName); 
+		String value = colVals[index];
+		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
+		ColDataType dataType = colDefns.get(index).getColDataType();
+		String data = dataType.getDataType().toLowerCase();
+		if(data.equalsIgnoreCase("int"))
+			return new LongValue(colVals[index]);
+		else if(data.equalsIgnoreCase("date")){
+			if((" "+colVals[index]+" ").length()!=12)
+				throw new RuntimeException("Illeagel value dates" + value);
+			return new ExtendedDateValue(" "+colVals[index]+" ");
+		}
+		else if(data.equalsIgnoreCase("string") || data.contains("char"))
+			return new StringValue(" " + colVals[index] + " ");
+		else if(data.equalsIgnoreCase("double") || data.equalsIgnoreCase("decimal"))
+			return new DoubleValue(colVals[index]);
+		return null;
+	}
+	
+	public static String toUnescapedString(LeafValue leafValue){
+		if(leafValue instanceof StringValue){
+			return leafValue.toString().substring(1,leafValue.toString().length()-1);
+		}
+		return leafValue.toString();
 	}
 	
 	public static Column convertStringToColumn(String columnStr){
@@ -155,6 +188,24 @@ public final class TableUtils {
 		return items;
 	}
 	
+	public static List<Column> convertSelectExpressionItemIntoColumn(Collection<SelectExpressionItem> expressionList) {
+		List<Column> items = new ArrayList<Column>();
+		for (SelectExpressionItem expression : expressionList) {
+			Column column;
+			if(expression.getExpression() instanceof Column){
+				column = (Column)expression.getExpression();
+			}else{
+				column = new Column();
+				column.setTable(new Table());
+				column.setColumnName(expression.getExpression().toString().toUpperCase());
+			}
+			if(expression.getAlias()!=null)
+				column.setColumnName(expression.getAlias().toUpperCase());
+			items.add(column);
+		}
+		return items;
+	}
+	
 	public static List<ColumnDefinition> convertFunctionNameToColumnDefinitions(List<Function> functionList){
 		List<ColumnDefinition> defList = new ArrayList<ColumnDefinition>();
 		Iterator<Function> iteratorColumnList = functionList.iterator();
@@ -177,4 +228,6 @@ public final class TableUtils {
 		}
 		return convertColumnListIntoSelectExpressionItem(columnList);
 	}
+
+	
 }

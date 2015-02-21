@@ -23,7 +23,7 @@ public class ProjectItemImpl implements SelectItemVisitor {
 		this.queryDomain=queryDomain;
 	}
 	
-	public List<SelectExpressionItem> getExpressionList() {
+	public List<SelectExpressionItem> getSelectExpressionItemList() {
 		return expressionList;
 	}
 	

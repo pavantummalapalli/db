@@ -244,22 +244,7 @@ public class ExpressionEvaluator extends Eval {
 	@Override
 	public LeafValue eval(Column arg0) throws SQLException {	
 		String value = arg0.getWholeColumnName().toUpperCase();
-		int index = columnMapping.get(value);
-		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
-		ColDataType dataType = colDefns.get(index).getColDataType();
-		String data = dataType.getDataType().toLowerCase();
-		if(data.equalsIgnoreCase("int"))
-			return new LongValue(colVals[index]);
-		else if(data.equalsIgnoreCase("date")){
-			if((" "+colVals[index]+" ").length()!=12)
-				throw new RuntimeException("Illeagel value dates" + value);
-			return new ExtendedDateValue(" "+colVals[index]+" ");
-		}
-		else if(data.equalsIgnoreCase("string") || data.contains("char"))
-			return new StringValue(" " + colVals[index] + " ");
-		else if(data.equalsIgnoreCase("double") || data.equalsIgnoreCase("decimal"))
-			return new DoubleValue(colVals[index]);
-		return null;
+		return TableUtils.getLeafValue(value, columnMapping, colVals, table);
 	}
 	public String getLeafValue(LeafValue leafValue) {
 		if (leafValue instanceof DoubleValue)

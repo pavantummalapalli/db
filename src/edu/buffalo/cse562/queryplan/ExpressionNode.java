@@ -1,5 +1,7 @@
 package edu.buffalo.cse562.queryplan;
 
+import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -31,22 +33,26 @@ public class ExpressionNode implements Node {
 		SqlIterator sqlIterator = new SqlIterator(table, null, dataFile,null);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
-		String[] colVals;
+		LeafValue[] colVals;
 		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 			while((colVals = sqlIterator.next()) != null) {
 				int i;
-				LeafValue leafValue = evaluate.evaluateExpression(expression, colVals, null);
+				String[] colValsString = new String[colVals.length];
+				for(int j=0;j<colVals.length;j++){
+					colValsString[j]=toUnescapedString(colVals[j]);
+				}
+				LeafValue leafValue = evaluate.evaluateExpression(expression, colValsString, null);
 				BooleanValue value =(BooleanValue) leafValue;
 				if(value ==BooleanValue.FALSE)
 					continue;
 				for(i=1; i<colVals.length; i++) {
-					pw.print(colVals[i-1] + "|");
+					pw.print(toUnescapedString(colVals[i-1]) + "|");
 				}
 				if(colVals.length > 0)
-					pw.println(colVals[i-1]);
+					pw.println(toUnescapedString(colVals[i-1]));
 			}
 			pw.close();
 		} catch (FileNotFoundException e) {

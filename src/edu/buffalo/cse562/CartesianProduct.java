@@ -1,14 +1,18 @@
 package edu.buffalo.cse562;
 
+import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSelectExpressionItems;
+import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
+import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSelectExpressionItems;
-import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
+
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -40,7 +44,7 @@ public class CartesianProduct {
 		List<Expression> table1ItemsExpression = convertSelectExpressionItemIntoExpressions(items);
 		SqlIterator sqlIterator1 = new SqlIterator(table1,table1ItemsExpression , dataFile1,null);
 		String newTableName = getNewTableName(table1, table2);
-		String[] colVals1, colVals2;
+		LeafValue[] colVals1, colVals2;
 		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
@@ -49,13 +53,13 @@ public class CartesianProduct {
 				while((colVals2 = sqlIterator2.next()) != null) {
 					int i;
 					for(i=0; i<colVals1.length; i++) {
-						pw.print(colVals1[i] + "|");
+						pw.print(toUnescapedString(colVals1[i]) + "|");
 					}
 					for(i=1; i<colVals2.length; i++) {
-						pw.print(colVals2[i-1] + "|");
+						pw.print(toUnescapedString(colVals2[i-1]) + "|");
 					}
 					if(colVals2.length > 0)
-						pw.println(colVals2[i-1]);
+						pw.println(toUnescapedString(colVals2[i-1]));
 				}
 				sqlIterator2.close();
 			}

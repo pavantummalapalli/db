@@ -12,24 +12,22 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.jsqlparser.expression.DateValue;
-import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
-import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class SqlIterator {
 	//Schema Info, Expression and relation to be declared
 		private boolean aggregateModeOn;
-		FileReader fileReader;
-		BufferedReader bufferedReader;
-		List <Expression> expressionList;
-		CreateTable table;
-		HashMap<String, Integer> columnMapping;
-		File dataFile;
+		private FileReader fileReader;
+		private BufferedReader bufferedReader;
+		private List <Expression> expressionList;
+		private CreateTable table;
+		private HashMap<String, Integer> columnMapping;
+		private HashMap<Integer,String> reverseColumnMapping;
+		private File dataFile;
 		private String[] colVals;
 		private List <String> groupByList;
 		private List <ExpressionEvaluator> expressionEvaluatorList;
@@ -38,6 +36,7 @@ public class SqlIterator {
 			this.expressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
+			reverseColumnMapping = new HashMap<>();
 			this.dataFile = dataFile;
 			this.groupByList = groupByList;
 			
@@ -69,7 +68,9 @@ public class SqlIterator {
 				int index = 0;
 				while(iterator.hasNext()) {
 					ColumnDefinition cd = iterator.next();
-					columnMapping.put(cd.getColumnName(), index++);
+					columnMapping.put(cd.getColumnName(), index);
+					reverseColumnMapping.put(index, cd.getColumnName());
+					index++;
 				}
 				if(expressionList!=null && expressionList.size()>0){
 					expressionEvaluatorList = new ArrayList<>(expressionList.size());
@@ -84,20 +85,28 @@ public class SqlIterator {
 		}
 		
 		
-		public String[] next() {
+		public LeafValue[] next() {
 			try {
 				String row = bufferedReader.readLine();
 				if(row == null || row.trim().isEmpty())
 					return null;
 				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
-				if(expressionList ==null || expressionList.size()==0)
-					return colVals;
-				String [] resolvedValues = new String[expressionList.size()];
+				if(expressionList ==null || expressionList.size()==0){
+					LeafValue [] resolvedValues = new LeafValue[colVals.length];
+					for(int i=0;i<colVals.length;i++){
+						Integer index  = Integer.valueOf(i);
+						String columnName = reverseColumnMapping.get(index);
+						resolvedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
+					}
+					return resolvedValues;
+				}
+				LeafValue [] resolvedValues = new LeafValue[expressionList.size()];
 				int count = 0;
 				for (Expression expression : expressionList) {
 					LeafValue leafValue = expressionEvaluatorList.get(count).evaluateExpression(expression, colVals, null);
-					resolvedValues[count] =expressionEvaluatorList.get(count).getLeafValue(leafValue);
+					//resolvedValues[count] =expressionEvaluatorList.get(count).getLeafValue(leafValue);
+					resolvedValues[count] =leafValue;
 					count++;
 				}
 				return resolvedValues;

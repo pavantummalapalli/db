@@ -64,7 +64,6 @@ public class ExtendedProjectNode implements Node {
 		int i = 0;
 		if(functionList.size() > 0) {
 			String newTableName = relationNode.getTableName() + "_groupby";
-			String[] colVals1, colVals2;
 			File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 			try {
 				PrintWriter pw = new PrintWriter(file);

@@ -30,10 +30,20 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 
 	private Node node;
-	private Map<String,String> columnTableMap;
+	private Map<String,String> columnTableMap = new HashMap <>();;
+	private List<SelectExpressionItem> selectExpressionItems;
 	
 	public Node getQueryPlanTreeRoot(){
 		return node;
+	}
+	
+	public void setSelectExpressionItems(
+			List<SelectExpressionItem> selectExpressionItems) {
+		this.selectExpressionItems = selectExpressionItems;
+	}
+	
+	public List<SelectExpressionItem> getSelectExpressionItems() {
+		return selectExpressionItems;
 	}
 	
 	private void removeParentFlag(Node node){
@@ -47,14 +57,14 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	@Override
 	public void visit(PlainSelect arg0) {
 		//STEP 1 : SET FROM CLAUSE
-		FromItemImpl visitor = new FromItemImpl();
+		FromItemImpl visitor = new FromItemImpl(this);
 		arg0.getFromItem().accept(visitor);
 		Node leftNode = visitor.getFromItemNode();
 		removeParentFlag(leftNode);
 		List<Join> joins=arg0.getJoins();
 		if(joins!=null && joins.size()>0){
 			for(Join join:joins){
-				FromItemImpl tempVisitor = new FromItemImpl();
+				FromItemImpl tempVisitor = new FromItemImpl(this);
 				join.getRightItem().accept(tempVisitor);
 				Node rightNode =  tempVisitor.getFromItemNode();
 				removeParentFlag(rightNode);
@@ -82,12 +92,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		for (SelectItem selItem : selectItem) {
 			selItem.accept(prjImp);
 		}
+		selectExpressionItems = prjImp.getSelectExpressionItemList();
 		List groupByColumns = arg0.getGroupByColumnReferences();
 		List<String> groupByList = new LinkedList<>();
 		boolean extendedMode = false;
 		//PROCESS AGGREGATES
 		ExtendedProjectNode epn = new ExtendedProjectNode();
-		if((groupByColumns!=null && groupByColumns.size()>0) || isAggregateFunctionInSelecItem(prjImp.getExpressionList())){
+		if((groupByColumns!=null && groupByColumns.size()>0) || isAggregateFunctionInSelecItem(prjImp.getSelectExpressionItemList())){
 			extendedMode=true;
 			if(groupByColumns!=null){
 				for(Column column:(List<Column>)groupByColumns){
@@ -102,12 +113,12 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 			}
 		}
 		
-		resolveSelectItemExpressionList(prjImp.getExpressionList());
+		resolveSelectItemExpressionList(prjImp.getSelectExpressionItemList());
 	
 		//STEP 4: SET SELECT PROJECTION
 		//If extended mode is true then query is of type select a,sum(a) from B group by a
 		if(extendedMode){
-			List<SelectExpressionItem> items = extractAggregateFunctionsFromSelectExpressionItems(prjImp.getExpressionList()); 
+			List<SelectExpressionItem> items = extractAggregateFunctionsFromSelectExpressionItems(prjImp.getSelectExpressionItemList()); 
 			epn.setFunctionList(items);
 			epn.setChildNode(node);
 			node=epn;
@@ -119,13 +130,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				node=expressionNode;
 			}
 			//Convert all selectExpressionItem to Column types so that no further evaluation can happen
-			List<String> selecItemsInStringForm = TableUtils.convertSelectExpressionItemIntoColumnString(prjImp.getExpressionList());
+			List<String> selecItemsInStringForm = TableUtils.convertSelectExpressionItemIntoColumnString(prjImp.getSelectExpressionItemList());
 			projectNode.setExpressionList(TableUtils.convertColumnListIntoSelectExpressionItem(selecItemsInStringForm));
 			projectNode.setChildNode(node);
 		}
 		//Else query is select sum(a) from B
 		else{
-			projectNode.setExpressionList(prjImp.getExpressionList());
+			projectNode.setExpressionList(prjImp.getSelectExpressionItemList());
 			projectNode.setChildNode(node);
 		}
 		//STEP 7: SET ORDER BY
@@ -144,12 +155,12 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		for(SelectExpressionItem item:items){
 			if(item.getExpression() instanceof Function){
 				Function function = (Function)item.getExpression();
-				if(!isFunctionAggregate(function)){
-					return false;
+				if(isFunctionAggregate(function)){
+					return true;
 				}
 			}
 		}
-		return true;
+		return false;
 	}
 
 	private Node buildCartesianOperatorNode(Node node,Node node1){
@@ -174,7 +185,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	}
 	
 	private Map <String, String> mapColumnAndTable(List <Table> tableList) {
-		columnTableMap = new HashMap <>();
+		
 		for (Table table : tableList) {
 			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table.getName().toUpperCase()).getColumnDefinitions();
 			for (ColumnDefinition columnDef : colDefList) {
@@ -255,4 +266,5 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	public Map<String, String> getColumnTableMap() {
 		return columnTableMap;
 	}
+	
 }
