@@ -274,6 +274,8 @@ public class ProjectNode implements Node {
 				RelationNode relationNode1= new RelationNode(preferredAliasName,preferredAliasName,file,newTable);
 				relationNode1.setTable(newTable);
 			}
+			if (pw != null)
+				pw.close();
 			bufferedReader.close();
 			fileReader.close();
 		} catch (IOException e) {
