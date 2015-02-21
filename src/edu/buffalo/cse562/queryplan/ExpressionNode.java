@@ -3,11 +3,13 @@ package edu.buffalo.cse562.queryplan;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.sql.SQLException;
 
+import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import edu.buffalo.cse562.ExpressionEvaluator;
 import edu.buffalo.cse562.SqlIterator;
 import edu.buffalo.cse562.utils.TableUtils;
 
@@ -26,15 +28,20 @@ public class ExpressionNode implements Node {
 		String tableName = relationNode.getTableName();
 		CreateTable table = relationNode.getTable();
 		File dataFile = relationNode.getFile();
-		SqlIterator sqlIterator = new SqlIterator(table, new ArrayList <>(Arrays.asList(expression)), dataFile,null);
+		SqlIterator sqlIterator = new SqlIterator(table, null, dataFile,null);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		String[] colVals;
 		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
+			ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 			while((colVals = sqlIterator.next()) != null) {
 				int i;
+				LeafValue leafValue = evaluate.evaluateExpression(expression, colVals, null);
+				BooleanValue value =(BooleanValue) leafValue;
+				if(value ==BooleanValue.FALSE)
+					continue;
 				for(i=1; i<colVals.length; i++) {
 					pw.print(colVals[i-1] + "|");
 				}
@@ -44,7 +51,9 @@ public class ExpressionNode implements Node {
 			pw.close();
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
-		}
+		}catch(SQLException e){
+			throw new RuntimeException(e);
+		} 
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
 		relationNode.setTableName(newTableName);

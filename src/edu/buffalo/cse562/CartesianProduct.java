@@ -6,12 +6,14 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
+import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSelectExpressionItems;
+import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
@@ -32,17 +34,18 @@ public class CartesianProduct {
 		RelationNode relationNode2 = node2.eval();
 		CreateTable table1 = relationNode1.getTable();
 		CreateTable table2 = relationNode2.getTable();
+		List<SelectExpressionItem> items = convertColumnDefinitionIntoSelectExpressionItems(table1.getColumnDefinitions());
 		File dataFile1 = relationNode1.getFile();
 		File dataFile2 = relationNode2.getFile();
-		SqlIterator sqlIterator1 = new SqlIterator(table1, null, dataFile1,null);
-		//String newTableName = node1.eval().getTableName() + "x" + node2.eval().getTableName();
+		List<Expression> table1ItemsExpression = convertSelectExpressionItemIntoExpressions(items);
+		SqlIterator sqlIterator1 = new SqlIterator(table1,table1ItemsExpression , dataFile1,null);
 		String newTableName = getNewTableName(table1, table2);
 		String[] colVals1, colVals2;
 		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals1 = sqlIterator1.next()) != null) {
-				SqlIterator sqlIterator2 = new SqlIterator(table2, null, dataFile2,null);
+				SqlIterator sqlIterator2 = new SqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null);
 				while((colVals2 = sqlIterator2.next()) != null) {
 					int i;
 					for(i=0; i<colVals1.length; i++) {

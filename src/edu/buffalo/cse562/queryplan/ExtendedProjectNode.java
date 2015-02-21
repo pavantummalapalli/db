@@ -71,12 +71,15 @@ public class ExtendedProjectNode implements Node {
 				Map<String, Object> aggDataMap = sqlIter.getAggregateData(i);
 				for (String key : aggDataMap.keySet()) {
 					StringBuilder sb = new StringBuilder("");
-					sb.append(key);
+					if(key!=null){
+						sb.append(key);
+						sb.append("|");
+					}
 					for (i=0; i < functionList.size(); i++) {
 						aggDataMap = sqlIter.getAggregateData(i);
 						Object val = aggDataMap.get(key);
-						sb.append("|");
 						sb.append(val);
+						sb.append("|");
 						if (val == null) {
 							throw new RuntimeException(" VAL IS NULL. aggDataMap  " + aggDataMap + "   ");
 						}
@@ -89,13 +92,15 @@ public class ExtendedProjectNode implements Node {
 						else if(val instanceof DateValue || val instanceof Date)
 							functionTypeList.add("date");
 						}
-					pw.println(sb.toString());
+					pw.println(sb.substring(0, sb.length()-1));
 				}
 				pw.close();
 				List<ColumnDefinition> newList = new ArrayList<>();
-				for(String group : groupByList) {
-					ColumnDefinition cd = columnDefnMap.get(group);
-					newList.add(cd);
+				if(groupByList!=null){
+					for(String group : groupByList) {
+						ColumnDefinition cd = columnDefnMap.get(group);
+						newList.add(cd);
+					}
 				}
 				int k=0;
 				for(SelectExpressionItem funcName : functionList) {

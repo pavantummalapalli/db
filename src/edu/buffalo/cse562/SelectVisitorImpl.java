@@ -85,18 +85,21 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		List groupByColumns = arg0.getGroupByColumnReferences();
 		List<String> groupByList = new LinkedList<>();
 		boolean extendedMode = false;
+		//PROCESS AGGREGATES
 		ExtendedProjectNode epn = new ExtendedProjectNode();
 		if((groupByColumns!=null && groupByColumns.size()>0) || isAggregateFunctionInSelecItem(prjImp.getExpressionList())){
 			extendedMode=true;
-			for(Column column:(List<Column>)groupByColumns){
-				String wholeCoumnName;
-				if(column.getTable()==null ||column.getTable().getName()==null||column.getTable().getName().isEmpty())
-					wholeCoumnName =  TableUtils.resolveColumnTableName(columnTableMap, column);
-				else
-					wholeCoumnName=column.getWholeColumnName();
-				groupByList.add(wholeCoumnName.toUpperCase());
+			if(groupByColumns!=null){
+				for(Column column:(List<Column>)groupByColumns){
+					String wholeCoumnName;
+					if(column.getTable()==null ||column.getTable().getName()==null||column.getTable().getName().isEmpty())
+						wholeCoumnName =  TableUtils.resolveColumnTableName(columnTableMap, column);
+					else
+						wholeCoumnName=column.getWholeColumnName();
+					groupByList.add(wholeCoumnName.toUpperCase());
+				}
+				epn.setGroupByList(groupByList);
 			}
-			epn.setGroupByList(groupByList);
 		}
 		
 		resolveSelectItemExpressionList(prjImp.getExpressionList());
@@ -115,16 +118,21 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				expressionNode.setChildNode(node);
 				node=expressionNode;
 			}
-			projectNode.setChildNode(epn);
+			//Convert all selectExpressionItem to Column types so that no further evaluation can happen
+			List<String> selecItemsInStringForm = TableUtils.convertSelectExpressionItemIntoColumnString(prjImp.getExpressionList());
+			projectNode.setExpressionList(TableUtils.convertColumnListIntoSelectExpressionItem(selecItemsInStringForm));
+			projectNode.setChildNode(node);
 		}
 		//Else query is select sum(a) from B
 		else{
+			projectNode.setExpressionList(prjImp.getExpressionList());
 			projectNode.setChildNode(node);
 		}
 		//STEP 7: SET ORDER BY
 		List<OrderByElement> orderByElements =  (List<OrderByElement>)arg0.getOrderByElements();
+		//TODO need to evaluate the schema so that order by elements for columns without schema is also possible
 		if(orderByElements!=null && orderByElements.size()>0)
-			projectNode.setOrderByElements(resolveOrderByElements(orderByElements));	
+			projectNode.setOrderByElements(resolveOrderByElements(orderByElements));
 		//STEP 6: SET DISTINCT
 		projectNode.setDistinctOnElements(arg0.getDistinct());
 		//STEP 7: SET LIMIT		
@@ -229,6 +237,8 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		ExpressionVisitorImpl impl = new ExpressionVisitorImpl(this);
 		for(SelectExpressionItem item : items){
 			item.getExpression().accept(impl);
+			if(item.getAlias()!=null)
+				item.setAlias(item.getAlias().toUpperCase());
 		}
 	}
 	

@@ -83,27 +83,6 @@ public class SqlIterator {
 			}
 		}
 		
-		public String getLeafValue(LeafValue leafValue) {
-			if (leafValue instanceof DoubleValue)
-				return String.valueOf(((DoubleValue) leafValue).getValue());
-			else if (leafValue instanceof LongValue)
-				return String.valueOf(((LongValue) leafValue).getValue());
-			else if (leafValue instanceof StringValue)
-				return ((StringValue) leafValue).getValue();
-			else if (leafValue instanceof DateValue)
-				return String.valueOf(((DateValue) leafValue).getDate());
-			//TODO throw Unsupported 
-			return "";
-		}
-		public String getLeafValue(LongValue leafValue) {
-			return String.valueOf(leafValue.getValue());
-		}
-		public String getLeafValue(StringValue leafValue) {
-			return leafValue.getValue();
-		}
-		public String getLeafValue(DateValue leafValue) {
-			return String.valueOf(leafValue.getDate());
-		}
 		
 		public String[] next() {
 			try {
@@ -112,16 +91,19 @@ public class SqlIterator {
 					return null;
 				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
+				if(expressionList ==null || expressionList.size()==0)
+					return colVals;
 				String [] resolvedValues = new String[expressionList.size()];
 				int count = 0;
 				for (Expression expression : expressionList) {
 					LeafValue leafValue = expressionEvaluatorList.get(count).evaluateExpression(expression, colVals, null);
-					resolvedValues[count++] = getLeafValue(leafValue);
+					resolvedValues[count] =expressionEvaluatorList.get(count).getLeafValue(leafValue);
+					count++;
 				}
 				return resolvedValues;
 			}
 			catch (SQLException e) {
-				throw new RuntimeException("SQLException in SQLIterator next method 1", e); 
+				throw new RuntimeException("SQLException in SQLIterator next method 1", e);
 				//e.printStackTrace();
 			} catch (IOException e) {
 				//e.printStackTrace();

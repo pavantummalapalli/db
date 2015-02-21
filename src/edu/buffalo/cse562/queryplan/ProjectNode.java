@@ -23,7 +23,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class ProjectNode implements Node {
 
 	private boolean parentNode = true;
-	private List<SelectExpressionItem> expressionList;
+	private List<SelectExpressionItem> selectItemsList;
 	private Limit limit;
 	private Distinct distinctOnElements;
 	private List<OrderByElement> orderByElements;
@@ -39,11 +39,11 @@ public class ProjectNode implements Node {
 	}
 
 	public void setExpressionList(List<SelectExpressionItem> expressionList) {
-		this.expressionList = expressionList;
+		this.selectItemsList = expressionList;
 	}
 
 	public List<SelectExpressionItem> getExpressionList() {
-		return expressionList;
+		return selectItemsList;
 	}
 
 	public void setOrderByElements(List<OrderByElement> orderByElements) {
@@ -97,7 +97,7 @@ public class ProjectNode implements Node {
 		SqlIterator iterator = new SqlIterator(
 				relationNode.getTable(),
 				TableUtils
-						.convertSelectExpressionItemIntoExpressions(expressionList),
+						.convertSelectExpressionItemIntoExpressions(selectItemsList),
 				relationNode.getFile(), null);
 
 		List<ColumnDefinition> columnDefList = relationNode.getTable()
@@ -150,34 +150,35 @@ public class ProjectNode implements Node {
 			});
 		}
 		// Expand column during runtime
-		if (expressionList.size() == 1 && expressionList.get(0).equals("*")) {
-			expressionList.remove(0);
-			expressionList
-					.addAll(TableUtils.convertColumnIntoSelectExpressionItem(columnIndexMap
+		if (selectItemsList.size() == 1 && selectItemsList.get(0).equals("*")) {
+			selectItemsList.remove(0);
+			selectItemsList
+					.addAll(TableUtils.convertColumnListIntoSelectExpressionItem(columnIndexMap
 							.keySet()));
 		}
 
 		// TODO distinct and Column resolution is not +nt.
 		long offset = (limit == null ? Integer.MAX_VALUE : limit.getRowCount());
 		List<String> columnList = TableUtils
-				.convertSelectExpressionItemIntoColumnString(expressionList);
+				.convertSelectExpressionItemIntoColumnString(selectItemsList);
 		for (int i = 0; i < Math.min(offset, projectList.size()); i++) {
 			String[] rowArr = projectList.get(i);
-			for (int j = 0; j < columnList.size() - 1; j++) {
-				String column = columnList.get(j);
-				int index = columnIndexMap.get(column);
+			int j = 0;
+			for (; j < columnList.size() - 1; j++) {
+//				String column = columnList.get(j);
+//				int index = columnIndexMap.get(column);
 				if (parentNode)
-					System.out.print(rowArr[index] + "|");
+					System.out.print(rowArr[j] + "|");
 				else
-					pw.print(rowArr[index] + "|");
+					pw.print(rowArr[j] + "|");
 			}
 			if (columnList.size() > 0) {
-				int index = columnIndexMap
-						.get(columnList.get(columnList.size() - 1));
+//				int index = columnIndexMap
+//						.get(columnList.get(columnList.size() - 1));
 				if (parentNode)
-					System.out.println(rowArr[index]);
+					System.out.println(rowArr[j]);
 				else
-					pw.println(rowArr[index]);
+					pw.println(rowArr[j]);
 			}
 		}
 		if (parentNode == false) {

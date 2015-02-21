@@ -1,6 +1,6 @@
 package edu.buffalo.cse562;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.jsqlparser.schema.Table;
@@ -18,7 +18,7 @@ public class ExtendedCreateTable extends CreateTable {
 	}
 
 	public void setAlias(String alias) {
-		cds= new LinkedList<>();
+		cds= new ArrayList<>();
 		for(ColumnDefinition cd : (List<ColumnDefinition>) table.getColumnDefinitions())
 			cds.add(new ExtendedColumnDefinition(cd, alias));
 	}

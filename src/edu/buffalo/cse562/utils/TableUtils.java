@@ -49,6 +49,7 @@ public final class TableUtils {
 		}
 		else{
 			column.setColumnName(splitColumnNames[0]);
+			column.setTable(new Table());
 		}
 		return column;
 	}
@@ -125,7 +126,7 @@ public final class TableUtils {
 		return items;
 	}
 	
-	public static List<SelectExpressionItem> convertColumnIntoSelectExpressionItem(
+	public static List<SelectExpressionItem> convertColumnListIntoSelectExpressionItem(
 			Collection<String> columnList) {
 		List<SelectExpressionItem> items = new ArrayList<SelectExpressionItem>();
 		for (String column : columnList) {
@@ -144,10 +145,11 @@ public final class TableUtils {
 				column = (Column)expression.getExpression();
 			}else{
 				column = new Column();
-				column.setColumnName(expression.getExpression().toString());
+				column.setTable(new Table());
+				column.setColumnName(expression.getExpression().toString().toUpperCase());
 			}
 			if(expression.getAlias()!=null)
-				column.setColumnName(expression.getAlias());
+				column.setColumnName(expression.getAlias().toUpperCase());
 			items.add(column.getWholeColumnName().toUpperCase());
 		}
 		return items;
@@ -162,5 +164,17 @@ public final class TableUtils {
 			defList.add(def);
 		}
 		return defList;
+	}
+	
+	public static List<ColumnDefinition> convertSelectExpressionItemsIntoColumnDefinition(Collection<SelectExpressionItem> expressionList){
+		return convertColumnNameToColumnDefinitions(convertSelectExpressionItemIntoColumnString(expressionList));
+	}
+	
+	public static List<SelectExpressionItem> convertColumnDefinitionIntoSelectExpressionItems(Collection<ColumnDefinition> definitionList){
+		Collection<String> columnList= new ArrayList<>();
+		for(ColumnDefinition def : definitionList){
+			columnList.add(def.getColumnName());
+		}
+		return convertColumnListIntoSelectExpressionItem(columnList);
 	}
 }

@@ -8,7 +8,7 @@ import net.sf.jsqlparser.expression.DateValue;
 public class ExtendedDateValue extends DateValue{
 
 	public ExtendedDateValue(String value) {
-		super(value);
+			super(value);
 		// TODO Auto-generated constructor stub
 	}
 	

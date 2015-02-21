@@ -250,8 +250,11 @@ public class ExpressionEvaluator extends Eval {
 		String data = dataType.getDataType().toLowerCase();
 		if(data.equalsIgnoreCase("int"))
 			return new LongValue(colVals[index]);
-		else if(data.equalsIgnoreCase("date"))
+		else if(data.equalsIgnoreCase("date")){
+			if((" "+colVals[index]+" ").length()!=12)
+				throw new RuntimeException("Illeagel value dates" + value);
 			return new ExtendedDateValue(" "+colVals[index]+" ");
+		}
 		else if(data.equalsIgnoreCase("string") || data.contains("char"))
 			return new StringValue(" " + colVals[index] + " ");
 		else if(data.equalsIgnoreCase("double") || data.equalsIgnoreCase("decimal"))
@@ -266,7 +269,7 @@ public class ExpressionEvaluator extends Eval {
 		else if (leafValue instanceof StringValue)
 			return ((StringValue) leafValue).getValue();
 		else if (leafValue instanceof DateValue)
-			return String.valueOf(((DateValue) leafValue).getDate());
+			return String.valueOf(((DateValue) leafValue).toString());
 		//TODO throw Unsupported 
 		return "";
 	}
@@ -277,6 +280,6 @@ public class ExpressionEvaluator extends Eval {
 		return leafValue.getValue();
 	}
 	public String getLeafValue(DateValue leafValue) {
-		return String.valueOf(leafValue.getDate());
+		return leafValue.toString();
 	}
 }
