@@ -76,7 +76,7 @@ public class AggregateTest extends BaseTest {
 	}
 	
 	@Test
-	public void testAggregateFunction() throws IOException, SQLException {
+	public void testAggregateFunction() throws IOException, SQLException, ClassNotFoundException {
 
 		for (int i = 0; i < aggregateFilePath.size(); i++) {
 			String path = aggregateFilePath.get(i);
@@ -94,7 +94,7 @@ public class AggregateTest extends BaseTest {
 	}
 
 	@Test
-	public void testGroupByAggregateFunction() throws IOException, SQLException {
+	public void testGroupByAggregateFunction() throws IOException, SQLException, ClassNotFoundException {
 		for (int i = 0; i < groupByFilePath.size(); i++) {
 			String path = groupByFilePath.get(i);
 			File file = new File(path);
@@ -111,7 +111,7 @@ public class AggregateTest extends BaseTest {
 	}
 	
 	@Test
-	public void testTableFunction() throws IOException, SQLException {
+	public void testTableFunction() throws IOException, SQLException, ClassNotFoundException {
 		for (int i = 0; i < tableFuncFilePath.size(); i++) {
 			String path = tableFuncFilePath.get(i);
 			File file = new File(path);
@@ -128,7 +128,7 @@ public class AggregateTest extends BaseTest {
 	}
 	
 	@Test
-	public void testUnionFunction() throws IOException, SQLException {
+	public void testUnionFunction() throws IOException, SQLException, ClassNotFoundException {
 		
 		for (int i = 0; i < unionFuncFilePath.size(); i++) {
 			String path = unionFuncFilePath.get(i);
@@ -145,7 +145,7 @@ public class AggregateTest extends BaseTest {
 		}
 	}
 	
-	private void executeQuery(String query) throws SQLException, ConnectException {		
+	private void executeQuery(String query) throws SQLException, ConnectException, ClassNotFoundException {		
 		
 		connection = getConnectionForMYSQL();
 		PreparedStatement statement = connection.prepareStatement(query);
@@ -163,8 +163,8 @@ public class AggregateTest extends BaseTest {
 				sb = new StringBuilder(sb.substring(0, sb.length() - 1));
 			}
 			mysqlList.add(sb.toString());
-		}
-		//System.out.println(sb);
+			System.out.println(sb);
+		}	
 		
 		statement.close();
 	}
@@ -291,10 +291,18 @@ public class AggregateTest extends BaseTest {
 	}
 	
 	@Test
-	public void testAll() throws IOException, SQLException {
-		testAggregateFunction();
-		testGroupByAggregateFunction();
-		testTableFunction();
-		testTableFunction();
+	public void testAll() throws Exception {
+		//testAggregateFunction();
+		//testGroupByAggregateFunction();
+		//testTableFunction();
+		//testTableFunction();
+		AggregateTest agg = new AggregateTest();
+		agg.testAggregateCompareWithMYSQLResults();
+		
+		agg = new AggregateTest();
+		agg.testGroupByCompareWithMYSQLResults();
+		
+		agg = new AggregateTest();
+		testTableFunctionCompareWithMYSQLResults();
 	}
 }
