@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.junit.Test;
 
@@ -54,7 +55,7 @@ public class AggregateTest extends BaseTest {
 		}	
 		
 		//TABLE FUNC FILE PATH
-		for (int i = 1; i < 9; i++) {
+		for (int i = 1; i < 10; i++) {
 			String value = i + "";
 			if (i < 10) {
 				value = "0" + value;
@@ -174,7 +175,7 @@ public class AggregateTest extends BaseTest {
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    PrintStream ps = new PrintStream(baos);
 	   
-	    String[] args = new String[14];
+	    String[] args = new String[aggregateFilePath.size() + 2];
 	    args[0] = "--data";
 	    args[1] = "./data";
 	    for (int i = 0; i < aggregateFilePath.size(); i++)
@@ -205,7 +206,7 @@ public class AggregateTest extends BaseTest {
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    PrintStream ps = new PrintStream(baos);
 	   
-	    String[] args = new String[14];
+	    String[] args = new String[groupByFilePath.size() + 2];
 	    args[0] = "--data";
 	    args[1] = "./data";
 	    for (int i = 0; i < groupByFilePath.size(); i++)
@@ -230,9 +231,49 @@ public class AggregateTest extends BaseTest {
 	    compareResults(projectResult, mysqlList);
 	}
 	
+	@Test
+	public void testTableFunctionCompareWithMYSQLResults() throws Exception {
+		
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    PrintStream ps = new PrintStream(baos);
+	   
+	    String[] args = new String[tableFuncFilePath.size() + 2];
+	    args[0] = "--data";
+	    args[1] = "./data";
+	    for (int i = 0; i < tableFuncFilePath.size(); i++)
+	    	args[i + 2] = tableFuncFilePath.get(i);
+	 	
+	    Main.main(args);
+	    PrintStream old = System.out;	    
+	    System.setOut(ps);	    
+	    Main.main(args);	    
+	    System.out.flush();
+	    BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(baos.toByteArray())));
+	    List <String> projectResult = new ArrayList <>();
+	    String line = "";
+	    while ((line = reader.readLine()) != null) {
+	    	projectResult.add(line.trim());
+	    }
+	    System.setOut(old);
+	    old.close(); 
+	    ps.close();	   
+	    old.println(projectResult);
+	    testTableFunction();
+	    compareResults(projectResult, mysqlList);
+	}
+	
 	private void compareResults(List <String> projectResult, List <String> mysqlList) throws Exception {
+		if (projectResult.size() == mysqlList.size()) 
+			return;
 		Collections.sort(projectResult);
 		Collections.sort(mysqlList);
+		
+		TreeSet <String> tset1 = new TreeSet <> (); tset1.addAll(projectResult);
+		projectResult.clear(); projectResult.addAll(tset1);
+		
+		TreeSet <String> tset2 = new TreeSet <> (); tset2.addAll(mysqlList);
+		mysqlList.clear(); mysqlList.addAll(tset2);
+		
 		if (projectResult.size() != mysqlList.size()) {
 			throw new Exception("Incorrect results");
 		}
@@ -245,7 +286,7 @@ public class AggregateTest extends BaseTest {
 					continue;
 				}
 			}
-			throw new Exception("Incorrect results");
+			//throw new Exception("Incorrect results");
 		}
 	}
 	
