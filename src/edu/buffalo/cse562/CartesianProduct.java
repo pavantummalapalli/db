@@ -4,16 +4,24 @@ import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSel
 import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
 import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -33,6 +41,8 @@ public class CartesianProduct {
 		this.expression = expression;
 	}
 	
+	
+	
 	public RelationNode doCartesianProduct() {
 		RelationNode relationNode1 = node1.eval();
 		RelationNode relationNode2 = node2.eval();
@@ -42,10 +52,16 @@ public class CartesianProduct {
 		File dataFile1 = relationNode1.getFile();
 		File dataFile2 = relationNode2.getFile();
 		List<Expression> table1ItemsExpression = convertSelectExpressionItemIntoExpressions(items);
+		
+		
+		dataFile1 = optimizeRelationNode(table1, dataFile1);
+		dataFile2 = optimizeRelationNode(table2, dataFile2);
+		
 		SqlIterator sqlIterator1 = new SqlIterator(table1,table1ItemsExpression , dataFile1,null);
 		String newTableName = getNewTableName(table1, table2);
 		LeafValue[] colVals1, colVals2;
 		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
+				
 		try {
 			PrintWriter pw = new PrintWriter(file);
 			while((colVals1 = sqlIterator1.next()) != null) {
@@ -80,6 +96,66 @@ public class CartesianProduct {
 		return relationNode;
 	}
 	
+	private File optimizeRelationNode(CreateTable table, File dataFile) {
+		List <Expression> expressionList = TableUtils.expressionList;
+		List<ColumnDefinition> colDefList = table.getColumnDefinitions();
+		if (expressionList == null || expressionList.isEmpty())
+			return dataFile;
+		File file = new File(TableUtils.getTempDataDir() + File.separator + table.getTable().getName() 
+				+ "_opt" + ".dat");
+		try {
+			List <Expression> expList = new ArrayList <>();
+			for (Expression exp : expressionList) {
+				Expression exprLeft = ((BinaryExpression)exp).getLeftExpression();
+				Expression exprRight = ((BinaryExpression)exp).getRightExpression();
+				for (ColumnDefinition colDef : colDefList) {
+					if ((exprLeft instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprLeft.toString()))
+						|| exprLeft instanceof LeafValue || exprLeft instanceof Function) {
+						if ((exprRight instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprRight.toString()))
+								|| exprRight instanceof LeafValue || exprRight instanceof Function) {
+								expList.add(exp);
+								break;
+						}
+					}
+				}
+			}
+			BufferedReader reader = new BufferedReader(new FileReader(dataFile));
+			String line = "";
+			ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
+			PrintWriter pw = new PrintWriter(file);
+			while ((line = reader.readLine()) != null) {
+				String[] colVals = line.trim().split("\\|");
+				boolean flag = true; 
+				for (Expression expr : expList) {
+					LeafValue leafValue = evaluate.evaluateExpression(expr, colVals, null);
+					if (((BooleanValue)leafValue).getValue() == (Boolean.FALSE)) {
+						flag = false;
+						break;
+					}					
+				}
+				if (flag) {
+					pw.println(line);
+				}
+			}
+			pw.close();
+			reader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			throw new RuntimeException("file not found ", e);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException("IOException : ", e);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException("SQLException : ", e);
+		}
+		
+		return file;
+	}
+
+
+
 	private String getNewTableName(CreateTable table1,CreateTable table2){
 		return table1.getTable().getName() + "x" + table2.getTable().getName();
 	}
