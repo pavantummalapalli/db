@@ -1,7 +1,7 @@
 package edu.buffalo.cse562.queryplan;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -64,9 +64,13 @@ public class ExtendedProjectNode implements Node {
 		int i = 0;
 		if(functionList.size() > 0) {
 			String newTableName = relationNode.getTableName() + "_groupby";
-			File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
+			DataSource file=null;
+			if(TableUtils.isSwapOn)
+				file= new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"));
+			else
+				file = new BufferDataSource();
 			try {
-				PrintWriter pw = new PrintWriter(file);
+				PrintWriter pw = new PrintWriter(file.getWriter());
 				Map<String, Object> aggDataMap = sqlIter.getAggregateData(i);
 				for (String key : aggDataMap.keySet()) {
 					StringBuilder sb = new StringBuilder("");
@@ -121,7 +125,7 @@ public class ExtendedProjectNode implements Node {
 				newTable.setTable(new Table(null, newTableName));
 				newTable.setColumnDefinitions(newList);
 				relationNode.setTable(newTable);
-			} catch (FileNotFoundException e) {
+			} catch (IOException e) {
 				//e.printStackTrace();
 				throw new RuntimeException("FileNotFound exception ", e);
 			}

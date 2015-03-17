@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -60,6 +61,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		FromItemImpl visitor = new FromItemImpl(this);
 		arg0.getFromItem().accept(visitor);
 		Node leftNode = visitor.getFromItemNode();
+		//Node leafNode = leftNode;
 		removeParentFlag(leftNode);
 		List<Join> joins=arg0.getJoins();
 		if(joins!=null && joins.size()>0){
@@ -82,6 +84,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 			arg0.getWhere().accept(new ExpressionVisitorImpl(this));
 			ExpressionNode expressionNode = new ExpressionNode(arg0.getWhere());
 			expressionNode.setChildNode(node);
+			//leafNode.setExpressionList(expressionList);
 			node=expressionNode;
 		}
 		
@@ -149,6 +152,8 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		//STEP 7: SET LIMIT		
 		projectNode.setLimit(arg0.getLimit());
 		node=projectNode;
+		
+		List<Expression> expressionList = TableUtils.getBinaryExpressionList(arg0.getWhere());
 	}
 	
 	private boolean isAggregateFunctionInSelecItem(List<SelectExpressionItem> items) {

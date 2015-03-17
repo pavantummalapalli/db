@@ -1,7 +1,5 @@
 package edu.buffalo.cse562.queryplan;
 
-import java.io.File;
-
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.ExtendedCreateTable;
 
@@ -9,12 +7,12 @@ public class RelationNode implements Node {
 	
 	private String tableName;
 	private String aliasName;
-	private File file;
+	private DataSource file;
 	private CreateTable table;
 	
 	public RelationNode(){}
 	
-	public RelationNode(String tableName,String aliasName,File file,CreateTable table){
+	public RelationNode(String tableName,String aliasName,DataSource file,CreateTable table){
 		this.tableName = tableName.toUpperCase();
 		this.file=file;
 //		if(aliasName!=null && !aliasName.isEmpty())
@@ -33,11 +31,11 @@ public class RelationNode implements Node {
 		return table;
 	}
 	
-	public void setFile(File file) {
+	public void setFile(DataSource file) {
 		this.file = file;
 	}
 	
-	public File getFile() {
+	public DataSource getFile() {
 		return file;
 	}
 	

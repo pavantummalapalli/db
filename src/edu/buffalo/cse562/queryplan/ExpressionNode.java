@@ -3,7 +3,7 @@ package edu.buffalo.cse562.queryplan;
 import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 
@@ -29,14 +29,18 @@ public class ExpressionNode implements Node {
 		RelationNode relationNode = childNode.eval();
 		String tableName = relationNode.getTableName();
 		CreateTable table = relationNode.getTable();
-		File dataFile = relationNode.getFile();
+		DataSource dataFile = relationNode.getFile();
 		SqlIterator sqlIterator = new SqlIterator(table, null, dataFile,null);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		LeafValue[] colVals;
-		File file = new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat");
+		DataSource file;
+		if(TableUtils.isSwapOn)
+			file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"));
+		else
+			file = new BufferDataSource();
 		try {
-			PrintWriter pw = new PrintWriter(file);
+			PrintWriter pw = new PrintWriter(file.getWriter());
 			ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 			while((colVals = sqlIterator.next()) != null) {
 				int i;
@@ -55,7 +59,7 @@ public class ExpressionNode implements Node {
 					pw.println(toUnescapedString(colVals[i-1]));
 			}
 			pw.close();
-		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}catch(SQLException e){
 			throw new RuntimeException(e);
@@ -78,4 +82,9 @@ public class ExpressionNode implements Node {
 	public CreateTable evalSchema() {
 		return childNode.evalSchema();
 	}
+	
+	public Expression getExpression() {
+		return expression;
+	}
+	
 }

@@ -107,7 +107,6 @@ public class ProjectNode implements Node {
 				TableUtils
 						.convertSelectExpressionItemIntoExpressions(selectItemsList),
 				relationNode.getFile(), null);
-
 		List<ColumnDefinition> columnDefList = relationNode.getTable()
 				.getColumnDefinitions();
 		Map<String, Integer> columnIndexMap = new HashMap<>();
@@ -133,16 +132,20 @@ public class ProjectNode implements Node {
 			}
 			projectList.add(colVals);
 		}
-		File file = null;
+		DataSource file = null;
 		PrintWriter pw = null;
-
+		
 		if (parentNode == false) {
 			String newTableName = relationNode.getTableName() + "_new";
-			file = new File(TableUtils.getTempDataDir() + File.separator
-					+ newTableName + ".dat");
-			pw = new PrintWriter(file);
+			if(TableUtils.isSwapOn){
+				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator
+						+ newTableName + ".dat"));
+			}
+			else{
+				file = new BufferDataSource();
+			}
+			pw = new PrintWriter(file.getWriter());
 		}
-
 		if (orderByElements != null && orderByElements.size() > 0) {
 			Collections.sort(projectList, new Comparator<LeafValue[]>() {
 				@Override

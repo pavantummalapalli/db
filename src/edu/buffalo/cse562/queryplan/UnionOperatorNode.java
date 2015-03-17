@@ -28,8 +28,8 @@ public class UnionOperatorNode implements Operator {
 		try {
 			for (Node childNode : childNodes) {
 				RelationNode relationNode = childNode.eval();
-				FileReader fileReader = new FileReader(relationNode.getFile());
-				BufferedReader bufferedReader = new BufferedReader(fileReader);
+				//FileReader fileReader = new FileReader(relationNode.getFile().getReader());
+				BufferedReader bufferedReader = new BufferedReader(relationNode.getFile().getReader());
 				String rowVal;
 								
 				while ((rowVal = bufferedReader.readLine()) != null) {
@@ -38,7 +38,7 @@ public class UnionOperatorNode implements Operator {
 					out.println(rowVal);
 				}
 				bufferedReader.close();
-				fileReader.close();
+				//fileReader.close();
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

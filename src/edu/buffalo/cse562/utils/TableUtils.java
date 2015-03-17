@@ -9,12 +9,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
@@ -28,6 +31,7 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
+	public static boolean isSwapOn=true; 
 
 	private static class TableFileFilter implements FileFilter{
 		
@@ -229,5 +233,33 @@ public final class TableUtils {
 		return convertColumnListIntoSelectExpressionItem(columnList);
 	}
 
+	public static List<Expression> expressionList;
 	
+	private static void recurse(Expression where) {		
+		if (where instanceof Parenthesis) {
+			recurse(((Parenthesis) where).getExpression());
+			return;
+		}	
+		if (!(where instanceof BinaryExpression)) return;
+		if ( ! (where instanceof AndExpression)) {
+			expressionList.add(where);
+			return;
+		}	
+		Expression leftExpr = ((BinaryExpression)where).getLeftExpression();
+		Expression rightExpr = ((BinaryExpression)where).getRightExpression();
+		
+		if ((leftExpr instanceof Column || rightExpr instanceof LeafValue) 
+				&& (rightExpr instanceof LeafValue || rightExpr instanceof Column)) {
+			expressionList.add(where);	
+			return; 
+		} 
+		recurse(leftExpr);
+		recurse(rightExpr);
+	}
+	
+	public static List<Expression> getBinaryExpressionList(Expression where) {
+		expressionList = new ArrayList<>();
+		recurse(where);
+		return expressionList;
+	}	
 }

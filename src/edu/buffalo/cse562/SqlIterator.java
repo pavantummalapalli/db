@@ -1,8 +1,6 @@
 package edu.buffalo.cse562;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -16,23 +14,23 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import edu.buffalo.cse562.queryplan.DataSource;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class SqlIterator {
 	//Schema Info, Expression and relation to be declared
 		private boolean aggregateModeOn;
-		private FileReader fileReader;
 		private BufferedReader bufferedReader;
 		private List <Expression> expressionList;
 		private CreateTable table;
 		private HashMap<String, Integer> columnMapping;
 		private HashMap<Integer,String> reverseColumnMapping;
-		private File dataFile;
+		private DataSource dataFile;
 		private String[] colVals;
 		private List <String> groupByList;
 		private List <ExpressionEvaluator> expressionEvaluatorList;
 			
-		public SqlIterator(CreateTable table, List <Expression> expression, File dataFile, List <String> groupByList) {
+		public SqlIterator(CreateTable table, List <Expression> expression, DataSource dataFile, List <String> groupByList) {
 			this.expressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
@@ -61,8 +59,8 @@ public class SqlIterator {
 		
 		public void open() {
 			try {
-				fileReader = new FileReader(dataFile);
-				bufferedReader = new BufferedReader(fileReader);
+				//fileReader = new FileReader(dataFile);
+				bufferedReader = new BufferedReader(dataFile.getReader());
 				List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 				Iterator<ColumnDefinition> iterator = colDefns.iterator();
 				int index = 0;
@@ -79,7 +77,7 @@ public class SqlIterator {
 					}
 				}
 				//expressionEvaluator = new ExpressionEvaluator(table);
-			} catch (FileNotFoundException e) {
+			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -151,7 +149,6 @@ public class SqlIterator {
 		public void close() {
 			try {
 				bufferedReader.close();
-				fileReader.close();
 			} catch (IOException e) {
 				throw new RuntimeException("Exception while closing SQLIterator close method ", e);
 			}	
