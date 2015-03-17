@@ -44,6 +44,8 @@ public class CartesianProduct {
 		this.expression = expression;
 	}
 	
+	
+	
 	public RelationNode doCartesianProduct() {
 		RelationNode relationNode1 = node1.eval();
 		RelationNode relationNode2 = node2.eval();
@@ -53,7 +55,6 @@ public class CartesianProduct {
 		DataSource dataFile1 = relationNode1.getFile();
 		DataSource dataFile2 = relationNode2.getFile();
 		List<Expression> table1ItemsExpression = convertSelectExpressionItemIntoExpressions(items);
-		
 		dataFile1 = optimizeRelationNode(table1, dataFile1);
 		dataFile2 = optimizeRelationNode(table2, dataFile2);
 		

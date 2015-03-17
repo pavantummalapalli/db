@@ -15,19 +15,19 @@ public abstract class BaseTest extends TestCase {
 	private static final String DB_USER = "root";
 	private static final String DB_PASSWORD = "root";
 	
-	Connection getConnectionForMYSQL() throws ConnectException {
+	Connection getConnectionForMYSQL() throws ConnectException, ClassNotFoundException, SQLException {
 		if (connection != null) 
 			return connection;
 		try {
 			Class.forName(DB_DRIVER);
 		} catch (ClassNotFoundException e) {
-			throw new ConnectException("MySQL Connection failed");
+			throw new ClassNotFoundException("MySQL Connection failed", e);
 		}
 
 		try {
 			connection = DriverManager.getConnection(DB_CONNECTION, DB_USER, DB_PASSWORD);
 		} catch (SQLException e) {
-			throw new ConnectException("MySQL Connection failed");
+			throw new SQLException("MySQL Connection failed", e);
 		}
 
 		if (connection != null) {

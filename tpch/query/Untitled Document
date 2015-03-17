@@ -1,0 +1,1 @@
+--data ./data/tpch ./data/query/query1.sql ./data/NBA_Examples/nba04.sql ./data/query/query1.sql ./data/query/having1.sql
