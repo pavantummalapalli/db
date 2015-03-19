@@ -27,7 +27,6 @@ public class ExtendedProjectNode implements Node {
 	private List <String> groupByList;
 	private Expression havingExpression;
 	private Node childNode;
-	private String delimiter = "~~";//delimiter to be decided
 	
 	public void setHavingExpression(Expression havingExpression) {
 		this.havingExpression = havingExpression;

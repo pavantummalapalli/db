@@ -15,7 +15,6 @@ public class CartesianOperatorNode implements Operator{
 	private Expression expression;
 	private Set<String> tableNames;
 	
-	
 	public void setTableNames(Set<String> tableNames) {
 		this.tableNames = tableNames;
 	}
