@@ -11,7 +11,7 @@ public class Main {
 			return;
 		}
 		
-		String dataDir = "";
+		String dataDir = "", swapDir = null;
 		String sqlFiles[] = new String[args.length - 2];
 		int index = 0;
 		boolean flag = true;
@@ -20,30 +20,24 @@ public class Main {
 				dataDir = args[i + 1];
 				i++;	
 				flag = false;
+			} else if (args[i].equals("--swap")) {
+				swapDir = args[i + 1];
+				i++;
 			} else {
 				sqlFiles[index++] = args[i];
 			}
 		}
 		TableUtils.setDataDir(dataDir);
-		TableUtils.setTempDataDir(dataDir + File.separator + "temp");
+		if (swapDir != null) {
+			TableUtils.setTempDataDir(swapDir);
+			TableUtils.isSwapOn = true;
+		}	
 		createTempFolder();
 		new StatementReader().readSqlFile(dataDir, sqlFiles);
-		//removeTempFolder();
 	}
 
 	private static void createTempFolder() {
 		new File(TableUtils.getTempDataDir()).mkdir();
-	}
-
-	private static void removeTempFolder() {
-		File file = new File(TableUtils.getTempDataDir());
-		if(file.exists()) {
-			File[] files = file.listFiles();
-			for(File f:files) {
-				f.delete();
-			}
-		}
-		file.delete();
 	}
 
 	private static void printUsage() {
