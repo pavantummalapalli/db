@@ -15,7 +15,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.DataSourceSqlIterator;
-import edu.buffalo.cse562.SortedMergeJoinImpl;
+import edu.buffalo.cse562.MergeJoinImpl;
 import edu.buffalo.cse562.SqlIterator;
 import edu.buffalo.cse562.fileoperations.sort.ExternalSort;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
@@ -80,7 +80,7 @@ public class MergeJoinNode implements Operator {
 		FileDataSource fileDataSource2 = (FileDataSource)((RelationNode)node2).getFile();
 		fileDataSource2.setFile(finalSortedFiles2);
 		
-		SortedMergeJoinImpl mergeJoin = new SortedMergeJoinImpl(node1, node2, expression);
+		MergeJoinImpl mergeJoin = new MergeJoinImpl(node1, node2, expression);
 		
 		return mergeJoin.doMergeJoins();
 	}	
@@ -138,7 +138,7 @@ public class MergeJoinNode implements Operator {
 		/**
 		 * expression list and group by list is null.
 		 */
-		SqlIterator sqlIterator = new DataSourceSqlIterator(table, null, fileDataSource, null, null);
+		SqlIterator sqlIterator = new DataSourceSqlIterator(table, null, fileDataSource, null, relationNode.getExpression());
 							
 		List <LeafValue[]> leafValueList = new ArrayList <>();
 		List <File> sortedFileBlocks = new ArrayList <>();

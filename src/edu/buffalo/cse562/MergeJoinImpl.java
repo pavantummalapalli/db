@@ -25,13 +25,13 @@ import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
-public class SortedMergeJoinImpl {
+public class MergeJoinImpl {
 	private Node node1;
 	private Node node2;
 	//predicate should be equals to for SMJ 
 	private Expression expression;
 	
-	public SortedMergeJoinImpl(Node node1, Node node2, Expression expression) {
+	public MergeJoinImpl(Node node1, Node node2, Expression expression) {
 		this.node1 = node1;
 		this.node2 = node2;
 		this.expression = expression;
@@ -86,8 +86,8 @@ public class SortedMergeJoinImpl {
 		else
 			file = new BufferDataSource();
 		
-		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null, null);
-		SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2, table2ItemsExpression, dataFile2,null, null);
+		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null, relationNode1.getExpression());
+		SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2, table2ItemsExpression, dataFile2,null, relationNode2.getExpression());
 		
 		try {
 			PrintWriter pw = new PrintWriter(file.getWriter());
