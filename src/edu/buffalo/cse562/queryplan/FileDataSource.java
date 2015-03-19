@@ -37,4 +37,12 @@ public class FileDataSource implements DataSource{
 		if(writer!=null)
 			writer.close();
 	}
+
+	public File getFile() {
+		return file;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
+	}	
 }

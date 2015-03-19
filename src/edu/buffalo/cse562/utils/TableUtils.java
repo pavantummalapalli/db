@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -267,5 +268,28 @@ public final class TableUtils {
 			return expressionList;
 		else
 			return new ArrayList<>();
+	}
+
+	public static int compareTwoLeafValues(LeafValue leafValue1, LeafValue leafValue2) {
+		int ans = 0;
+		if (leafValue1 instanceof DoubleValue && leafValue2 instanceof DoubleValue)
+			ans = ((DoubleValue) leafValue1).getValue() <= ((DoubleValue) leafValue2).getValue() ? -1 : 1;
+		else if (leafValue1 instanceof LongValue && leafValue2 instanceof LongValue)
+			ans = ((LongValue) leafValue1).getValue() <= ((LongValue) leafValue2).getValue() ? -1 : 1;
+		else if (leafValue1 instanceof StringValue && leafValue2 instanceof StringValue)
+			ans = ((StringValue) leafValue1).getValue().compareTo(((StringValue) leafValue2).getValue());
+		else if (leafValue1 instanceof DateValue && leafValue1 instanceof DateValue)
+			ans = ((DateValue) leafValue1).getValue().compareTo(((DateValue) leafValue2).getValue());
+		else
+			throw new RuntimeException("Its not expected. Both LeafValue should be of same type.");
+		return ans;
+	}
+
+	public static String convertToString(LeafValue[] leafValueArr) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < leafValueArr.length; i++) {
+			sb.append(toUnescapedString(leafValueArr[i]) + "|");
+		}
+		return sb.substring(0, sb.length() - 1).toString();
 	}
 }
