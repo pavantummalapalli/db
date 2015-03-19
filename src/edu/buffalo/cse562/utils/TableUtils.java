@@ -17,7 +17,7 @@ import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
@@ -31,7 +31,7 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
-	public static boolean isSwapOn=true; 
+	public static boolean isSwapOn; 
 
 	private static class TableFileFilter implements FileFilter{
 		
@@ -91,7 +91,7 @@ public final class TableUtils {
 		return column;
 	}
 	
-	public  static File getAssociatedTableFile(String tableName){
+	public static File getAssociatedTableFile(String tableName){
 		TableFileFilter filter = new TableFileFilter(tableName);
 		File file = new File(TableUtils.getDataDir());
 		File[]  files = file.listFiles(filter);
@@ -235,32 +235,37 @@ public final class TableUtils {
 	}
 
 	public static List<Expression> expressionList;
-	
-	private static void recurse(Expression where) {		
+
+	private static boolean recurse(Expression where) {
+		
 		if (where instanceof Parenthesis) {
-			recurse(((Parenthesis) where).getExpression());
-			return;
+			return recurse(((Parenthesis) where).getExpression());
 		}
-		if (!(where instanceof BinaryExpression)) return;
-		if ( ! (where instanceof AndExpression)) {
-			expressionList.add(where);
-			return;
+		
+		if(where instanceof OrExpression){
+			return false;
 		}
+		
+		if (!(where instanceof BinaryExpression)) return true;
+//		if (!(where instanceof AndExpression)) {
+//			expressionList.add(where);
+//			return true;
+//		}
 		Expression leftExpr = ((BinaryExpression)where).getLeftExpression();
 		Expression rightExpr = ((BinaryExpression)where).getRightExpression();
-		
-		if ((leftExpr instanceof Column || rightExpr instanceof LeafValue) 
-				&& (rightExpr instanceof LeafValue || rightExpr instanceof Column)) {
+		if ((leftExpr instanceof Column && !(rightExpr instanceof BinaryExpression)) 
+				|| (!(rightExpr instanceof BinaryExpression) && rightExpr instanceof Column)) {
 			expressionList.add(where);	
-			return; 
+			return true; 
 		}
-		recurse(leftExpr);
-		recurse(rightExpr);
+		return recurse(leftExpr) && recurse(rightExpr);
 	}
 	
 	public static List<Expression> getBinaryExpressionList(Expression where) {
 		expressionList = new ArrayList<>();
-		recurse(where);
-		return expressionList;
-	}	
+		if(recurse(where))
+			return expressionList;
+		else
+			return new ArrayList<>();
+	}
 }

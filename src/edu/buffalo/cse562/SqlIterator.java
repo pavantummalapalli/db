@@ -4,6 +4,6 @@ import net.sf.jsqlparser.expression.LeafValue;
 
 public interface SqlIterator {
 	public LeafValue[] next();
-	public String[] nextAggregate();
+	public void nextAggregate();
 	public void close();
 }

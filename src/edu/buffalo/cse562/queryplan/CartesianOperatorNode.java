@@ -1,6 +1,9 @@
 package edu.buffalo.cse562.queryplan;
 
+import java.util.Set;
+
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.CartesianProduct;
 
@@ -10,6 +13,16 @@ public class CartesianOperatorNode implements Operator{
 	private Node relationNode1;
 	private Node relationNode2;
 	private Expression expression;
+	private Set<String> tableNames;
+	
+	
+	public void setTableNames(Set<String> tableNames) {
+		this.tableNames = tableNames;
+	}
+	
+	public Set<String> getTableNames() {
+		return tableNames;
+	}
 	
 	public void setRelationNode1(Node RelationNode1) {
 		this.relationNode1 = RelationNode1;
@@ -41,8 +54,13 @@ public class CartesianOperatorNode implements Operator{
 		this.parentNode = parentNode;
 	}
 	@Override
-	public void setJoinCondition(Expression exp) {
-		expression=exp;
+	public void addJoinCondition(Expression exp) {
+		if(expression!=null){
+			Expression exp1 = new AndExpression(expression, exp);
+			expression=exp1;
+		}
+		else
+			expression=exp;
 	}
 	@Override
 	public Expression getJoinCondition() {

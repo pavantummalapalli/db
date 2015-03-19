@@ -31,8 +31,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 		private List <ExpressionEvaluator> selectExpressionEvaluatorList;
 		private Expression filterExpression;
 		
-		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSource dataFile, List <String> groupByList) {
-			Expression filterExpression=null;
+		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSource dataFile, List <String> groupByList,Expression filterExpression) {
 			this.selectExpressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
@@ -125,32 +124,33 @@ public class DataSourceSqlIterator implements SqlIterator {
 			}
 		}
 		
-		public String[] nextAggregate() {
+		public void nextAggregate() {
 			try {
-				String row = bufferedReader.readLine();
-				if(row == null || row.trim().isEmpty())
-					return null;
-				//TODO: detect n trim spaces
-				colVals = row.split("\\|");
-				try {
-					
+				String row = null;
+				while((row=bufferedReader.readLine()) != null && !row.trim().isEmpty()){
+					colVals = row.split("\\|");
+					if(filterExpression!=null){
+						ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
+						LeafValue leafValue = evaluate.evaluateExpression(filterExpression, colVals, null);
+						BooleanValue value =(BooleanValue) leafValue;
+						if(value ==BooleanValue.FALSE)
+							continue;
+					}
 					if(selectExpressionList != null){
 						int count = 0;
 						for (Expression expression : selectExpressionList) {
 							LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, colVals, groupByList);
 							count++;
-						}	
+						}
 					}
-				} catch (SQLException e) {
-					throw new RuntimeException("SQLException in nextAggregate method ", e);
-					//e.printStackTrace();
 				}
+			} catch (SQLException e) {
+				throw new RuntimeException("SQLException in nextAggregate method ", e);
+				//e.printStackTrace();
 			} catch (IOException e) {
 				throw new RuntimeException("Exception while closing SQLIterator close method ", e);
 				//e.printStackTrace();
 			}
-			
-			return colVals;
 		}
 		
 		public void close() {

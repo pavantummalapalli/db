@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,9 +33,11 @@ import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class CartesianProduct {
-	Node node1;
-	Node node2;
-	Expression expression;
+	private Node node1;
+	private Node node2;
+	private Expression expression;
+	
+	
 	public CartesianProduct(Node node1, Node node2,
 			Expression expression) {
 		this.node1 = node1;
@@ -51,11 +54,16 @@ public class CartesianProduct {
 		DataSource dataFile1 = relationNode1.getFile();
 		DataSource dataFile2 = relationNode2.getFile();
 		List<Expression> table1ItemsExpression = convertSelectExpressionItemIntoExpressions(items);
-		dataFile1 = optimizeRelationNode(table1, dataFile1);
-		dataFile2 = optimizeRelationNode(table2, dataFile2);
-		
-		DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null);
+		//dataFile1 = optimizeRelationNode(table1, dataFile1);
+		//dataFile2 = optimizeRelationNode(table2, dataFile2);
+		List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
+		newList.addAll(table1.getColumnDefinitions());
+		newList.addAll(table2.getColumnDefinitions());
+		CreateTable joinedTable = new CreateTable();
 		String newTableName = getNewTableName(table1, table2);
+		joinedTable.setTable(new Table(null, newTableName));
+		joinedTable.setColumnDefinitions(newList);
+		DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null,relationNode1.getExpression());
 		LeafValue[] colVals1, colVals2;
 		DataSource file = null;
 		if(TableUtils.isSwapOn)
@@ -63,10 +71,27 @@ public class CartesianProduct {
 		else
 			file = new BufferDataSource();
 		try {
+			
 			PrintWriter pw = new PrintWriter(file.getWriter());
 			while((colVals1 = sqlIterator1.next()) != null) {
-				DataSourceSqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null);
+				DataSourceSqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null,relationNode2.getExpression());
 				while((colVals2 = sqlIterator2.next()) != null) {
+					List<LeafValue> fusedColumnValsList = new ArrayList<LeafValue>();
+					fusedColumnValsList.addAll(Arrays.asList(colVals1));
+					LeafValue[] fusedColsVals = new LeafValue[colVals1.length+colVals2.length];
+					fusedColumnValsList.addAll(Arrays.asList(colVals2));
+					fusedColumnValsList.toArray(fusedColsVals);
+					String[] fusedColsValsString = new String[fusedColsVals.length]; 
+					for(int j=0;j<fusedColsValsString.length;j++){
+						fusedColsValsString[j]=toUnescapedString(fusedColsVals[j]);
+					}
+					if(expression!=null){
+						ExpressionEvaluator evaluate = new ExpressionEvaluator(joinedTable);
+						LeafValue leafValue = evaluate.evaluateExpression(expression, fusedColsValsString, null);
+						BooleanValue value =(BooleanValue) leafValue;
+						if(value ==BooleanValue.FALSE)
+							continue;
+					}
 					int i;
 					for(i=0; i<colVals1.length; i++) {
 						pw.print(toUnescapedString(colVals1[i]) + "|");
@@ -82,17 +107,12 @@ public class CartesianProduct {
 			pw.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}catch (SQLException e) {
+			throw new RuntimeException(e);
 		}
 		sqlIterator1.close();
-		List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
-		newList.addAll(table1.getColumnDefinitions());
-		newList.addAll(table2.getColumnDefinitions());
-		CreateTable newTable = new CreateTable();
-		newTable.setTable(new Table(null, newTableName));
-		newTable.setColumnDefinitions(newList);
-		//TODO put the table name in a temp hash map
 		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
-		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
+		RelationNode relationNode = new RelationNode(newTableName, null,file,joinedTable);
 		return relationNode;
 	}
 	
@@ -154,11 +174,8 @@ public class CartesianProduct {
 			// TODO Auto-generated catch block
 			throw new RuntimeException("SQLException : ", e);
 		}
-		
 		return file;
 	}
-
-
 
 	private String getNewTableName(CreateTable table1,CreateTable table2){
 		return table1.getTable().getName() + "x" + table2.getTable().getName();

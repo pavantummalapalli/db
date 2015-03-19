@@ -81,11 +81,15 @@ public class RelationNode implements Node {
 	}
 	
 	public void addExpression(Expression exp){
-		if(exp!=null){
+		if(expression!=null){
 			Expression exp1 = new AndExpression(expression, exp);
 			expression=exp1;
 		}
 		else
 			expression=exp;
+	}
+	
+	public Expression getExpression(){
+		return expression;
 	}
 }

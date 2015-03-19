@@ -73,7 +73,7 @@ public class HashJoin {
 		}
 		
 		Map<LeafValue, List<LeafValue[]>> hashMap = new HashMap<>();
-		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null);
+		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null, relationNode1.getExpression());
 		String newTableName = getNewTableName(table1, table2);
 		LeafValue[] colVals1, colVals2;
 		DataSource file =null;
@@ -101,7 +101,8 @@ public class HashJoin {
 			colIndex++;
 		}
 		SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
-				convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null);
+				convertSelectExpressionItemIntoExpressions(TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())),
+				dataFile2, null, relationNode2.getExpression());
 		while((colVals2 = sqlIterator2.next()) != null) {
 			try {
 				PrintWriter pw = new PrintWriter(file.getWriter());

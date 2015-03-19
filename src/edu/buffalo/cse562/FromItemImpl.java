@@ -23,10 +23,15 @@ public class FromItemImpl implements FromItemVisitor {
 
 	private Node node;
 	private List <Table> tableList = new ArrayList<>();
+	private List<String> tableNames = new ArrayList<>();
 	private QueryDomain queryDomain;
 	
 	public FromItemImpl(QueryDomain queryDomain){
 		this.queryDomain = queryDomain;
+	}
+	
+	public List<String> getTableNames() {
+		return tableNames;
 	}
 	
 	@Override
@@ -37,6 +42,7 @@ public class FromItemImpl implements FromItemVisitor {
 			table.setAlias(table.getName());
 		node = new RelationNode(table.getName(),table.getAlias(),new FileDataSource(filePath),schema);
 		tableList.add(table);
+		tableNames.add(table.getAlias().toUpperCase());
 	}
 
 	@Override
@@ -63,6 +69,7 @@ public class FromItemImpl implements FromItemVisitor {
 			}
 			higherDomainColumnMap.put(columnName.toUpperCase(),subselect.getAlias().toUpperCase());
 		}
+		tableNames.add(subselect.getAlias().toUpperCase());
 		//queryDomain.getQueryDomainTableSchemaMap().put(subselect.getAlias(), tempNode.evalSchema());
 		node=tempNode;
 	}

@@ -5,6 +5,6 @@ import net.sf.jsqlparser.expression.Expression;
 public interface Operator extends Node{
 
 	public Expression getJoinCondition();
-	public void setJoinCondition(Expression exp);
+	public void addJoinCondition(Expression exp);
 	
 }
