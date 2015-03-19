@@ -57,11 +57,9 @@ public class ExtendedProjectNode implements Node {
 
 		List<Expression> expressionList = TableUtils.convertSelectExpressionItemIntoExpressions( functionList);
 		DataSourceSqlIterator sqlIter = new DataSourceSqlIterator(relationNode.getTable(), expressionList, relationNode.getFile(),
-				groupByList);
+				groupByList,relationNode.getExpression());
 
-		while (sqlIter.nextAggregate() != null) {
-			// do nothing.
-		}
+		sqlIter.nextAggregate();
 		int i = 0;
 		if(functionList.size() > 0) {
 			String newTableName = relationNode.getTableName() + "_groupby";
@@ -120,6 +118,7 @@ public class ExtendedProjectNode implements Node {
 					newList.add(cd);
 					k++;
 				}
+				relationNode = new RelationNode();
 				relationNode.setFile(file);
 				relationNode.setTableName(newTableName);
 				CreateTable newTable = new CreateTable();

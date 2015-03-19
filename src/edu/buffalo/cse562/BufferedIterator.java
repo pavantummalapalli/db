@@ -16,8 +16,8 @@ public class BufferedIterator implements SqlIterator {
 	}
 
 	@Override
-	public String[] nextAggregate() {
-		return iterator.nextAggregate();
+	public void nextAggregate() {
+		iterator.nextAggregate();
 	}
 
 	@Override

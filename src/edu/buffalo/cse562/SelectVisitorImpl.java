@@ -2,10 +2,12 @@ package edu.buffalo.cse562;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -31,7 +33,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 
 	private Node node;
-	private Map<String,String> columnTableMap = new HashMap <>();;
+	private Map<String,String> columnTableMap = new HashMap <>();
 	private List<SelectExpressionItem> selectExpressionItems;
 	
 	public Node getQueryPlanTreeRoot(){
@@ -65,6 +67,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		removeParentFlag(leftNode);
 		List<Join> joins=arg0.getJoins();
 		if(joins!=null && joins.size()>0){
+			Set<String> tableNames  = new HashSet<String>(visitor.getTableNames());
 			for(Join join:joins){
 				FromItemImpl tempVisitor = new FromItemImpl(this);
 				join.getRightItem().accept(tempVisitor);
@@ -72,6 +75,8 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				removeParentFlag(rightNode);
 				visitor.getTableList().addAll(tempVisitor.getTableList());
 				leftNode = buildCartesianOperatorNode(leftNode, rightNode);
+				tableNames.addAll(tempVisitor.getTableNames());
+				((CartesianOperatorNode)leftNode).setTableNames(new HashSet<>(tableNames));
 			}
 		}
 		columnTableMap =mapColumnAndTable(visitor.getTableList());
@@ -115,9 +120,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				epn.setGroupByList(groupByList);
 			}
 		}
-		
 		resolveSelectItemExpressionList(prjImp.getSelectExpressionItemList());
-	
 		//STEP 4: SET SELECT PROJECTION
 		//If extended mode is true then query is of type select a,sum(a) from B group by a
 		if(extendedMode){
@@ -153,7 +156,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		projectNode.setLimit(arg0.getLimit());
 		node=projectNode;
 		
-		List<Expression> expressionList = TableUtils.getBinaryExpressionList(arg0.getWhere());
+//		List<Expression> expressionList = TableUtils.getBinaryExpressionList(arg0.getWhere());
 	}
 	
 	private boolean isAggregateFunctionInSelecItem(List<SelectExpressionItem> items) {
@@ -271,5 +274,4 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	public Map<String, String> getColumnTableMap() {
 		return columnTableMap;
 	}
-	
 }

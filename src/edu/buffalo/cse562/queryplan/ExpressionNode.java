@@ -31,7 +31,7 @@ public class ExpressionNode implements Node {
 		String tableName = relationNode.getTableName();
 		CreateTable table = relationNode.getTable();
 		DataSource dataFile = relationNode.getFile();
-		DataSourceSqlIterator sqlIterator = new DataSourceSqlIterator(table, null, dataFile,null);
+		DataSourceSqlIterator sqlIterator = new DataSourceSqlIterator(table, null, dataFile,null,null);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		LeafValue[] colVals;

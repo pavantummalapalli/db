@@ -13,7 +13,6 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class QueryOptimizer {
 
-	//TODO Convert to visitor patter latter on
 	private void iterateNode(Node node,List<Expression> extractedExpressionList){
 		if(node instanceof ProjectNode){
 			iterateNode(((ProjectNode)node).getChildNode(),extractedExpressionList);
@@ -34,13 +33,28 @@ public class QueryOptimizer {
 		else if(node instanceof CartesianOperatorNode){
 			iterateNode(((CartesianOperatorNode)node).getRelationNode1(),extractedExpressionList);
 			iterateNode(((CartesianOperatorNode)node).getRelationNode2(),extractedExpressionList);
+			if(extractedExpressionList!=null){
+				Iterator<Expression> iterator =  extractedExpressionList.iterator();
+				while(iterator.hasNext()){
+					Expression exp = iterator.next();
+					Set<String> listNames =  getTableName(exp);
+					if(listNames.size()==1)
+						continue;
+					Set<String> joinsTableNames = new HashSet<>(((CartesianOperatorNode)node).getTableNames());
+					listNames.removeAll(joinsTableNames);
+					if(listNames.isEmpty()){
+						((CartesianOperatorNode)node).addJoinCondition(exp);
+						iterator.remove();
+					}
+				}
+			}
 		}
 		else if(node instanceof RelationNode){
 			String alias = ((RelationNode)node).getTableName();
 			//String table= ((RelationNode)node).getTableName();
 			if(extractedExpressionList!=null){
 				Iterator<Expression> iterator =  extractedExpressionList.iterator();
-				if(iterator.hasNext()){
+				while(iterator.hasNext()){
 					Expression exp = iterator.next();
 					Set<String> listNames =  getTableName(exp);
 					listNames.remove(alias);

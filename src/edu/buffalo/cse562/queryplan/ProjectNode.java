@@ -107,12 +107,11 @@ public class ProjectNode implements Node {
 				relationNode.getTable(),
 				TableUtils
 						.convertSelectExpressionItemIntoExpressions(selectItemsList),
-				relationNode.getFile(), null);
+				relationNode.getFile(), null,relationNode.getExpression());
 		List<ColumnDefinition> columnDefList = relationNode.getTable()
 				.getColumnDefinitions();
 		Map<String, Integer> columnIndexMap = new HashMap<>();
 		Map<String, ColumnDefinition> columnDefnMap = new HashMap<>();
-		List<String> functionTypeList = new ArrayList<>();
 		int cnt = 0;
 		for (ColumnDefinition columnDef : columnDefList) {
 			columnIndexMap.put(columnDef.getColumnName().toUpperCase(), cnt++);
@@ -235,7 +234,7 @@ public class ProjectNode implements Node {
 		}catch(IOException e){
 			throw new RuntimeException("File not found",e);
 		}
-		return relationNode;
+		return null;
 	}
 
 	@Override
