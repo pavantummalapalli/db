@@ -30,9 +30,9 @@ public class QueryOptimizer {
 		else if(node instanceof ExtendedProjectNode){
 			iterateNode(((ExtendedProjectNode)node).getChildNode(),extractedExpressionList);
 		}
-		else if(node instanceof CartesianOperatorNode){
-			iterateNode(((CartesianOperatorNode)node).getRelationNode1(),extractedExpressionList);
-			iterateNode(((CartesianOperatorNode)node).getRelationNode2(),extractedExpressionList);
+		else if(node instanceof AbstractJoinNode){
+			iterateNode(((AbstractJoinNode)node).getRelationNode1(),extractedExpressionList);
+			iterateNode(((AbstractJoinNode)node).getRelationNode2(),extractedExpressionList);
 			if(extractedExpressionList!=null){
 				Iterator<Expression> iterator =  extractedExpressionList.iterator();
 				while(iterator.hasNext()){
@@ -40,10 +40,10 @@ public class QueryOptimizer {
 					Set<String> listNames =  getTableName(exp);
 					if(listNames.size()==1)
 						continue;
-					Set<String> joinsTableNames = new HashSet<>(((CartesianOperatorNode)node).getTableNames());
+					Set<String> joinsTableNames = new HashSet<>(((AbstractJoinNode)node).getTableNames());
 					listNames.removeAll(joinsTableNames);
 					if(listNames.isEmpty()){
-						((CartesianOperatorNode)node).addJoinCondition(exp);
+						((AbstractJoinNode)node).addJoinCondition(exp);
 						iterator.remove();
 					}
 				}

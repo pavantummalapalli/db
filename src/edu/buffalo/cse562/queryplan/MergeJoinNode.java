@@ -23,7 +23,7 @@ import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueMerger;
 import edu.buffalo.cse562.utils.TableUtils;
 
-public class MergeJoinNode implements Operator {
+public class MergeJoinNode extends AbstractJoinNode {
 
 	private Expression expression;
 	private Node node1;

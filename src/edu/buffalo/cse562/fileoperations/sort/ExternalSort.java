@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class ExternalSort<V> {
 
@@ -79,20 +80,20 @@ public class ExternalSort<V> {
 		while(blocks.size()>0){
 			List<Integer> index = new ArrayList<Integer>();
 			V minData = blocks.get(0).getFirstEntry();
-			List<V> mergedData=new ArrayList<V>();
+			Set<V> mergedData=new HashSet<V>();
+			mergedData.add(minData);
 			index.add(0);
 			//Iterate through blocks
 			for(int i=1;i<blocks.size();i++){
 				//if(minData>blocks.get(i).getFirstEntry()){
 				if(compare(minData, blocks.get(i).getFirstEntry())>=1 ){
 					minData = blocks.get(i).getFirstEntry();
-					mergedData.add(minData);
 					index= new ArrayList<Integer>();
 					index.add(i);
 				}
 				else if(compare(minData, blocks.get(i).getFirstEntry())==0 ){
 					//minData= mergeData(minData,blocks.get(i).getFirstEntry());
-					mergedData =  mergeData(minData,blocks.get(i).getFirstEntry());
+					mergedData.addAll(mergeData(minData,blocks.get(i).getFirstEntry()));
 					index.add(i);
 				}
 			}

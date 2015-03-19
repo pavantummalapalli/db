@@ -5,10 +5,9 @@ import java.util.Set;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import edu.buffalo.cse562.CartesianProduct;
 
-public class CartesianOperatorNode extends AbstractJoinNode{
-	
+public abstract class AbstractJoinNode implements Operator {
+
 	private Node parentNode;
 	private Node relationNode1;
 	private Node relationNode2;
@@ -35,15 +34,7 @@ public class CartesianOperatorNode extends AbstractJoinNode{
 	public Node getRelationNode2() {
 		return relationNode2;
 	}
-	public RelationNode eval(){
-		CartesianProduct cartesianProduct = new CartesianProduct(relationNode1, relationNode2, expression); 
-		return cartesianProduct.doCartesianProduct();
-	}
-	@Override
-	public CreateTable evalSchema() {
-		CartesianProduct cartesianProduct = new CartesianProduct(relationNode1, relationNode2, expression);
-		return cartesianProduct.evalSchema();
-	}
+	
 	@Override
 	public Node getParentNode() {
 		return parentNode;
