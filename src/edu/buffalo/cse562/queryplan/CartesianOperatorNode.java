@@ -1,21 +1,16 @@
 package edu.buffalo.cse562.queryplan;
 
-import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.CartesianProduct;
 
 public class CartesianOperatorNode implements Operator{
 	
-	private EqualsTo expression;
+	private Node parentNode;
 	private Node relationNode1;
 	private Node relationNode2;
+	private Expression expression;
 	
-	public void setExpression(EqualsTo expression) {
-		this.expression = expression;
-	}
-	public EqualsTo getExpression() {
-		return expression;
-	}
 	public void setRelationNode1(Node RelationNode1) {
 		this.relationNode1 = RelationNode1;
 	}
@@ -36,5 +31,21 @@ public class CartesianOperatorNode implements Operator{
 	public CreateTable evalSchema() {
 		CartesianProduct cartesianProduct = new CartesianProduct(relationNode1, relationNode2, expression);
 		return cartesianProduct.evalSchema();
+	}
+	@Override
+	public Node getParentNode() {
+		return parentNode;
+	}
+	@Override
+	public void setParentNode(Node parentNode) {
+		this.parentNode = parentNode;
+	}
+	@Override
+	public void setJoinCondition(Expression exp) {
+		expression=exp;
+	}
+	@Override
+	public Expression getJoinCondition() {
+		return expression;
 	}
 }

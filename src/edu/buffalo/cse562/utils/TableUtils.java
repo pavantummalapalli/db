@@ -31,7 +31,7 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
-	public static boolean isSwapOn=true; 
+	public static boolean isSwapOn=false; 
 
 	private static class TableFileFilter implements FileFilter{
 		
@@ -99,6 +99,7 @@ public final class TableUtils {
 			throw new RuntimeException("File Not Found : " + tableName.toUpperCase());
 		return files[0];
 	}
+	
 	public static Map<String, CreateTable> getTableSchemaMap() {
 		return tableSchemaMap;
 	}
@@ -239,12 +240,12 @@ public final class TableUtils {
 		if (where instanceof Parenthesis) {
 			recurse(((Parenthesis) where).getExpression());
 			return;
-		}	
+		}
 		if (!(where instanceof BinaryExpression)) return;
 		if ( ! (where instanceof AndExpression)) {
 			expressionList.add(where);
 			return;
-		}	
+		}
 		Expression leftExpr = ((BinaryExpression)where).getLeftExpression();
 		Expression rightExpr = ((BinaryExpression)where).getRightExpression();
 		
@@ -252,7 +253,7 @@ public final class TableUtils {
 				&& (rightExpr instanceof LeafValue || rightExpr instanceof Column)) {
 			expressionList.add(where);	
 			return; 
-		} 
+		}
 		recurse(leftExpr);
 		recurse(rightExpr);
 	}

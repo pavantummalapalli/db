@@ -7,7 +7,6 @@ import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -20,7 +19,6 @@ import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
-import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -38,14 +36,12 @@ public class CartesianProduct {
 	Node node2;
 	Expression expression;
 	public CartesianProduct(Node node1, Node node2,
-			EqualsTo expression) {
+			Expression expression) {
 		this.node1 = node1;
 		this.node2 = node2;
 		this.expression = expression;
 	}
-	
-	
-	
+
 	public RelationNode doCartesianProduct() {
 		RelationNode relationNode1 = node1.eval();
 		RelationNode relationNode2 = node2.eval();
@@ -58,7 +54,7 @@ public class CartesianProduct {
 		dataFile1 = optimizeRelationNode(table1, dataFile1);
 		dataFile2 = optimizeRelationNode(table2, dataFile2);
 		
-		SqlIterator sqlIterator1 = new SqlIterator(table1,table1ItemsExpression , dataFile1,null);
+		DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null);
 		String newTableName = getNewTableName(table1, table2);
 		LeafValue[] colVals1, colVals2;
 		DataSource file = null;
@@ -69,7 +65,7 @@ public class CartesianProduct {
 		try {
 			PrintWriter pw = new PrintWriter(file.getWriter());
 			while((colVals1 = sqlIterator1.next()) != null) {
-				SqlIterator sqlIterator2 = new SqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null);
+				DataSourceSqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null);
 				while((colVals2 = sqlIterator2.next()) != null) {
 					int i;
 					for(i=0; i<colVals1.length; i++) {

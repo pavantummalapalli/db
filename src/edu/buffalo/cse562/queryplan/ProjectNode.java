@@ -26,10 +26,11 @@ import net.sf.jsqlparser.statement.select.Distinct;
 import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.DataSourceSqlIterator;
 import edu.buffalo.cse562.utils.TableUtils;
 public class ProjectNode implements Node {
 
+	private Node parentNodeLink;
 	private boolean parentNode = true;
 	private List<SelectExpressionItem> selectItemsList;
 	private Limit limit;
@@ -102,7 +103,7 @@ public class ProjectNode implements Node {
 	public RelationNode eval() {
 		RelationNode relationNode = childNode.eval();
 		try{
-		SqlIterator iterator = new SqlIterator(
+		DataSourceSqlIterator iterator = new DataSourceSqlIterator(
 				relationNode.getTable(),
 				TableUtils
 						.convertSelectExpressionItemIntoExpressions(selectItemsList),
@@ -248,5 +249,15 @@ public class ProjectNode implements Node {
 		// columnDef.addAll(TableUtils.convertFunctionNameToColumnDefinitions(functionList));
 		table.setColumnDefinitions(columnDef);
 		return table;
+	}
+
+	@Override
+	public Node getParentNode() {
+		return parentNodeLink;
+	}
+
+	@Override
+	public void setParentNode(Node parentNode) {
+		this.parentNodeLink=parentNode;
 	}
 }

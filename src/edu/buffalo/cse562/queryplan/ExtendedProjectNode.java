@@ -17,11 +17,12 @@ import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.DataSourceSqlIterator;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExtendedProjectNode implements Node {
 
+	private Node parentNode;
 	private List <SelectExpressionItem> functionList;
 	private List <String> groupByList;
 	private Expression havingExpression;
@@ -55,7 +56,7 @@ public class ExtendedProjectNode implements Node {
 		}
 
 		List<Expression> expressionList = TableUtils.convertSelectExpressionItemIntoExpressions( functionList);
-		SqlIterator sqlIter = new SqlIterator(relationNode.getTable(), expressionList, relationNode.getFile(),
+		DataSourceSqlIterator sqlIter = new DataSourceSqlIterator(relationNode.getTable(), expressionList, relationNode.getFile(),
 				groupByList);
 
 		while (sqlIter.nextAggregate() != null) {
@@ -159,5 +160,15 @@ public class ExtendedProjectNode implements Node {
 //			columnDef.addAll(TableUtils.convertFunctionNameToColumnDefinitions(functionList));
 //		table.setColumnDefinitions(columnDef);
 		return table;
+	}
+	@Override
+	public Node getParentNode() {
+		// TODO Auto-generated method stub
+		return parentNode;
+	}
+	@Override
+	public void setParentNode(Node parentNode) {
+		// TODO Auto-generated method stub
+		this.parentNode=parentNode;
 	}
 }

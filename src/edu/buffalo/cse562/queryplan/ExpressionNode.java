@@ -12,11 +12,12 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.ExpressionEvaluator;
-import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.DataSourceSqlIterator;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExpressionNode implements Node {
 
+	private Node parentNode;
 	private Expression expression;
 	private Node childNode;
 	
@@ -30,7 +31,7 @@ public class ExpressionNode implements Node {
 		String tableName = relationNode.getTableName();
 		CreateTable table = relationNode.getTable();
 		DataSource dataFile = relationNode.getFile();
-		SqlIterator sqlIterator = new SqlIterator(table, null, dataFile,null);
+		DataSourceSqlIterator sqlIterator = new DataSourceSqlIterator(table, null, dataFile,null);
 		//TODO decide the table name convention
 		String newTableName = tableName + "_new";
 		LeafValue[] colVals;
@@ -63,7 +64,7 @@ public class ExpressionNode implements Node {
 			throw new RuntimeException(e);
 		}catch(SQLException e){
 			throw new RuntimeException(e);
-		} 
+		}
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
 		relationNode.setTableName(newTableName);
@@ -86,5 +87,14 @@ public class ExpressionNode implements Node {
 	public Expression getExpression() {
 		return expression;
 	}
-	
+
+	@Override
+	public Node getParentNode() {
+		return parentNode;
+	}
+
+	@Override
+	public void setParentNode(Node parentNode) {
+		this.parentNode=parentNode;
+	}
 }

@@ -8,6 +8,8 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
 import edu.buffalo.cse562.queryplan.Node;
+import edu.buffalo.cse562.queryplan.ProjectNode;
+import edu.buffalo.cse562.queryplan.QueryOptimizer;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class StatementReader {
@@ -26,6 +28,7 @@ public class StatementReader {
 						SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 						((Select)statement).getSelectBody().accept(selectVistor);
 						Node node = selectVistor.getQueryPlanTreeRoot();
+						node=new QueryOptimizer().optimizeQueryPlan((ProjectNode)node);
 						node.eval();
 					} else if (statement instanceof CreateTable) {
 						try {

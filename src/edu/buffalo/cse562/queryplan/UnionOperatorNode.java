@@ -1,15 +1,15 @@
 package edu.buffalo.cse562.queryplan;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
-public class UnionOperatorNode implements Operator {
+public class UnionOperatorNode implements Node {
 
+	private Node parentNode;
 	private List<Node> childNodes;
 	
 	public void setChildNodes(List<Node> childNodes) {
@@ -52,5 +52,17 @@ public class UnionOperatorNode implements Operator {
 	public CreateTable evalSchema() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Node getParentNode() {
+		// TODO Auto-generated method stub
+		return parentNode;
+	}
+
+	@Override
+	public void setParentNode(Node parentNode) {
+		// TODO Auto-generated method stub
+		this.parentNode=parentNode;
 	}
 }

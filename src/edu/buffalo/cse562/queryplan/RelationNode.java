@@ -1,14 +1,18 @@
 package edu.buffalo.cse562.queryplan;
 
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.ExtendedCreateTable;
 
 public class RelationNode implements Node {
 	
+	private Node parentNode;
 	private String tableName;
 	private String aliasName;
 	private DataSource file;
 	private CreateTable table;
+	private Expression expression;
 	
 	public RelationNode(){}
 	
@@ -64,5 +68,24 @@ public class RelationNode implements Node {
 	@Override
 	public CreateTable evalSchema() {
 		return table;
+	}
+
+	@Override
+	public Node getParentNode() {
+		return parentNode;
+	}
+
+	@Override
+	public void setParentNode(Node parentNode) {
+		this.parentNode=parentNode;
+	}
+	
+	public void addExpression(Expression exp){
+		if(exp!=null){
+			Expression exp1 = new AndExpression(expression, exp);
+			expression=exp1;
+		}
+		else
+			expression=exp;
 	}
 }
