@@ -19,4 +19,10 @@ public class BufferedIterator implements SqlIterator {
 	public String[] nextAggregate() {
 		return iterator.nextAggregate();
 	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
 }
