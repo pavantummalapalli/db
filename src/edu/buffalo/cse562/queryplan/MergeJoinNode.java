@@ -45,7 +45,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
 		List <ColumnDefinition> columnDefList2 = (relationNode2.getTable().getColumnDefinitions());
-		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
+		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
 
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);

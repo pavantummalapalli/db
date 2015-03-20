@@ -34,7 +34,7 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
-	public static boolean isSwapOn=true; 
+	public static boolean isSwapOn; 
 
 	private static class TableFileFilter implements FileFilter{
 		
@@ -302,7 +302,8 @@ public final class TableUtils {
 			joinExps.add(andExp.getLeftExpression());
 			expression = andExp.getRightExpression();
 		}
-		joinExps.add(expression);
+		if(expression != null)
+			joinExps.add(expression);
 		return joinExps;
 	}
 	

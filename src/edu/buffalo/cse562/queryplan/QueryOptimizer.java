@@ -59,6 +59,7 @@ public class QueryOptimizer {
 							hashJoinNode.setRelationNode2(((AbstractJoinNode)node).getRelationNode2());
 							hashJoinNode.setParentNode(((AbstractJoinNode)node).getParentNode());
 							hashJoinNode.setTableNames(((AbstractJoinNode)node).getTableNames());
+							hashJoinNode.addJoinCondition(((AbstractJoinNode) node).getJoinCondition());
 							node=hashJoinNode;
 						}
 					}

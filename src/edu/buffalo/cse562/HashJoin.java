@@ -83,7 +83,7 @@ public class HashJoin {
 		}
 		
 		Map<String, List<LeafValue[]>> hashMap = new HashMap<>();
-		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null, relationNode1.getExpression());
+		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1, null, relationNode1.getExpression());
 		String newTableName = getNewTableName(table1, table2);
 		LeafValue[] colVals1, colVals2;
 		DataSource file =null;
@@ -91,14 +91,20 @@ public class HashJoin {
 			file= new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"));
 		else
 			file = new BufferDataSource();
+		String delimiter = "!~";
 		while((colVals1 = sqlIterator1.next()) != null) {
-			if(hashMap.containsKey(colVals1[colIndex].toString())) {
-				hashMap.get(colVals1[colIndex].toString()).add(colVals1);
+			StringBuilder hashKeyBuilder = new StringBuilder();
+			for(int[] colIndex: colIndexList) {
+				hashKeyBuilder.append(colVals1[colIndex[0]].toString() + delimiter); 
+			}
+			String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
+			if(hashMap.containsKey(hashKey)) {
+				hashMap.get(hashKey).add(colVals1);
 			}
 			else {
 				List<LeafValue[]> list = new ArrayList<>();
 				list.add(colVals1);
-				hashMap.put(colVals1[colIndex].toString(), list);
+				hashMap.put(hashKey, list);
 			}
 		}
 		sqlIterator1.close();
@@ -109,8 +115,13 @@ public class HashJoin {
 		try {
 			PrintWriter pw = new PrintWriter(file.getWriter());
 			while((colVals2 = sqlIterator2.next()) != null) {
-				if(hashMap.containsKey(colVals2[colIndex].toString())) {
-					List<LeafValue[]> leafValues = hashMap.get(colVals2[colIndex].toString());
+				StringBuilder hashKeyBuilder = new StringBuilder();
+				for(int[] colIndex: colIndexList) {
+					hashKeyBuilder.append(colVals2[colIndex[1]].toString() + delimiter); 
+				}
+				String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
+				if(hashMap.containsKey(hashKey)) {
+					List<LeafValue[]> leafValues = hashMap.get(hashKey);
 					for(int i=0; i<leafValues.size(); i++) {
 						StringBuilder sb = new StringBuilder();
 						for(int j=0; j<leafValues.get(i).length; j++)
