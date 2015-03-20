@@ -97,6 +97,7 @@ public class ProjectNode implements Node {
 
 	public void setChildNode(Node childNode) {
 		this.childNode = childNode;
+		childNode.setParentNode(this);
 	}
 
 	@Override
@@ -258,5 +259,14 @@ public class ProjectNode implements Node {
 	@Override
 	public void setParentNode(Node parentNode) {
 		this.parentNodeLink=parentNode;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer buffer = new StringBuffer("Project Data");
+		buffer.append("\n");
+		buffer.append(childNode.toString());
+		buffer.append("\n");
+		return buffer.toString();
 	}
 }

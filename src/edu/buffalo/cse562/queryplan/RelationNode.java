@@ -92,4 +92,12 @@ public class RelationNode implements Node {
 	public Expression getExpression(){
 		return expression;
 	}
+	
+	@Override
+	public String toString() {
+		if(getAliasName()!=null)
+		return getTableName() + " as " + getAliasName();
+		else
+			return getTableName() ;
+	}
 }

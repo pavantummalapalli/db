@@ -30,9 +30,9 @@ import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class HashJoin {
-	Node node1;
-	Node node2;
-	Expression expression;
+	private Node node1;
+	private Node node2;
+	private Expression expression;
 	public HashJoin(Node node1, Node node2,
 			Expression expression) {
 		this.node1 = node1;

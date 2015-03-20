@@ -74,6 +74,7 @@ public class ExpressionNode implements Node {
 	
 	public void setChildNode(Node childNode) {
 		this.childNode = childNode;
+		childNode.setParentNode(this);
 	}
 	public Node getChildNode() {
 		return childNode;
@@ -96,5 +97,12 @@ public class ExpressionNode implements Node {
 	@Override
 	public void setParentNode(Node parentNode) {
 		this.parentNode=parentNode;
+	}
+	@Override
+	public String toString() {
+		//StringBuffer buffer = new StringBuffer( "Apply Filter Expression : "+expression.toString());
+		StringBuffer buffer = new StringBuffer( "Apply Filter Expression \n");
+		buffer.append(childNode.toString()+"\n");
+		return buffer.toString();
 	}
 }

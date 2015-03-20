@@ -36,6 +36,7 @@ public class ExtendedProjectNode implements Node {
 	}
 	public void setChildNode(Node childNode) {
 		this.childNode = childNode;
+		childNode.setParentNode(this);
 	}
 	public Node getChildNode() {
 		return childNode;
@@ -168,5 +169,13 @@ public class ExtendedProjectNode implements Node {
 	public void setParentNode(Node parentNode) {
 		// TODO Auto-generated method stub
 		this.parentNode=parentNode;
+	}
+	
+	@Override
+	public String toString() {
+		//StringBuffer buffer = new StringBuffer("Aggregation : Functions - "+functionList!=null?functionList.toString():" Nothing "+" Group By : "+groupByList!=null?groupByList.toString():" Nothing "+ " Having : "+havingExpression!=null?havingExpression.toString():" Nothing \n" );
+		StringBuffer buffer = new StringBuffer("Aggregation \n" );
+		buffer.append(childNode.toString()+"\n");
+		return buffer.toString();
 	}
 }

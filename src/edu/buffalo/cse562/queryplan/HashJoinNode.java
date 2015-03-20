@@ -16,4 +16,9 @@ public class HashJoinNode extends AbstractJoinNode {
 		HashJoin hashJoin = new HashJoin(getRelationNode1(), getRelationNode2(), getJoinCondition());
 		return hashJoin.evalSchema();
 	}
+
+	@Override
+	public String getJoinName() {
+		return "Hash Join";
+	}
 }
