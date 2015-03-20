@@ -110,15 +110,16 @@ public class ProjectNode implements Node {
 				TableUtils
 						.convertSelectExpressionItemIntoExpressions(selectItemsList),
 				relationNode.getFile(), null,relationNode.getExpression());
-		List<ColumnDefinition> columnDefList = relationNode.getTable()
-				.getColumnDefinitions();
+		List<ColumnDefinition> columnDefList = TableUtils.convertSelectExpressionItemsIntoColumnDefinition(selectItemsList);
+		//List<ColumnDefinition> columnDefList = relationNode.getTable()
+		//		.getColumnDefinitions();
 		Map<String, Integer> columnIndexMap = new HashMap<>();
-		Map<String, ColumnDefinition> columnDefnMap = new HashMap<>();
+		//Map<String, ColumnDefinition> columnDefnMap = new HashMap<>();
 		int cnt = 0;
 		for (ColumnDefinition columnDef : columnDefList) {
 			columnIndexMap.put(columnDef.getColumnName().toUpperCase(), cnt++);
-			columnDefnMap.put(columnDef.getColumnName().toUpperCase(),
-					columnDef);
+			//columnDefnMap.put(columnDef.getColumnName().toUpperCase(),
+			//		columnDef);
 		}
 		LeafValue[] colVals;
 		List<LeafValue[]> projectList = new ArrayList<>();
@@ -162,12 +163,12 @@ public class ProjectNode implements Node {
 							orderByColumnName = orderByColumnName.split(" ")[0]
 									.trim();
 						int index = columnIndexMap.get(orderByColumnName);
-						String val1 = toUnescapedString(o1[index]);
-						String val2 = toUnescapedString(o2[index]);
-						if (val1.equals(val2))
+						LeafValue val1 = o1[index];
+						LeafValue val2 = o2[index];
+						int compareValue= TableUtils.compareTwoLeafValues(val1, val2);
+						if (compareValue==0)
 							continue;
-						return isAsc ? val1.compareTo(val2) : val2
-								.compareTo(val1);
+						return isAsc ?compareValue : TableUtils.compareTwoLeafValues(val2, val1);
 					}
 					return 0;
 				}

@@ -89,6 +89,8 @@ public class ExternalSort<V> {
 				if(compare(minData, blocks.get(i).getFirstEntry())>=1 ){
 					minData = blocks.get(i).getFirstEntry();
 					index= new ArrayList<Integer>();
+					mergedData=new HashSet<V>();
+					mergedData.add(minData);
 					index.add(i);
 				}
 				else if(compare(minData, blocks.get(i).getFirstEntry())==0 ){
