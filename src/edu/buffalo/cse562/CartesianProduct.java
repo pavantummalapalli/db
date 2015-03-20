@@ -105,6 +105,8 @@ public class CartesianProduct {
 				sqlIterator2.close();
 			}
 			pw.close();
+			relationNode1.getFile().close();
+			relationNode2.getFile().close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}catch (SQLException e) {
@@ -115,7 +117,7 @@ public class CartesianProduct {
 		RelationNode relationNode = new RelationNode(newTableName, null,file,joinedTable);
 		return relationNode;
 	}
-	
+
 //	private DataSource optimizeRelationNode(CreateTable table, DataSource dataFile) {
 //		List <Expression> expressionList = TableUtils.expressionList;
 //		List<ColumnDefinition> colDefList = table.getColumnDefinitions();

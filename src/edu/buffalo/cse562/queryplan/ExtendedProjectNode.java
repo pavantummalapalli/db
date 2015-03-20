@@ -118,6 +118,7 @@ public class ExtendedProjectNode implements Node {
 					newList.add(cd);
 					k++;
 				}
+				relationNode.getFile().close();
 				relationNode = new RelationNode();
 				relationNode.setFile(file);
 				relationNode.setTableName(newTableName);

@@ -60,6 +60,7 @@ public class ExpressionNode implements Node {
 					pw.println(toUnescapedString(colVals[i-1]));
 			}
 			pw.close();
+			relationNode.getFile().close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}catch(SQLException e){
@@ -67,9 +68,10 @@ public class ExpressionNode implements Node {
 		}
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
-		relationNode.setTableName(newTableName);
-		relationNode.setFile(file);
-		return relationNode;
+		RelationNode relationNode1 = new RelationNode();
+		relationNode1.setTableName(newTableName);
+		relationNode1.setFile(file);
+		return relationNode1;
 	}
 	
 	public void setChildNode(Node childNode) {

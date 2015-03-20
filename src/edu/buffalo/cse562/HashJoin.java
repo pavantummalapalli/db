@@ -108,11 +108,12 @@ public class HashJoin {
 			}
 		}
 		sqlIterator1.close();
-		
-		SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
-				convertSelectExpressionItemIntoExpressions(TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())),
-				dataFile2, null, relationNode2.getExpression());
 		try {
+			relationNode1.getFile().close();
+			SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
+					convertSelectExpressionItemIntoExpressions(TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())),
+					dataFile2, null, relationNode2.getExpression());
+		
 			PrintWriter pw = new PrintWriter(file.getWriter());
 			while((colVals2 = sqlIterator2.next()) != null) {
 				StringBuilder hashKeyBuilder = new StringBuilder();
@@ -133,13 +134,13 @@ public class HashJoin {
 				}
 			} 
 			pw.close();
+			sqlIterator2.close();
+			relationNode2.getFile().close();
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		sqlIterator2.close();
 		
 		List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
 		newList.addAll(table1.getColumnDefinitions());
