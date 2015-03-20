@@ -17,6 +17,7 @@ import java.util.Map;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -50,22 +51,34 @@ public class HashJoin {
 		DataSource dataFile2 = relationNode2.getFile();
 		List<Expression> table1ItemsExpression = convertSelectExpressionItemIntoExpressions(items);
 		
-		List<ColumnDefinition> cdList = table1.getColumnDefinitions();
-		int colIndex=0;
-		Expression table2exp = null;
-		if(expression instanceof BinaryExpression) {
-			Expression exprLeft = ((BinaryExpression) expression).getLeftExpression();
-			Expression exprRight = ((BinaryExpression) expression).getRightExpression();
-			for (ColumnDefinition colDef : cdList) {
-				if ((exprLeft instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprLeft.toString()))) {
-					table2exp = exprRight;
-					break;
-				} 
-				else if ((exprRight instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprRight.toString()))) {
-					table2exp = exprLeft;
-					break;
+		List<Expression> joinExpressions = TableUtils.getIndividualJoinConditions(expression);
+		List<int[]> colIndexList = new ArrayList<>();
+		for(Expression joinExpression: joinExpressions) {
+			if(joinExpression instanceof BinaryExpression) {
+				List<ColumnDefinition> cdList = table1.getColumnDefinitions();
+				int[] colIndex = {0, 0};
+				Expression table2exp = null;
+				Expression exprLeft = ((BinaryExpression) joinExpression).getLeftExpression();
+				Expression exprRight = ((BinaryExpression) joinExpression).getRightExpression();
+				for (ColumnDefinition colDef : cdList) {
+					if ((exprLeft instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprLeft.toString()))) {
+						table2exp = exprRight;
+						break;
+					} 
+					else if ((exprRight instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprRight.toString()))) {
+						table2exp = exprLeft;
+						break;
+					}
+					colIndex[0]++;
 				}
-				colIndex++;
+				cdList = table2.getColumnDefinitions();
+				for (ColumnDefinition colDef : cdList) {
+					if ((table2exp instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(table2exp.toString()))) {
+						break;
+					} 
+					colIndex[1]++;
+				}
+				colIndexList.add(colIndex);
 			}
 		}
 		
@@ -89,14 +102,7 @@ public class HashJoin {
 			}
 		}
 		sqlIterator1.close();
-		colIndex = 0;
-		cdList = table2.getColumnDefinitions();
-		for (ColumnDefinition colDef : cdList) {
-			if ((table2exp instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(table2exp.toString()))) {
-				break;
-			} 
-			colIndex++;
-		}
+		
 		SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
 				convertSelectExpressionItemIntoExpressions(TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())),
 				dataFile2, null, relationNode2.getExpression());
@@ -135,7 +141,7 @@ public class HashJoin {
 		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
 		return relationNode;
 	}
-	
+
 	private String getNewTableName(CreateTable table1,CreateTable table2){
 		return table1.getTable().getName() + "x" + table2.getTable().getName();
 	}
