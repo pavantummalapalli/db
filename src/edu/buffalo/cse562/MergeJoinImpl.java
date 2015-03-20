@@ -54,14 +54,14 @@ public class MergeJoinImpl {
 		Expression leftExpression = ((BinaryExpression)expression).getLeftExpression();
 		Expression rightExpression = ((BinaryExpression)expression).getRightExpression();
 		
-		List <Column> colDefList1 = table1.getColumnDefinitions();
-		List <Column> colDefList2 = table2.getColumnDefinitions();
+		List <ColumnDefinition> colDefList1 = table1.getColumnDefinitions();
+		List <ColumnDefinition> colDefList2 = table2.getColumnDefinitions();
 		
 		int indexCol1 = -1;
 		int indexCol2 = -1;
 		
 		for (int i = 0; i < colDefList1.size(); i++) {
-			Column col1 = colDefList1.get(i);
+			ColumnDefinition col1 = colDefList1.get(i);
 			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.getColumnName())
 					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.getColumnName())) {
 				indexCol1 = i;
@@ -69,7 +69,7 @@ public class MergeJoinImpl {
 			}
 		}
 		for (int i = 0; i < colDefList2.size(); i++) {
-			Column col2 = colDefList2.get(i);
+			ColumnDefinition col2 = colDefList2.get(i);
 			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.getColumnName())
 					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.getColumnName())) {
 				indexCol2 = i;

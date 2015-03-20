@@ -32,7 +32,7 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
-	public static boolean isSwapOn=true; 
+	public static boolean isSwapOn=false; 
 
 	private static class TableFileFilter implements FileFilter{
 		
