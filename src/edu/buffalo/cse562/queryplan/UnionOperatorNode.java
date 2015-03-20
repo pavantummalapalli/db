@@ -3,6 +3,7 @@ package edu.buffalo.cse562.queryplan;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
 import java.util.List;
 
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -14,6 +15,10 @@ public class UnionOperatorNode implements Node {
 	
 	public void setChildNodes(List<Node> childNodes) {
 		this.childNodes = childNodes;
+		Iterator<Node> nodesIt = childNodes.iterator();
+		while(nodesIt.hasNext()){
+			nodesIt.next().setParentNode(this);
+		}
 	}
 
 	public List<Node> getChildNodes() {
@@ -23,7 +28,6 @@ public class UnionOperatorNode implements Node {
 	@Override
 	public RelationNode eval() {
 
-		// TODO Auto-generated method stub
 		PrintWriter out = new PrintWriter(System.out);
 		try {
 			for (Node childNode : childNodes) {
@@ -50,19 +54,26 @@ public class UnionOperatorNode implements Node {
 
 	@Override
 	public CreateTable evalSchema() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Node getParentNode() {
-		// TODO Auto-generated method stub
 		return parentNode;
 	}
 
 	@Override
 	public void setParentNode(Node parentNode) {
-		// TODO Auto-generated method stub
 		this.parentNode=parentNode;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer buffer = new StringBuffer("Union");
+		Iterator<Node> nodesIt = childNodes.iterator();
+		while(nodesIt.hasNext()){
+			buffer.append(nodesIt.next().toString()+"\n");
+		}
+		return buffer.toString();
 	}
 }

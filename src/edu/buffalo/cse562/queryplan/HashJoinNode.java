@@ -3,7 +3,7 @@ package edu.buffalo.cse562.queryplan;
 import edu.buffalo.cse562.HashJoin;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
-public class HashJoinNode extends CartesianOperatorNode {
+public class HashJoinNode extends AbstractJoinNode {
 
 	@Override
 	public RelationNode eval() {
@@ -17,4 +17,8 @@ public class HashJoinNode extends CartesianOperatorNode {
 		return hashJoin.evalSchema();
 	}
 
+	@Override
+	public String getJoinName() {
+		return "Hash Join";
+	}
 }

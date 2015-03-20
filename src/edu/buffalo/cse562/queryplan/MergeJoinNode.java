@@ -10,7 +10,6 @@ import java.util.List;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -23,75 +22,53 @@ import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueMerger;
 import edu.buffalo.cse562.utils.TableUtils;
 
-public class MergeJoinNode implements Operator {
+public class MergeJoinNode extends AbstractJoinNode {
 
-	private Expression expression;
-	private Node node1;
-	private Node node2;
-	private Node parentNode;
-		
-	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression, Node parentNode) {
-		this.node1 = relationNode1;
-		this.node2 = relationNode2;
-		this.expression = expression;
-		this.parentNode = parentNode;
+	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression) {
+		setRelationNode1(relationNode1);
+		setRelationNode2(relationNode2);
+		addJoinCondition(expression);
 	}	
-	public Expression getExpression() {
-		return expression;
-	}
-	public void setExpression(Expression expression) {
-		this.expression = expression;
-	}
-	public Node getNode1() {
-		return node1;
-	}
-	public void setNode1(Node node1) {
-		this.node1 = node1;
-	}
-	public Node getNode2() {
-		return node2;
-	}
-	public void setNode2(Node node2) {
-		this.node2 = node2;
-	}
 
 	@Override
 	public RelationNode eval() {
-		
-		int[] columnIndex = getExpressionColumnIndex();
 		//sorting node1
-		File[] sortedBlockFiles1 = getSortedBlockFiles(node1, columnIndex[0]);
-		File[] sortedBlockFiles2 = getSortedBlockFiles(node2, columnIndex[1]);
+		RelationNode relationNode1 = getRelationNode1().eval();
+		RelationNode relationNode2=  getRelationNode2().eval();
+		int[] columnIndex = getExpressionColumnIndex(relationNode1,relationNode2);
+		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndex[0]);
+		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndex[1]);
 		
-		List <ColumnDefinition> columnDefList1 = ((RelationNode)node1).getTable().getColumnDefinitions();
+		List <ColumnDefinition> columnDefList1 = (relationNode1.getTable().getColumnDefinitions());
 		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
 		File finalSortedFiles1 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile1");
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
-		List <ColumnDefinition> columnDefList2 = ((RelationNode)node2).getTable().getColumnDefinitions();
-		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
+		List <ColumnDefinition> columnDefList2 = (relationNode2.getTable().getColumnDefinitions());
+		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
+
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);
 		
-		//sorting node2		
-		FileDataSource fileDataSource1 = (FileDataSource)((RelationNode)node1).getFile();
+		//sorting relationNode2		
+		FileDataSource fileDataSource1 = (FileDataSource)relationNode1.getFile();
 		fileDataSource1.setFile(finalSortedFiles1);
 		
-		FileDataSource fileDataSource2 = (FileDataSource)((RelationNode)node2).getFile();
+		FileDataSource fileDataSource2 = (FileDataSource)relationNode2.getFile();
 		fileDataSource2.setFile(finalSortedFiles2);
 		
-		MergeJoinImpl mergeJoin = new MergeJoinImpl(node1, node2, expression);
+		MergeJoinImpl mergeJoin = new MergeJoinImpl(relationNode1, relationNode2, getJoinCondition());
 		
 		return mergeJoin.doMergeJoins();
 	}	
 	
 	//TODO port to common utils later	
-	private int[] getExpressionColumnIndex() {
+	private int[] getExpressionColumnIndex(RelationNode relationNode1,RelationNode relationNode2) {
 		int[] columnIndex = new int[2];
-		Expression leftExpression = ((BinaryExpression)expression).getLeftExpression();
-		Expression rightExpression = ((BinaryExpression)expression).getRightExpression();
-		CreateTable table1 = ((RelationNode)node1).getTable();
-		CreateTable table2 = ((RelationNode)node2).getTable();
+		Expression leftExpression = ((BinaryExpression)getJoinCondition()).getLeftExpression();
+		Expression rightExpression = ((BinaryExpression)getJoinCondition()).getRightExpression();
+		CreateTable table1 = relationNode1.getTable();
+		CreateTable table2 = relationNode2.getTable();
 		List <Column> colDefList1 = table1.getColumnDefinitions();
 		List <Column> colDefList2 = table2.getColumnDefinitions();
 		
@@ -128,8 +105,7 @@ public class MergeJoinNode implements Operator {
 	 * @param colIndex is the index of the column of the table on which basis we have to sort.
 	 * @return
 	 */
-	private File[] getSortedBlockFiles(Node node, int colIndex) {
-		RelationNode relationNode = (RelationNode)node;
+	private File[] getSortedBlockFiles(RelationNode relationNode, int colIndex) {
 		CreateTable table = relationNode.getTable();
 		
 		FileDataSource fileDataSource = (FileDataSource)relationNode.getFile();
@@ -197,25 +173,9 @@ public class MergeJoinNode implements Operator {
 	public CreateTable evalSchema() {
 		return null;
 	}
+
 	@Override
-	public Node getParentNode() {
-		return parentNode;
-	}
-	@Override
-	public void setParentNode(Node parentNode) {
-		this.parentNode = parentNode;
-	}
-	@Override
-	public Expression getJoinCondition() {
-		return expression;
-	}	
-	@Override
-	public void addJoinCondition(Expression exp) {
-		if(expression!=null){
-			Expression exp1 = new AndExpression(expression, exp);
-			expression=exp1;
-		}
-		else
-			expression=exp;
+	public String getJoinName() {
+		return "Merge Join";
 	}
 }
