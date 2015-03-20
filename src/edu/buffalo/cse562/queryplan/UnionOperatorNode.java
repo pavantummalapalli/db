@@ -42,6 +42,7 @@ public class UnionOperatorNode implements Node {
 					out.println(rowVal);
 				}
 				bufferedReader.close();
+				relationNode.getFile().close();
 				//fileReader.close();
 			}
 		} catch (IOException e) {

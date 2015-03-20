@@ -237,12 +237,19 @@ public final class TableUtils {
 		return convertColumnListIntoSelectExpressionItem(columnList);
 	}
 
-	public static List<Expression> expressionList;
-
-	private static boolean recurse(Expression where) {
+	private static boolean recurse(Expression where,List<Expression> expressionList) {
 		
 		if (where instanceof Parenthesis) {
-			return recurse(((Parenthesis) where).getExpression());
+			List<Expression> tempExpression = new ArrayList<Expression>();
+//			if(recurse(((Parenthesis) where).getExpression(), tempExpression)){
+//				expressionList.addAll(tempExpression);
+//			}
+//			else
+//				expressionList.add(where);
+//			return true;
+			return recurse(((Parenthesis) where).getExpression(), expressionList);
+			//return true;
+
 		}
 		
 		if(where instanceof OrExpression){
@@ -261,12 +268,12 @@ public final class TableUtils {
 			expressionList.add(where);	
 			return true; 
 		}
-		return recurse(leftExpr) && recurse(rightExpr);
+		return recurse(leftExpr,expressionList) && recurse(rightExpr,expressionList);
 	}
 	
 	public static List<Expression> getBinaryExpressionList(Expression where) {
-		expressionList = new ArrayList<>();
-		if(recurse(where))
+		List<Expression> expressionList = new ArrayList<>();
+		if(recurse(where,expressionList))
 			return expressionList;
 		else
 			return new ArrayList<>();
@@ -275,9 +282,9 @@ public final class TableUtils {
 	public static int compareTwoLeafValues(LeafValue leafValue1, LeafValue leafValue2) {
 		int ans = 0;
 		if (leafValue1 instanceof DoubleValue && leafValue2 instanceof DoubleValue)
-			ans = ((DoubleValue) leafValue1).getValue() <= ((DoubleValue) leafValue2).getValue() ? -1 : 1;
+			ans = new Double(((DoubleValue) leafValue1).getValue()).compareTo(new Double(((DoubleValue) leafValue2).getValue()));
 		else if (leafValue1 instanceof LongValue && leafValue2 instanceof LongValue)
-			ans = ((LongValue) leafValue1).getValue() <= ((LongValue) leafValue2).getValue() ? -1 : 1;
+			ans = new Long(((LongValue) leafValue1).getValue()).compareTo(new Long(((LongValue) leafValue2).getValue()));
 		else if (leafValue1 instanceof StringValue && leafValue2 instanceof StringValue)
 			ans = ((StringValue) leafValue1).getValue().compareTo(((StringValue) leafValue2).getValue());
 		else if (leafValue1 instanceof DateValue && leafValue1 instanceof DateValue)

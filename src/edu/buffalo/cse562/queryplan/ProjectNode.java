@@ -133,6 +133,7 @@ public class ProjectNode implements Node {
 			}
 			projectList.add(colVals);
 		}
+		relationNode.getFile().close();
 		DataSource file = null;
 		PrintWriter pw = null;
 		

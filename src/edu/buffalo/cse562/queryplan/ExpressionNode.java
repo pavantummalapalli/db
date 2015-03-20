@@ -60,6 +60,7 @@ public class ExpressionNode implements Node {
 					pw.println(toUnescapedString(colVals[i-1]));
 			}
 			pw.close();
+			relationNode.getFile().close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}catch(SQLException e){

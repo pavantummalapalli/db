@@ -35,9 +35,10 @@ public class BufferDataSource implements DataSource {
 		if(reader!=null)
 			reader.close();
 		if(writer!=null){
-			addToBuffer();
 			writer.close();
 		}
+		buffer=null;
+		System.gc();
 	}
 	
 	private void addToBuffer(){

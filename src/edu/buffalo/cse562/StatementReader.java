@@ -41,7 +41,7 @@ public class StatementReader {
 					}
 				}
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}
 	}
