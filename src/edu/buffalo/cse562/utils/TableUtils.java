@@ -255,7 +255,7 @@ public final class TableUtils {
 		Expression leftExpr = ((BinaryExpression)where).getLeftExpression();
 		Expression rightExpr = ((BinaryExpression)where).getRightExpression();
 		if ((leftExpr instanceof Column && !(rightExpr instanceof BinaryExpression)) 
-				|| (!(rightExpr instanceof BinaryExpression) && rightExpr instanceof Column)) {
+				|| (!(leftExpr instanceof BinaryExpression) && rightExpr instanceof Column)) {
 			expressionList.add(where);	
 			return true; 
 		}
