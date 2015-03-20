@@ -32,7 +32,7 @@ public class Main {
 			TableUtils.setTempDataDir(swapDir);
 			TableUtils.isSwapOn = true;
 		}	
-		createTempFolder();
+		//createTempFolder();
 		new StatementReader().readSqlFile(dataDir, sqlFiles);
 	}
 

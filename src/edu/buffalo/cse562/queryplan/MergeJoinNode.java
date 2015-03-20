@@ -64,12 +64,12 @@ public class MergeJoinNode implements Operator {
 		File[] sortedBlockFiles2 = getSortedBlockFiles(node2, columnIndex[1]);
 		
 		List <ColumnDefinition> columnDefList1 = ((RelationNode)node1).getTable().getColumnDefinitions();
-		ExternalSort externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
+		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
 		File finalSortedFiles1 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile1");
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
-		List <ColumnDefinition> columnDefList2 = ((RelationNode)node1).getTable().getColumnDefinitions();
-		ExternalSort externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
+		List <ColumnDefinition> columnDefList2 = ((RelationNode)node2).getTable().getColumnDefinitions();
+		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);
 		
@@ -100,16 +100,16 @@ public class MergeJoinNode implements Operator {
 		
 		for (int i = 0; i < colDefList1.size(); i++) {
 			Column col1 = colDefList1.get(i);
-			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.toString())
-					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.toString())) {
+			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.getColumnName())
+					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.getColumnName())) {
 				indexCol1 = i;
 				break;
 			}
 		}
 		for (int i = 0; i < colDefList2.size(); i++) {
 			Column col2 = colDefList2.get(i);
-			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.toString())
-					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.toString())) {
+			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.getColumnName())
+					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.getColumnName())) {
 				indexCol2 = i;
 				break;
 			}

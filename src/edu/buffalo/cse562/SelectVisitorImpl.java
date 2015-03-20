@@ -24,6 +24,7 @@ import net.sf.jsqlparser.statement.select.Union;
 import edu.buffalo.cse562.queryplan.CartesianOperatorNode;
 import edu.buffalo.cse562.queryplan.ExpressionNode;
 import edu.buffalo.cse562.queryplan.ExtendedProjectNode;
+import edu.buffalo.cse562.queryplan.HashJoinNode;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.QueryDomain;
@@ -74,9 +75,11 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				Node rightNode =  tempVisitor.getFromItemNode();
 				removeParentFlag(rightNode);
 				visitor.getTableList().addAll(tempVisitor.getTableList());
-				leftNode = buildCartesianOperatorNode(leftNode, rightNode);
+				//leftNode = buildCartesianOperatorNode(leftNode, rightNode);
+				leftNode = buildHashJoinNode(leftNode, rightNode);
 				tableNames.addAll(tempVisitor.getTableNames());
-				((CartesianOperatorNode)leftNode).setTableNames(new HashSet<>(tableNames));
+				//((CartesianOperatorNode)leftNode).setTableNames(new HashSet<>(tableNames));
+				((HashJoinNode)leftNode).setTableNames(new HashSet<>(tableNames));
 			}
 		}
 		columnTableMap =mapColumnAndTable(visitor.getTableList());
@@ -176,6 +179,13 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		cartesianOperatorNode.setRelationNode1(node);
 		cartesianOperatorNode.setRelationNode2(node1);
 		return cartesianOperatorNode;
+	}
+	
+	private Node buildHashJoinNode(Node node,Node node1){
+		HashJoinNode hashJoinNode= new HashJoinNode();
+		hashJoinNode.setRelationNode1(node);
+		hashJoinNode.setRelationNode2(node1);
+		return hashJoinNode;
 	}
 
 	@Override

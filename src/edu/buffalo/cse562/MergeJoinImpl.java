@@ -62,16 +62,16 @@ public class MergeJoinImpl {
 		
 		for (int i = 0; i < colDefList1.size(); i++) {
 			Column col1 = colDefList1.get(i);
-			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.toString())
-					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.toString())) {
+			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.getColumnName())
+					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.getColumnName())) {
 				indexCol1 = i;
 				break;
 			}
 		}
 		for (int i = 0; i < colDefList2.size(); i++) {
 			Column col2 = colDefList2.get(i);
-			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.toString())
-					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.toString())) {
+			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.getColumnName())
+					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.getColumnName())) {
 				indexCol2 = i;
 				break;
 			}
