@@ -134,6 +134,7 @@ public class ProjectNode implements Node {
 			projectList.add(colVals);
 		}
 		relationNode.getFile().close();
+		System.gc();
 		DataSource file = null;
 		PrintWriter pw = null;
 		
@@ -203,6 +204,8 @@ public class ProjectNode implements Node {
 					pw.println(toUnescapedString(rowArr[j]));
 			}
 		}
+		projectList.clear();
+		System.gc();
 		if (parentNode == false) {
 			pw.close();
 			relationNode.setFile(file);
@@ -225,7 +228,6 @@ public class ProjectNode implements Node {
 				newList.add(cd);
 				i++;
 			}
-			
 			CreateTable newTable = new CreateTable();
 			newTable.setTable(new Table(null, preferredAliasName));
 			newTable.setColumnDefinitions(newList);
