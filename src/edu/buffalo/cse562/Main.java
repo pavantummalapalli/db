@@ -1,6 +1,8 @@
 package edu.buffalo.cse562;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.buffalo.cse562.utils.TableUtils;
 
@@ -12,7 +14,7 @@ public class Main {
 		}
 		
 		String dataDir = "", swapDir = null;
-		String sqlFiles[] = new String[args.length - 2];
+		List <String> fileList = new ArrayList <>();
 		int index = 0;
 		boolean flag = true;
 		for (int i = 0; i < args.length; i++) {
@@ -24,7 +26,7 @@ public class Main {
 				swapDir = args[i + 1];
 				i++;
 			} else {
-				sqlFiles[index++] = args[i];
+				fileList.add(args[i]);
 			}
 		}
 		TableUtils.setDataDir(dataDir);
@@ -33,7 +35,7 @@ public class Main {
 			TableUtils.isSwapOn = true;
 		}	
 		//createTempFolder();
-		new StatementReader().readSqlFile(dataDir, sqlFiles);
+		new StatementReader().readSqlFile(dataDir, fileList.toArray(new String[fileList.size()]));
 	}
 
 	private static void createTempFolder() {

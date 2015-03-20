@@ -21,13 +21,17 @@ import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueMerger;
 import edu.buffalo.cse562.utils.TableUtils;
+import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
 public class MergeJoinNode extends AbstractJoinNode {
 
+	private Expression exp;
+	
 	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression) {
 		setRelationNode1(relationNode1);
 		setRelationNode2(relationNode2);
 		addJoinCondition(expression);
+		this.exp = expression;
 	}	
 
 	@Override
@@ -36,16 +40,16 @@ public class MergeJoinNode extends AbstractJoinNode {
 		RelationNode relationNode1 = getRelationNode1().eval();
 		RelationNode relationNode2=  getRelationNode2().eval();
 		int[] columnIndex = getExpressionColumnIndex(relationNode1,relationNode2);
-		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndex[0]);
-		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndex[1]);
 		
+		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndex[0]);				
 		List <ColumnDefinition> columnDefList1 = (relationNode1.getTable().getColumnDefinitions());
 		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
 		File finalSortedFiles1 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile1");
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
+		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndex[1]);
 		List <ColumnDefinition> columnDefList2 = (relationNode2.getTable().getColumnDefinitions());
-		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
+		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
 
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);
@@ -69,14 +73,14 @@ public class MergeJoinNode extends AbstractJoinNode {
 		Expression rightExpression = ((BinaryExpression)getJoinCondition()).getRightExpression();
 		CreateTable table1 = relationNode1.getTable();
 		CreateTable table2 = relationNode2.getTable();
-		List <Column> colDefList1 = table1.getColumnDefinitions();
-		List <Column> colDefList2 = table2.getColumnDefinitions();
+		List <ColumnDefinition> colDefList1 = table1.getColumnDefinitions();
+		List <ColumnDefinition> colDefList2 = table2.getColumnDefinitions();
 		
 		int indexCol1 = -1;
 		int indexCol2 = -1;
 		
 		for (int i = 0; i < colDefList1.size(); i++) {
-			Column col1 = colDefList1.get(i);
+			ColumnDefinition col1 = colDefList1.get(i);
 			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.getColumnName())
 					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.getColumnName())) {
 				indexCol1 = i;
@@ -84,7 +88,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 			}
 		}
 		for (int i = 0; i < colDefList2.size(); i++) {
-			Column col2 = colDefList2.get(i);
+			ColumnDefinition col2 = colDefList2.get(i);
 			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.getColumnName())
 					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.getColumnName())) {
 				indexCol2 = i;
@@ -123,7 +127,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		long fileSizeInKB = (file.length() / 1024);
 		long memoryAvailableInKB = ExternalSort.getAvailableMemoryInKB();
 		long blocksCount = (fileSizeInKB * 2) / memoryAvailableInKB;
-		long eachBlockSizeInKB = fileSizeInKB / blocksCount;
+		long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
 		
 		LeafValue[] leafValue = null;
 		
@@ -152,19 +156,23 @@ public class MergeJoinNode extends AbstractJoinNode {
 		File fileTemp = new File(TableUtils.getTempDataDir() + File.separator + "temp" + fileCount);
 		if (fileTemp.exists()) 
 			fileTemp.delete();
-		Collections.sort(leafValueList, new LeafValueComparator(colIndex));
-		
 		try {
-			PrintWriter pw = new PrintWriter(fileTemp);
-			for (LeafValue[] leafValue : leafValueList) {
-				for (int i = 0; i < leafValue.length - 1; i++) {
-					pw.print(leafValue[i] + "|");
+			Collections.sort(leafValueList, new LeafValueComparator(colIndex));
+		
+			try {
+				PrintWriter pw = new PrintWriter(fileTemp);
+				for (LeafValue[] leafValue : leafValueList) {
+					for (int i = 0; i < leafValue.length - 1; i++) {
+						pw.print(toUnescapedString(leafValue[i]) + "|");
+					}
+					pw.println(toUnescapedString(leafValue[leafValue.length - 1]));
 				}
-				pw.println(leafValue[leafValue.length - 1]);
+				pw.close();
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException("Got FileNotFound Exception " );
 			}
-			pw.close();
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Got FileNotFound Exception " );
+		} catch (Exception e) {
+			System.out.println("Got exception");
 		}	
 		return fileTemp;
 	}

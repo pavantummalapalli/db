@@ -8,3 +8,4 @@
 **/*.SQL
 /bin/
 /data/*
+**/temp/

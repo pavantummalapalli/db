@@ -13,11 +13,13 @@ import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -32,7 +34,7 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
-	public static boolean isSwapOn=true; 
+	public static boolean isSwapOn=false; 
 
 	private static class TableFileFilter implements FileFilter{
 		
@@ -277,9 +279,9 @@ public final class TableUtils {
 	public static int compareTwoLeafValues(LeafValue leafValue1, LeafValue leafValue2) {
 		int ans = 0;
 		if (leafValue1 instanceof DoubleValue && leafValue2 instanceof DoubleValue)
-			ans = ((DoubleValue) leafValue1).getValue() <= ((DoubleValue) leafValue2).getValue() ? -1 : 1;
+			ans = new Double(((DoubleValue) leafValue1).getValue()).compareTo(new Double(((DoubleValue) leafValue2).getValue()));
 		else if (leafValue1 instanceof LongValue && leafValue2 instanceof LongValue)
-			ans = ((LongValue) leafValue1).getValue() <= ((LongValue) leafValue2).getValue() ? -1 : 1;
+			ans = new Long(((LongValue) leafValue1).getValue()).compareTo(new Long(((LongValue) leafValue2).getValue()));
 		else if (leafValue1 instanceof StringValue && leafValue2 instanceof StringValue)
 			ans = ((StringValue) leafValue1).getValue().compareTo(((StringValue) leafValue2).getValue());
 		else if (leafValue1 instanceof DateValue && leafValue1 instanceof DateValue)
@@ -296,4 +298,17 @@ public final class TableUtils {
 		}
 		return sb.substring(0, sb.length() - 1).toString();
 	}
+
+	public static List<Expression> getIndividualJoinConditions(Expression expression) {
+		List<Expression> joinExps = new ArrayList<>();
+		while(expression instanceof AndExpression) {
+			AndExpression andExp = (AndExpression)expression;
+			joinExps.add(andExp.getLeftExpression());
+			expression = andExp.getRightExpression();
+		}
+		if(expression != null)
+			joinExps.add(expression);
+		return joinExps;
+	}
+	
 }
