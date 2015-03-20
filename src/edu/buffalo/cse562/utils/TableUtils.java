@@ -13,11 +13,13 @@ import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -292,4 +294,17 @@ public final class TableUtils {
 		}
 		return sb.substring(0, sb.length() - 1).toString();
 	}
+
+	public static List<Expression> getIndividualJoinConditions(Expression expression) {
+		List<Expression> joinExps = new ArrayList<>();
+		while(expression instanceof AndExpression) {
+			AndExpression andExp = (AndExpression)expression;
+			joinExps.add(andExp.getLeftExpression());
+			expression = andExp.getRightExpression();
+		}
+		if(expression != null)
+			joinExps.add(expression);
+		return joinExps;
+	}
+	
 }
