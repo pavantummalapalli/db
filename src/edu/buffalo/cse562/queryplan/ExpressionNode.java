@@ -68,10 +68,9 @@ public class ExpressionNode implements Node {
 		}
 		sqlIterator.close();
 		//file.renameTo(new File(TableUtils.getDataDir() + File.separator + tableName + ".dat"));
-		RelationNode relationNode1 = new RelationNode();
-		relationNode1.setTableName(newTableName);
-		relationNode1.setFile(file);
-		return relationNode1;
+		relationNode.setTableName(newTableName);
+		relationNode.setFile(file);
+		return relationNode;
 	}
 	
 	public void setChildNode(Node childNode) {
