@@ -116,66 +116,66 @@ public class CartesianProduct {
 		return relationNode;
 	}
 	
-	private DataSource optimizeRelationNode(CreateTable table, DataSource dataFile) {
-		List <Expression> expressionList = TableUtils.expressionList;
-		List<ColumnDefinition> colDefList = table.getColumnDefinitions();
-		if (expressionList == null || expressionList.isEmpty())
-			return dataFile;
-		DataSource file =null;
-		if(TableUtils.isSwapOn)
-			file= new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + table.getTable().getName() 
-				+ "_opt" + ".dat"));
-		else
-			file = new BufferDataSource();
-		try {
-			List <Expression> expList = new ArrayList <>();
-			for (Expression exp : expressionList) {
-				Expression exprLeft = ((BinaryExpression)exp).getLeftExpression();
-				Expression exprRight = ((BinaryExpression)exp).getRightExpression();
-				for (ColumnDefinition colDef : colDefList) {
-					if ((exprLeft instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprLeft.toString()))
-						|| exprLeft instanceof LeafValue || exprLeft instanceof Function) {
-						if ((exprRight instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprRight.toString()))
-								|| exprRight instanceof LeafValue || exprRight instanceof Function) {
-								expList.add(exp);
-								break;
-						}
-					}
-				}
-			}
-			BufferedReader reader = new BufferedReader(dataFile.getReader());
-			String line = "";
-			ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
-			PrintWriter pw = new PrintWriter(file.getWriter());
-			while ((line = reader.readLine()) != null) {
-				String[] colVals = line.trim().split("\\|");
-				boolean flag = true; 
-				for (Expression expr : expList) {
-					LeafValue leafValue = evaluate.evaluateExpression(expr, colVals, null);
-					if (((BooleanValue)leafValue).getValue() == (Boolean.FALSE)) {
-						flag = false;
-						break;
-					}					
-				}
-				if (flag) {
-					pw.println(line);
-				}
-			}
-			pw.close();
-			reader.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-			throw new RuntimeException("file not found ", e);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			throw new RuntimeException("IOException : ", e);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			throw new RuntimeException("SQLException : ", e);
-		}
-		return file;
-	}
+//	private DataSource optimizeRelationNode(CreateTable table, DataSource dataFile) {
+//		List <Expression> expressionList = TableUtils.expressionList;
+//		List<ColumnDefinition> colDefList = table.getColumnDefinitions();
+//		if (expressionList == null || expressionList.isEmpty())
+//			return dataFile;
+//		DataSource file =null;
+//		if(TableUtils.isSwapOn)
+//			file= new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + table.getTable().getName() 
+//				+ "_opt" + ".dat"));
+//		else
+//			file = new BufferDataSource();
+//		try {
+//			List <Expression> expList = new ArrayList <>();
+//			for (Expression exp : expressionList) {
+//				Expression exprLeft = ((BinaryExpression)exp).getLeftExpression();
+//				Expression exprRight = ((BinaryExpression)exp).getRightExpression();
+//				for (ColumnDefinition colDef : colDefList) {
+//					if ((exprLeft instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprLeft.toString()))
+//						|| exprLeft instanceof LeafValue || exprLeft instanceof Function) {
+//						if ((exprRight instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprRight.toString()))
+//								|| exprRight instanceof LeafValue || exprRight instanceof Function) {
+//								expList.add(exp);
+//								break;
+//						}
+//					}
+//				}
+//			}
+//			BufferedReader reader = new BufferedReader(dataFile.getReader());
+//			String line = "";
+//			ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
+//			PrintWriter pw = new PrintWriter(file.getWriter());
+//			while ((line = reader.readLine()) != null) {
+//				String[] colVals = line.trim().split("\\|");
+//				boolean flag = true; 
+//				for (Expression expr : expList) {
+//					LeafValue leafValue = evaluate.evaluateExpression(expr, colVals, null);
+//					if (((BooleanValue)leafValue).getValue() == (Boolean.FALSE)) {
+//						flag = false;
+//						break;
+//					}					
+//				}
+//				if (flag) {
+//					pw.println(line);
+//				}
+//			}
+//			pw.close();
+//			reader.close();
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			//e.printStackTrace();
+//			throw new RuntimeException("file not found ", e);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			throw new RuntimeException("IOException : ", e);
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			throw new RuntimeException("SQLException : ", e);
+//		}
+//		return file;
+//	}
 
 	private String getNewTableName(CreateTable table1,CreateTable table2){
 		return table1.getTable().getName() + "x" + table2.getTable().getName();

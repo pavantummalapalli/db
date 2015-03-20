@@ -235,12 +235,16 @@ public final class TableUtils {
 		return convertColumnListIntoSelectExpressionItem(columnList);
 	}
 
-	public static List<Expression> expressionList;
-
-	private static boolean recurse(Expression where) {
+	private static boolean recurse(Expression where,List<Expression> expressionList) {
 		
 		if (where instanceof Parenthesis) {
-			return recurse(((Parenthesis) where).getExpression());
+			List<Expression> tempExpression = new ArrayList<Expression>();
+			if(recurse(((Parenthesis) where).getExpression(), tempExpression)){
+				expressionList.addAll(tempExpression);
+			}
+			else
+				expressionList.add(where);
+			return true;
 		}
 		
 		if(where instanceof OrExpression){
@@ -259,12 +263,12 @@ public final class TableUtils {
 			expressionList.add(where);	
 			return true; 
 		}
-		return recurse(leftExpr) && recurse(rightExpr);
+		return recurse(leftExpr,expressionList) && recurse(rightExpr,expressionList);
 	}
 	
 	public static List<Expression> getBinaryExpressionList(Expression where) {
-		expressionList = new ArrayList<>();
-		if(recurse(where))
+		List<Expression> expressionList = new ArrayList<>();
+		if(recurse(where,expressionList))
 			return expressionList;
 		else
 			return new ArrayList<>();
