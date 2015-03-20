@@ -2,11 +2,19 @@ package edu.buffalo.cse562;
 
 import java.io.File;
 import java.io.FileReader;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
+import java.util.Collection;
+
+import javax.management.NotificationEmitter;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
+import edu.buffalo.cse562.memmanage.Listener;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.QueryOptimizer;
@@ -17,6 +25,7 @@ public class StatementReader {
 	String query = "";
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
+			attachMemoryListeners();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
 				CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
@@ -44,5 +53,21 @@ public class StatementReader {
 		} catch (Throwable e) {
 			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}
+	}
+	
+	private void attachMemoryListeners(){
+		MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
+		Collection<MemoryPoolMXBean> pool = ManagementFactory.getMemoryPoolMXBeans();
+		for(MemoryPoolMXBean temp:pool){
+			if(temp.getType().compareTo(MemoryType.HEAP)==0){
+				if(temp.isUsageThresholdSupported()){
+					//Set at 80% usage
+					temp.setUsageThreshold(new Double(temp.getUsage().getMax()*.6).longValue());
+				}
+			}
+		}
+		NotificationEmitter emitter = (NotificationEmitter) mbean;
+		Listener listener = new Listener();
+		emitter.addNotificationListener(listener, null, null);
 	}
 }

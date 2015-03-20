@@ -67,6 +67,8 @@ public abstract class AbstractJoinNode implements Operator {
 	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer( getJoinName()+ " between : "+relationNode1.toString()+" and "+relationNode2.toString());
+		if(expression!=null)
+			buffer.append(" Join condition : "+expression.toString());
 		return buffer.toString();
 	}
 }

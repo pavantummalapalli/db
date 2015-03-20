@@ -127,7 +127,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		int fileCount = 1;
 		long fileSizeInKB = (file.length() / 1024);
 		long memoryAvailableInKB = ExternalSort.getAvailableMemoryInKB();
-		long blocksCount = (long)((fileSizeInKB * 1.5) / memoryAvailableInKB);
+		long blocksCount = (long)((fileSizeInKB * 2) / memoryAvailableInKB);
 		long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
 		long numberOfLines =(long)(eachBlockSizeInKB/ROW_SIZE_IN_KB); 
 		LeafValue[] leafValue = null;

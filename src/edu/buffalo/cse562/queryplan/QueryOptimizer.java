@@ -1,6 +1,7 @@
 package edu.buffalo.cse562.queryplan;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -13,7 +14,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class QueryOptimizer {
 
-	private Node iterateNode(Node node,List<Expression> extractedExpressionList){
+	private Node iterateNode(Node node,Collection<Expression> extractedExpressionList){
 		if(node instanceof ProjectNode){
 			((ProjectNode) node).setChildNode(iterateNode(((ProjectNode)node).getChildNode(),extractedExpressionList));
 			return node;
@@ -22,9 +23,14 @@ public class QueryOptimizer {
 			//At this point call the util function to extract disintegrated function
 			Node childNode = ((ExpressionNode)node).getChildNode();
 			List<Expression> expressionList = TableUtils.getBinaryExpressionList(((ExpressionNode)node).getExpression());
+			Set<Expression> localExpressionSet = new HashSet<>(expressionList);
 			if(expressionList!=null)
 				extractedExpressionList.addAll(expressionList);
-			((ExpressionNode) node).setChildNode(iterateNode(childNode,extractedExpressionList));
+			childNode = iterateNode(childNode,extractedExpressionList);
+			localExpressionSet.retainAll(extractedExpressionList);
+			if(localExpressionSet.isEmpty())
+				((ExpressionNode) node).setExpressionDead(true);
+			((ExpressionNode) node).setChildNode(childNode);
 			return node;
 		}
 		else if(node instanceof ExtendedProjectNode){
