@@ -26,7 +26,7 @@ import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 public class MergeJoinNode extends AbstractJoinNode {
 
 	private Expression exp;
-	private static final int ROW_SIZE_IN_KB= 1;
+	private static final double ROW_SIZE_IN_KB= 0.5;
 	
 	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression) {
 		setRelationNode1(relationNode1);
@@ -127,9 +127,9 @@ public class MergeJoinNode extends AbstractJoinNode {
 		int fileCount = 1;
 		long fileSizeInKB = (file.length() / 1024);
 		long memoryAvailableInKB = ExternalSort.getAvailableMemoryInKB();
-		long blocksCount = (fileSizeInKB * 4) / memoryAvailableInKB;
+		long blocksCount = (long)((fileSizeInKB * 1.5) / memoryAvailableInKB);
 		long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
-		long numberOfLines =eachBlockSizeInKB/ROW_SIZE_IN_KB; 
+		long numberOfLines =(long)(eachBlockSizeInKB/ROW_SIZE_IN_KB); 
 		LeafValue[] leafValue = null;
 		while ((leafValue = sqlIterator.next()) != null) {
 			leafValueList.add(leafValue);
