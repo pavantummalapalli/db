@@ -5,14 +5,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.schema.Column;
+import edu.buffalo.cse562.ExpressionVisitorImpl;
 import edu.buffalo.cse562.utils.TableUtils;
 
-public class QueryOptimizer {
+public class QueryOptimizer implements QueryDomain {
+	
+	Set<String> tableNames = new HashSet<String>();
 
 	private Node iterateNode(Node node,Collection<Expression> extractedExpressionList){
 		if(node instanceof ProjectNode){
@@ -166,6 +171,11 @@ public class QueryOptimizer {
 				tableNames.add(((Column)((BinaryExpression)exp).getRightExpression()).getTable().getName());
 			}
 		}
+		else if(exp instanceof Parenthesis){
+			exp.accept(new ExpressionVisitorImpl(this));
+			tableNames.addAll(this.tableNames);
+			this.tableNames=new HashSet<String>();
+		}
 		return tableNames;
 	}
 	
@@ -174,5 +184,17 @@ public class QueryOptimizer {
 		iterateNode(node, extractedExpressionList);
 		//System.out.println(node.toString());
 		return node;
+	}
+
+	@Override
+	public Column resolveColumn(Column column) {
+		tableNames.add(column.getTable().getName());
+		return column;
+	}
+
+	@Override
+	public Map<String, String> getColumnTableMap() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

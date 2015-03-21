@@ -275,15 +275,12 @@ public final class TableUtils {
 		
 		if (where instanceof Parenthesis) {
 			List<Expression> tempExpression = new ArrayList<Expression>();
-//			if(recurse(((Parenthesis) where).getExpression(), tempExpression)){
-//				expressionList.addAll(tempExpression);
-//			}
-//			else
-//				expressionList.add(where);
-//			return true;
-			return recurse(((Parenthesis) where).getExpression(), expressionList);
-			//return true;
-
+			if(recurse(((Parenthesis) where).getExpression(), tempExpression)){
+				expressionList.addAll(tempExpression);
+			}
+			else
+				expressionList.add(where);
+			return true;
 		}
 		
 		if(where instanceof OrExpression){
