@@ -101,7 +101,7 @@ public class MergeJoinImpl {
 					List<LeafValue[]> firstList = new ArrayList<>();
 					List<LeafValue[]> seconList = new ArrayList <>();
 					
-					while (prevFirst.equals(colVals1[indexCol1].toString())) {
+					while (colVals1 != null && prevFirst.equals(colVals1[indexCol1].toString())) {
 						LeafValue[] leafValue1 = new LeafValue[colVals1.length];
 						for (int i = 0; i < colVals1.length; i++) {
 							leafValue1[i] = colVals1[i];
@@ -109,7 +109,7 @@ public class MergeJoinImpl {
 						firstList.add(leafValue1);
 						colVals1 = sqlIterator1.next();
 					}
-					while (prevSecon.equals(colVals2[indexCol2].toString())) {
+					while (colVals2 != null && prevSecon.equals(colVals2[indexCol2].toString())) {
 						LeafValue[] leafValue2 = new LeafValue[colVals2.length];
 						for (int i = 0; i < colVals2.length; i++) {
 							leafValue2[i] = colVals2[i];

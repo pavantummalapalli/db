@@ -21,6 +21,7 @@ import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueMerger;
 import edu.buffalo.cse562.utils.TableUtils;
+import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
 public class MergeJoinNode extends AbstractJoinNode {
 
@@ -161,9 +162,9 @@ public class MergeJoinNode extends AbstractJoinNode {
 			PrintWriter pw = new PrintWriter(fileTemp);
 			for (LeafValue[] leafValue : leafValueList) {
 				for (int i = 0; i < leafValue.length - 1; i++) {
-					pw.print(leafValue[i] + "|");
+					pw.print(toUnescapedString(leafValue[i]) + "|");
 				}
-				pw.println(leafValue[leafValue.length - 1]);
+				pw.println(toUnescapedString(leafValue[leafValue.length - 1]));
 			}
 			pw.close();
 		} catch (FileNotFoundException e) {
