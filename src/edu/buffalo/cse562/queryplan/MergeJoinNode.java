@@ -1,5 +1,7 @@
 package edu.buffalo.cse562.queryplan;
 
+import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -21,7 +23,6 @@ import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueMerger;
 import edu.buffalo.cse562.utils.TableUtils;
-import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
 public class MergeJoinNode extends AbstractJoinNode {
 
@@ -40,25 +41,28 @@ public class MergeJoinNode extends AbstractJoinNode {
 		//sorting node1
 		RelationNode relationNode1 = getRelationNode1().eval();
 		RelationNode relationNode2=  getRelationNode2().eval();
-		int[] columnIndex = getExpressionColumnIndex(relationNode1,relationNode2);
 		
-		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndex[0]);				
+		List <Integer>[] columnIndexList = getExpressionColumnIndexList(relationNode1,relationNode2, getJoinCondition());
+		
+		//external sorting relation 1
+		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndexList[0]);				
 		List <ColumnDefinition> columnDefList1 = (relationNode1.getTable().getColumnDefinitions());
-		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
+		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndexList[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
 		File finalSortedFiles1 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile1");
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
-		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndex[1]);
+		//external sorting relation 2
+		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndexList[1]);
 		List <ColumnDefinition> columnDefList2 = (relationNode2.getTable().getColumnDefinitions());
-		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
-
+		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndexList[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);
 		
-		//sorting relationNode2		
+		//setting sorted file1 to relation 1
 		FileDataSource fileDataSource1 = (FileDataSource)relationNode1.getFile();
 		fileDataSource1.setFile(finalSortedFiles1);
 		
+		//setting sorted file2 to relation 2
 		FileDataSource fileDataSource2 = (FileDataSource)relationNode2.getFile();
 		fileDataSource2.setFile(finalSortedFiles2);
 		
@@ -67,50 +71,62 @@ public class MergeJoinNode extends AbstractJoinNode {
 		return mergeJoin.doMergeJoins();
 	}	
 	
-	//TODO port to common utils later	
-	private int[] getExpressionColumnIndex(RelationNode relationNode1,RelationNode relationNode2) {
-		int[] columnIndex = new int[2];
-		Expression leftExpression = ((BinaryExpression)getJoinCondition()).getLeftExpression();
-		Expression rightExpression = ((BinaryExpression)getJoinCondition()).getRightExpression();
-		CreateTable table1 = relationNode1.getTable();
-		CreateTable table2 = relationNode2.getTable();
-		List <ColumnDefinition> colDefList1 = table1.getColumnDefinitions();
-		List <ColumnDefinition> colDefList2 = table2.getColumnDefinitions();
+	//TODO port it to the TableUtils
+	/**
+	 * Takes two relatioNode and join condition and returns the List <Integer>[] for column in joins in two relations.
+	 * 0th index for columns indexes in relation 1.
+	 * 1st index for columns indexes in relation 2.
+	 */
+	public static List <Integer>[] getExpressionColumnIndexList(RelationNode relationNode1,RelationNode relationNode2, Expression joinCondition) {
+		List <Integer>[] columnIndexList = new ArrayList[2];
 		
-		int indexCol1 = -1;
-		int indexCol2 = -1;
+		columnIndexList[0] = new ArrayList<>();
+		columnIndexList[1] = new ArrayList<>();
 		
-		for (int i = 0; i < colDefList1.size(); i++) {
-			ColumnDefinition col1 = colDefList1.get(i);
-			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.getColumnName())
-					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.getColumnName())) {
-				indexCol1 = i;
-				break;
+		List <Expression> eachJoinConditionList = TableUtils.getIndividualJoinConditions(joinCondition);
+		
+		for (Expression eachJoinCondition : eachJoinConditionList) {
+			Expression leftExpression = ((BinaryExpression)eachJoinCondition).getLeftExpression();
+			Expression rightExpression = ((BinaryExpression)eachJoinCondition).getRightExpression();
+			CreateTable table1 = relationNode1.getTable();
+			CreateTable table2 = relationNode2.getTable();
+			List <ColumnDefinition> colDefList1 = table1.getColumnDefinitions();
+			List <ColumnDefinition> colDefList2 = table2.getColumnDefinitions();
+			
+			int indexCol1 = -1;
+			int indexCol2 = -1;
+			
+			for (int i = 0; i < colDefList1.size(); i++) {
+				ColumnDefinition col1 = colDefList1.get(i);
+				if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col1.getColumnName())
+						|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col1.getColumnName())) {
+					indexCol1 = i;
+					break;
+				}
 			}
-		}
-		for (int i = 0; i < colDefList2.size(); i++) {
-			ColumnDefinition col2 = colDefList2.get(i);
-			if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.getColumnName())
-					|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.getColumnName())) {
-				indexCol2 = i;
-				break;
+			for (int i = 0; i < colDefList2.size(); i++) {
+				ColumnDefinition col2 = colDefList2.get(i);
+				if (leftExpression instanceof Column && leftExpression.toString().equalsIgnoreCase(col2.getColumnName())
+						|| rightExpression instanceof Column && rightExpression.toString().equalsIgnoreCase(col2.getColumnName())) {
+					indexCol2 = i;
+					break;
+				}
 			}
+			if (indexCol1 == -1 || indexCol2 == -1) {
+				throw new RuntimeException("Both columns should be present in col definations of two relationNodes. One on each.");
+			}	
+			columnIndexList[0].add(indexCol1);
+			columnIndexList[1].add(indexCol2);
 		}
-		if (indexCol1 == -1 || indexCol2 == -1) {
-			throw new RuntimeException("Both columns should be present in col definations of two relationNodes. One on each.");
-		}	
-		columnIndex[0] = indexCol1;
-		columnIndex[1] = indexCol2;
-		return columnIndex;
+		return columnIndexList;
 	}
 	
 	/**
-	 * 
 	 * @param node
-	 * @param colIndex is the index of the column of the table on which basis we have to sort.
+	 * @param colIndexList is the index of the column of the table on which basis we have to sort.
 	 * @return
 	 */
-	private File[] getSortedBlockFiles(RelationNode relationNode,final int colIndex) {
+	private File[] getSortedBlockFiles(RelationNode relationNode,final List <Integer> colIndexList) {
 		CreateTable table = relationNode.getTable();
 		
 		FileDataSource fileDataSource = (FileDataSource)relationNode.getFile();
@@ -134,7 +150,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		while ((leafValue = sqlIterator.next()) != null) {
 			leafValueList.add(leafValue);
 			if (numberOfLines==leafValueList.size()) {
-				File sortedFile = sortAndFlushInFile(leafValueList, colIndex, fileCount++);
+				File sortedFile = sortAndFlushInFile(leafValueList, colIndexList, fileCount++);
 				sortedFileBlocks.add(sortedFile);
 				leafValueList.clear();
 				System.gc();
@@ -142,19 +158,19 @@ public class MergeJoinNode extends AbstractJoinNode {
 		}
 		
 		if (leafValueList.size() > 0) {
-			File sortedFile = sortAndFlushInFile(leafValueList, colIndex, fileCount++);
+			File sortedFile = sortAndFlushInFile(leafValueList, colIndexList, fileCount++);
 			sortedFileBlocks.add(sortedFile);
 		}
 		
 		return sortedFileBlocks.toArray(new File[sortedFileBlocks.size()]);
 	}
 	
-	private File sortAndFlushInFile(List <LeafValue[]>leafValueList, int colIndex, int fileCount) {
+	private File sortAndFlushInFile(List <LeafValue[]>leafValueList, final List <Integer> colIndexList, int fileCount) {
 		File fileTemp = new File(TableUtils.getTempDataDir() + File.separator + "temp" + fileCount);
 		if (fileTemp.exists()) 
 			fileTemp.delete();
 		try {
-			Collections.sort(leafValueList, new LeafValueComparator(colIndex));
+			Collections.sort(leafValueList, new LeafValueComparator(colIndexList));
 		
 			try {
 				PrintWriter pw = new PrintWriter(fileTemp);
