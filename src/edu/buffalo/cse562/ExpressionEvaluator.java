@@ -28,7 +28,6 @@ public class ExpressionEvaluator extends Eval {
 	private HashMap <String, Average> tempAverageMap = new HashMap <>();
 	private List<String> groupByList;
 	private boolean aggregateModeOn;
-	private HashMap <String, DateValue> dateLookUp = new HashMap<>();
 		
 	private class Average {
 		Double value;
@@ -213,10 +212,12 @@ public class ExpressionEvaluator extends Eval {
 			else if(function.getName().equalsIgnoreCase("DATE")){
 				Expression dateValueParam = (Expression) function.getParameters().getExpressions().get(0);
 				String dateStr = eval(dateValueParam).toString();
-				if (!dateLookUp.containsKey(dateStr)) {
-					dateLookUp.put(dateStr, new ExtendedDateValue(dateStr));
+				DateValue value= TableUtils.getPooledDateValue(dateStr);
+				if (value==null) {
+					value=new ExtendedDateValue(dateStr);
+					TableUtils.addToDatePool(dateStr,value );
 				}
-				return dateLookUp.get(dateStr);
+				return value;
 			}
 		}
 		catch(InvalidLeaf e){

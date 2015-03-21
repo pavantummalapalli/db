@@ -35,6 +35,7 @@ public final class TableUtils {
 	private static String dataDir;
 	private static String tempDataDir;
 	public static boolean isSwapOn=false; 
+	private static Map<String,DateValue> pooledDateValue = new HashMap<String, DateValue>();
 
 	private static class TableFileFilter implements FileFilter{
 		
@@ -140,6 +141,18 @@ public final class TableUtils {
 	public static Map<String, CreateTable> getTableSchemaMap() {
 		return tableSchemaMap;
 	}
+	
+	public static DateValue getPooledDateValue(String parameter){
+		if(pooledDateValue.containsKey(parameter))
+			return pooledDateValue.get(parameter);
+		return null;
+	}
+	
+	public static void addToDatePool(String parameter,DateValue dateValue){
+		pooledDateValue.put(parameter, dateValue);
+	}
+	
+	
 	
 	public static List <ColumnDefinition> getColumnDefinitionForTable(String tableName,Map <String, CreateTable> tempTableSchemaMap){
 		CreateTable cd = tableSchemaMap.get(tableName);

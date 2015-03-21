@@ -2,10 +2,12 @@ package edu.buffalo.cse562.fileoperations.sort;
 
 import java.util.List;
 
+import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import edu.buffalo.cse562.ExtendedDateValue;
@@ -31,7 +33,13 @@ public class LeafValueConverter implements Convertor<LeafValue[]> {
 			if (str.equalsIgnoreCase("int"))
 				leafValue[i] = new LongValue(colVals[i]);
 			else if (str.equalsIgnoreCase("date")) {
-				leafValue[i] = new ExtendedDateValue(" " + colVals[i] + " ");
+				String dateValueStr="'"+ colVals[i] + "'";
+				DateValue dateValue = TableUtils.getPooledDateValue(dateValueStr);
+				if(dateValue==null){
+					dateValue=new ExtendedDateValue(dateValueStr);
+					TableUtils.addToDatePool(dateValueStr, dateValue);
+				}
+				leafValue[i] = dateValue;
 			} else if (str.equalsIgnoreCase("string") || str.contains("char"))
 				leafValue[i] = new StringValue(" " + colVals[i] + " ");
 			else if (str.equalsIgnoreCase("double") || str.equalsIgnoreCase("decimal"))
