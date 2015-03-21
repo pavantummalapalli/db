@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -183,26 +184,27 @@ public class ProjectNode implements Node {
 		long offset = (limit == null ? Integer.MAX_VALUE : limit.getRowCount());
 		List<String> columnList = TableUtils
 				.convertSelectExpressionItemIntoColumnString(selectItemsList);
-		for (int i = 0; i < Math.min(offset, projectList.size()); i++) {
-			LeafValue[] rowArr = projectList.get(i);
+		
+		Iterator<LeafValue[]> it = projectList.iterator();
+		
+		while (it.hasNext() && offset-- > 0) {
+			LeafValue[] rowArr = it.next();
 			int j = 0;
 			for (; j < columnList.size() - 1; j++) {
-//				String column = columnList.get(j);
-//				int index = columnIndexMap.get(column);
 				if (parentNode)
 					System.out.print(toUnescapedString(rowArr[j]) + "|");
 				else
 					pw.print(toUnescapedString(rowArr[j]) + "|");
 			}
 			if (columnList.size() > 0) {
-//				int index = columnIndexMap
-//						.get(columnList.get(columnList.size() - 1));
 				if (parentNode)
 					System.out.println(toUnescapedString(rowArr[j]));
 				else
 					pw.println(toUnescapedString(rowArr[j]));
 			}
+			it.remove();
 		}
+		
 		if (parentNode == false) {
 			pw.close();
 			relationNode.setFile(file);
