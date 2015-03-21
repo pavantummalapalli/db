@@ -28,10 +28,12 @@ public class DataSourceSqlIterator implements SqlIterator {
 		private String[] colVals;
 		private List <Column> groupByList;
 		private List <ExpressionEvaluator> selectExpressionEvaluatorList;
+		private ExpressionEvaluator groupByColumnEvaluator;
 		private Expression filterExpression;
 		private ExpressionEvaluator evaluate ;
 		
 		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSourceReader dataFile, List <Column> groupByList,Expression filterExpression) {
+			groupByColumnEvaluator=new ExpressionEvaluator(table);
 			this.selectExpressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
@@ -137,10 +139,19 @@ public class DataSourceSqlIterator implements SqlIterator {
 						if(value ==BooleanValue.FALSE)
 							continue;
 					}
+					GroupBy groupBy = null;
+					if(groupByList!=null && groupByList.size()>0){
+						LeafValue[] leafValues = new LeafValue[groupByList.size()];
+						int i=0;
+						for(Column groupByColumn : groupByList) {
+							leafValues[i++] = groupByColumnEvaluator.evaluateExpression(groupByColumn,resolvedValues,null);
+						}	
+						groupBy= new GroupBy(leafValues);
+					}
 					if(selectExpressionList != null){
 						int count = 0;
 						for (Expression expression : selectExpressionList) {
-							LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, resolvedValues, groupByList);
+							LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, resolvedValues, groupByList,groupBy);
 							count++;
 						}
 					}

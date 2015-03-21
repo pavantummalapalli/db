@@ -27,7 +27,7 @@ public class GroupBy {
 		@Override
 		public boolean equals(Object obj) {
 			if(obj instanceof GroupBy){
-				return toString().equals(obj.toString());
+				return keyString.equals(obj.toString());
 			}
 			return false;
 		}

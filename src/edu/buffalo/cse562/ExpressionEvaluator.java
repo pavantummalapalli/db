@@ -28,6 +28,7 @@ public class ExpressionEvaluator extends Eval {
 	private HashMap<GroupBy,Object> calculatedData = new HashMap <>();
 	private HashMap <GroupBy, Average> tempAverageMap = new HashMap <>();
 	private List<Column> groupByList;
+	private GroupBy groupByKey;
 	private boolean aggregateModeOn;
 		
 	private class Average {
@@ -226,6 +227,13 @@ public class ExpressionEvaluator extends Eval {
 		return super.eval(exp);
 	}
 	
+	public LeafValue evaluateExpression(Expression exp,LeafValue []colVals,List<Column> groupByList,GroupBy groupByKey) throws SQLException{
+		this.colVals=colVals;
+		this.groupByList = groupByList;
+		this.groupByKey=groupByKey;
+		return super.eval(exp);
+	}
+	
 	public HashMap<GroupBy, Object> getCalculatedData() {
 		return calculatedData;
 	}
@@ -239,14 +247,6 @@ public class ExpressionEvaluator extends Eval {
 	}
 	
 	public GroupBy getGroupByValueKey() throws SQLException{
-		LeafValue[] leafValues = new LeafValue[groupByList.size()];
-		int i=0;
-		for(Column groupByColumn : groupByList) {
-			//Column temp = convertStringToColumn(groupByColumn.toUpperCase());
-			//Column temp = convertStringToColumn(groupByColumn);
-			leafValues[i++] = eval(groupByColumn);
-		}	
-		return new GroupBy(leafValues);
+		return groupByKey;
 	}
-	
 }

@@ -34,7 +34,7 @@ public class LeafValueConverter implements Convertor<LeafValue[]> {
 			else if (str.equalsIgnoreCase("date")) {
 				String dateValueStr="'"+ colVals[i] + "'";
 				leafValue[i] = TableUtils.getPooledDateValue(dateValueStr);
-			} else if (str.equalsIgnoreCase("string") || str.contains("char"))
+			} else if (str.equalsIgnoreCase("string") || str.toLowerCase().contains("char"))
 				leafValue[i] = new StringValue(" " + colVals[i] + " ");
 			else if (str.equalsIgnoreCase("double") || str.equalsIgnoreCase("decimal"))
 				leafValue[i] = new DoubleValue(colVals[i]);
