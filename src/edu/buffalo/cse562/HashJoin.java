@@ -92,10 +92,10 @@ public class HashJoin {
 		else
 			file = new BufferDataSource();
 		String delimiter = "!~";
-		while((colVals1 = sqlIterator1.next()) != null) {
+		while((colVals1 = sqlIterator1.next()) != null) { 
 			StringBuilder hashKeyBuilder = new StringBuilder();
 			for(int[] colIndex: colIndexList) {
-				hashKeyBuilder.append(colVals1[colIndex[0]].toString() + delimiter); 
+				hashKeyBuilder.append(toUnescapedString(colVals1[colIndex[0]]) + delimiter); 
 			}
 			String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
 			if(hashMap.containsKey(hashKey)) {
@@ -118,7 +118,7 @@ public class HashJoin {
 			while((colVals2 = sqlIterator2.next()) != null) {
 				StringBuilder hashKeyBuilder = new StringBuilder();
 				for(int[] colIndex: colIndexList) {
-					hashKeyBuilder.append(colVals2[colIndex[1]].toString() + delimiter); 
+					hashKeyBuilder.append(toUnescapedString(colVals2[colIndex[1]]) + delimiter); 
 				}
 				String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
 				if(hashMap.containsKey(hashKey)) {
