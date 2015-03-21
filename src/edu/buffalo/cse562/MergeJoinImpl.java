@@ -44,8 +44,7 @@ public class MergeJoinImpl {
 			List<ColumnDefinition> newList = new ArrayList<ColumnDefinition>();
 			newList.addAll(table1.getColumnDefinitions());
 			newList.addAll(table2.getColumnDefinitions());
-			List<SelectExpressionItem> items = convertColumnDefinitionIntoSelectExpressionItems(table1
-					.getColumnDefinitions());
+			List<SelectExpressionItem> items = convertColumnDefinitionIntoSelectExpressionItems(table1.getColumnDefinitions());
 			DataSource dataFile1 = relationNode1.getFile();
 			DataSource dataFile2 = relationNode2.getFile();
 
@@ -54,28 +53,23 @@ public class MergeJoinImpl {
 					.getColumnDefinitions()));
 			String newTableName = getNewTableName(table1, table2);
 
-			List<Integer>[] columnIndexList = MergeJoinNode
-					.getExpressionColumnIndexList(relationNode1, relationNode2,
-							expression);
+			List<Integer>[] columnIndexList = MergeJoinNode.getExpressionColumnIndexList(relationNode1, relationNode2, expression);
 
 			DataSource file = null;
 			if (TableUtils.isSwapOn)
-				file = new FileDataSource(new File(TableUtils.getTempDataDir()
-						+ File.separator + newTableName + ".dat"), newList);
+				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"), newList);
 			else
 				file = new BufferDataSource();
 			DataSourceWriter fileWriter = file.getWriter();
-			SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,
-					table1ItemsExpression, dataFile1.getReader(), null,
+			SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1, table1ItemsExpression, dataFile1.getReader(), null,
 					relationNode1.getExpression());
-			SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
-					table2ItemsExpression, dataFile2.getReader(), null,
+			SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2, table2ItemsExpression, dataFile2.getReader(), null,
 					relationNode2.getExpression());
 			LeafValue[] colVals1 = sqlIterator1.next();
 			LeafValue[] colVals2 = sqlIterator2.next();
+			long startTime = System.currentTimeMillis();
 			while (colVals1 != null && colVals2 != null) {
-				int compareResults = TableUtils.compareTwoLeafValuesList(
-						colVals1, colVals2, columnIndexList);
+				int compareResults = TableUtils.compareTwoLeafValuesList(colVals1, colVals2, columnIndexList);
 				if (compareResults == 0) {
 					LeafValue[] prevFirstColVals = colVals1;
 					LeafValue[] prevSeconColVals = colVals2;
@@ -83,9 +77,7 @@ public class MergeJoinImpl {
 					List<LeafValue[]> firstList = new ArrayList<>();
 					List<LeafValue[]> seconList = new ArrayList<>();
 
-					while (colVals1 != null
-							&& compareLeafValueArrayForSameRelation(colVals1,
-									prevFirstColVals, columnIndexList[0])) {
+					while (colVals1 != null && compareLeafValueArrayForSameRelation(colVals1, prevFirstColVals, columnIndexList[0])) {
 						LeafValue[] leafValue1 = new LeafValue[colVals1.length];
 						for (int i = 0; i < colVals1.length; i++) {
 							leafValue1[i] = colVals1[i];
@@ -93,9 +85,7 @@ public class MergeJoinImpl {
 						firstList.add(leafValue1);
 						colVals1 = sqlIterator1.next();
 					}
-					while (colVals2 != null
-							&& compareLeafValueArrayForSameRelation(colVals2,
-									prevSeconColVals, columnIndexList[1])) {
+					while (colVals2 != null && compareLeafValueArrayForSameRelation(colVals2, prevSeconColVals, columnIndexList[1])) {
 						LeafValue[] leafValue2 = new LeafValue[colVals2.length];
 						for (int i = 0; i < colVals2.length; i++) {
 							leafValue2[i] = colVals2[i];
@@ -105,8 +95,7 @@ public class MergeJoinImpl {
 					}
 					for (LeafValue[] col1LeafValue : firstList) {
 						for (LeafValue[] col2LeafValue : seconList) {
-							LeafValue[] tuple = new LeafValue[col1LeafValue.length
-									+ col2LeafValue.length];
+							LeafValue[] tuple = new LeafValue[col1LeafValue.length + col2LeafValue.length];
 							int z = 0;
 							for (int i = 0; i < col1LeafValue.length; i++, z++) {
 								tuple[z] = col1LeafValue[i];
@@ -123,6 +112,8 @@ public class MergeJoinImpl {
 					colVals2 = sqlIterator2.next();
 				}
 			}
+			long endTime = System.currentTimeMillis();
+			// System.out.println("Time taken on core merge join " + (endTime - startTime));
 			fileWriter.close();
 			sqlIterator1.close();
 			sqlIterator2.close();
@@ -132,29 +123,23 @@ public class MergeJoinImpl {
 			newTable.setTable(new Table(null, newTableName));
 			newTable.setColumnDefinitions(newList);
 
-			RelationNode relationNode = new RelationNode(newTableName, null,
-					file, newTable);
+			RelationNode relationNode = new RelationNode(newTableName, null, file, newTable);
 			return relationNode;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private boolean compareLeafValueArrayForSameRelation(
-			LeafValue[] prevLeafValue, LeafValue[] currLeafValue,
-			List<Integer> columnList) {
+	private boolean compareLeafValueArrayForSameRelation(LeafValue[] prevLeafValue, LeafValue[] currLeafValue, List<Integer> columnList) {
 		boolean ans = true;
 		for (int i = 0; i < columnList.size() && ans; i++) {
 			int index = columnList.get(i);
-			ans = ans
-					& TableUtils.compareTwoLeafValues(prevLeafValue[index],
-							currLeafValue[index]) == 0;
+			ans = ans & TableUtils.compareTwoLeafValues(prevLeafValue[index], currLeafValue[index]) == 0;
 		}
 		return ans;
 	}
 
 	private String getNewTableName(CreateTable table1, CreateTable table2) {
-		return table1.getTable().getName() + "_MERGE_"
-				+ table2.getTable().getName();
+		return table1.getTable().getName() + "_MERGE_" + table2.getTable().getName();
 	}
 }

@@ -108,7 +108,7 @@ public final class TableUtils {
 	
 	public static String toUnescapedString(LeafValue leafValue){
 		if(leafValue instanceof StringValue){
-			return leafValue.toString().substring(1,leafValue.toString().length()-1);
+			return ((StringValue) leafValue).getValue();
 		}
 		return leafValue.toString();
 	}

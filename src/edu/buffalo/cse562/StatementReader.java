@@ -25,6 +25,7 @@ public class StatementReader {
 	String query = "";
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
+			long startTime = System.currentTimeMillis();
 			attachMemoryListeners();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
@@ -50,6 +51,8 @@ public class StatementReader {
 					}
 				}
 			}
+			long endTime = System.currentTimeMillis();
+			System.out.println("Time in seconds " + (endTime - startTime) / 1000.);
 		} catch (Throwable e) {
 			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}

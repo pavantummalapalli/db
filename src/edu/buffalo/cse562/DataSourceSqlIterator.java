@@ -74,6 +74,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 					selectExpressionEvaluatorList.add(new ExpressionEvaluator(table));
 				}
 			}
+			evaluate = new ExpressionEvaluator(table);
 		}
 				
 		public LeafValue[] next() {
@@ -90,6 +91,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 //					convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
 //				}
 				if(filterExpression!=null){
+					//ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 					LeafValue leafValue = evaluate.evaluateExpression(filterExpression, convertedValues, null);
 					BooleanValue value =(BooleanValue) leafValue;
 					if(value ==BooleanValue.FALSE)
