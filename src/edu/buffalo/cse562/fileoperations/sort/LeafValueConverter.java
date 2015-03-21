@@ -28,7 +28,7 @@ public class LeafValueConverter implements Convertor<LeafValue[]> {
 		
 		for (int i = 0; i < columnDefList.size(); i++) {
 			ColDataType dataType = columnDefList.get(i).getColDataType();
-			String str = dataType.getDataType().toLowerCase();
+			String str = dataType.getDataType();
 			if (str.equalsIgnoreCase("int"))
 				leafValue[i] = new LongValue(colVals[i]);
 			else if (str.equalsIgnoreCase("date")) {

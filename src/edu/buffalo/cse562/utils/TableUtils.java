@@ -86,7 +86,7 @@ public final class TableUtils {
 		int index = columnMapping.get(columnName);
 		String value = colVals[index];
 		ColDataType dataType = colDefns.get(index).getColDataType();
-		String data = dataType.getDataType().toLowerCase();
+		String data = dataType.getDataType();
 		if(data.equalsIgnoreCase("int"))
 			return new LongValue(colVals[index]);
 		else if(data.equalsIgnoreCase("date")){
@@ -94,7 +94,7 @@ public final class TableUtils {
 				throw new RuntimeException("Illeagel value dates" + value);
 			return TableUtils.getPooledDateValue("'"+colVals[index]+"'");
 		}
-		else if(data.equalsIgnoreCase("string") || data.contains("char"))
+		else if(data.equalsIgnoreCase("string") || data.toLowerCase().contains("char"))
 			return new StringValue(" " + colVals[index] + " ");
 		else if(data.equalsIgnoreCase("double") || data.equalsIgnoreCase("decimal"))
 			return new DoubleValue(colVals[index]);
