@@ -1,18 +1,18 @@
 package edu.buffalo.cse562.queryplan;
 
-import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 
 import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import edu.buffalo.cse562.ExpressionEvaluator;
 import edu.buffalo.cse562.DataSourceSqlIterator;
+import edu.buffalo.cse562.ExpressionEvaluator;
+import edu.buffalo.cse562.datasource.DataSource;
+import edu.buffalo.cse562.datasource.DataSourceReader;
+import edu.buffalo.cse562.datasource.DataSourceWriter;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExpressionNode implements Node {
@@ -40,57 +40,55 @@ public class ExpressionNode implements Node {
 
 	@Override
 	public RelationNode eval() {
+		try {
 		RelationNode relationNode = childNode.eval();
 		String tableName = relationNode.getTableName();
 		CreateTable table = relationNode.getTable();
 		DataSource dataFile = relationNode.getFile();
+		DataSourceReader dataFileReader = dataFile.getReader(); 
 		// TODO decide the table name convention
 		if (!expressionDead) {
 			String newTableName = tableName + "_new";
 			DataSource file;
 			LeafValue[] colVals;
 			DataSourceSqlIterator sqlIterator = new DataSourceSqlIterator(
-					table, null, dataFile, null, null);
+					table, null, dataFileReader, null, null);
 			
 			if (TableUtils.isSwapOn)
 				file = new FileDataSource(new File(TableUtils.getTempDataDir()
-						+ File.separator + newTableName + ".dat"));
+						+ File.separator + newTableName + ".dat"),table.getColumnDefinitions());
 			else
 				file = new BufferDataSource();
-			try {
-				PrintWriter pw = new PrintWriter(file.getWriter());
+			
+				DataSourceWriter fileWriter = file.getWriter();
 				ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 				while ((colVals = sqlIterator.next()) != null) {
 					int i;
-					String[] colValsString = new String[colVals.length];
-					for (int j = 0; j < colVals.length; j++) {
-						colValsString[j] = toUnescapedString(colVals[j]);
-					}
+//					String[] colValsString = new String[colVals.length];
+//					for (int j = 0; j < colVals.length; j++) {
+//						colValsString[j] = toUnescapedString(colVals[j]);
+//					}
 					LeafValue leafValue = evaluate.evaluateExpression(
-							expression, colValsString, null);
+							expression, colVals, null);
 					BooleanValue value = (BooleanValue) leafValue;
 					if (value == BooleanValue.FALSE)
 						continue;
-					for (i = 1; i < colVals.length; i++) {
-						pw.print(toUnescapedString(colVals[i - 1]) + "|");
-					}
-					if (colVals.length > 0)
-						pw.println(toUnescapedString(colVals[i - 1]));
+					fileWriter.writeNextTuple(colVals);
 				}
-				pw.close();
-				relationNode.getFile().close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} catch (SQLException e) {
-				throw new RuntimeException(e);
-			}
+				fileWriter.close();
 			sqlIterator.close();
+			dataFile.clear();
 			relationNode.setFile(file);
 			relationNode.setTableName(newTableName);
 		}
 		// file.renameTo(new File(TableUtils.getDataDir() + File.separator +
 		// tableName + ".dat"));
 		return relationNode;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void setChildNode(Node childNode) {

@@ -1,47 +1,54 @@
 package edu.buffalo.cse562.queryplan;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
-public class BufferDataSource implements DataSource {
+import net.sf.jsqlparser.expression.LeafValue;
+import edu.buffalo.cse562.datasource.DataSource;
+import edu.buffalo.cse562.datasource.DataSourceReader;
+import edu.buffalo.cse562.datasource.DataSourceWriter;
 
-	private StringBuffer buffer;
-	private StringReader reader;
-	private StringWriter writer;
+public class BufferDataSource implements DataSource,DataSourceReader,DataSourceWriter {
 	
+	private List<LeafValue[]> tuples = new LinkedList<LeafValue[]>();
+	private Iterator<LeafValue[]> iterator = tuples.iterator();
+
 	@Override
-	public Reader getReader() throws IOException {
-		if(writer!=null){
-			addToBuffer();
-		}
-		reader = new StringReader(buffer.toString());
-		return reader;
+	public LeafValue[] readNextTuple() throws IOException {
+		if(iterator.hasNext())
+			return iterator.next();
+		return null;
 	}
 
 	@Override
-	public Writer getWriter() throws IOException {
-		if(writer!=null){
-			addToBuffer();
-			writer.close();
-		}
-		writer = new StringWriter();
-		return writer;
+	public void writeNextTuple(LeafValue[] tuple) throws IOException {
+		tuples.add(tuple);
 	}
-	
-	public void close() throws IOException {
-		if(reader!=null)
-			reader.close();
-		if(writer!=null){
-			writer.close();
-		}
-		buffer=null;
+
+	@Override
+	public void close(){
+		
+	}
+
+	@Override
+	public DataSourceReader getReader() throws IOException{
+		close();
+		iterator = tuples.iterator();
+		return this;
+	}
+
+	@Override
+	public DataSourceWriter getWriter() throws IOException{
+		close();
+		clear();
+		return this;
+	}
+
+	@Override
+	public void clear() {
+		tuples=new LinkedList<LeafValue[]>();
 		System.gc();
-	}
-	
-	private void addToBuffer(){
-		buffer = writer.getBuffer();
 	}
 }

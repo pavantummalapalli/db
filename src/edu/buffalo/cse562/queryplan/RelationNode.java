@@ -4,6 +4,7 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.ExtendedCreateTable;
+import edu.buffalo.cse562.datasource.DataSource;
 
 public class RelationNode implements Node {
 	

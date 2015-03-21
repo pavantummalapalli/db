@@ -2,6 +2,7 @@ package edu.buffalo.cse562.utils;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,7 +14,6 @@ import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
@@ -52,10 +52,38 @@ public final class TableUtils {
 		}
 	}
 	
+	public static Map<String,Integer> getColumnMapping(List<ColumnDefinition> colDefns){
+		Map<String,Integer> columnMapping = new HashMap<String, Integer>();
+		Iterator<ColumnDefinition> iterator = colDefns.iterator();
+		int index = 0;
+		while(iterator.hasNext()) {
+			ColumnDefinition cd = iterator.next();
+			columnMapping.put(cd.getColumnName(), index);
+			index++;
+		}
+		return columnMapping;
+	}
+	
+	public static LeafValue getIdentifiedLeafValue(Object val){
+		if(val instanceof String) 
+			return new StringValue(" " + val.toString() + " ");
+		else if(val instanceof Long || val instanceof Integer)
+			return new LongValue(val.toString());
+		else if(val instanceof Double)
+			return new DoubleValue(val.toString());
+		else if(val instanceof DateValue || val instanceof Date)
+			return new ExtendedDateValue(" "+val.toString()+" ");
+		return null;
+}
+	
+	//Optimize this function more
 	public static LeafValue getLeafValue(String columnName,Map<String,Integer> columnMapping,String[]colVals,CreateTable table){
-		int index = columnMapping.get(columnName); 
+		return getLeafValue(columnName, columnMapping, colVals, table.getColumnDefinitions());
+	}
+	
+	public static LeafValue getLeafValue(String columnName,Map<String,Integer> columnMapping,String[]colVals,List<ColumnDefinition> colDefns){
+		int index = columnMapping.get(columnName);
 		String value = colVals[index];
-		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 		ColDataType dataType = colDefns.get(index).getColDataType();
 		String data = dataType.getDataType().toLowerCase();
 		if(data.equalsIgnoreCase("int"))
@@ -71,6 +99,12 @@ public final class TableUtils {
 			return new DoubleValue(colVals[index]);
 		return null;
 	}
+	
+	
+//	public static LeafValue getLeafValue(String columnName,Map<String,Integer> columnMapping,LeafValue[]colVals,CreateTable table){
+//		int index = columnMapping.get(columnName); 
+//		return colVals[index];
+//	}
 	
 	public static String toUnescapedString(LeafValue leafValue){
 		if(leafValue instanceof StringValue){

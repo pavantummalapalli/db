@@ -1,7 +1,10 @@
 package edu.buffalo.cse562.queryplan;
 
+import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +24,6 @@ import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueMerger;
 import edu.buffalo.cse562.utils.TableUtils;
-import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
 public class MergeJoinNode extends AbstractJoinNode {
 
@@ -46,6 +48,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		List <ColumnDefinition> columnDefList1 = (relationNode1.getTable().getColumnDefinitions());
 		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndex[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
 		File finalSortedFiles1 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile1");
+		System.gc();
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
 		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndex[1]);
@@ -53,6 +56,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndex[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
 
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
+		System.gc();
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);
 		
 		//sorting relationNode2		
@@ -111,6 +115,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 	 * @return
 	 */
 	private File[] getSortedBlockFiles(RelationNode relationNode,final int colIndex) {
+		try{
 		CreateTable table = relationNode.getTable();
 		
 		FileDataSource fileDataSource = (FileDataSource)relationNode.getFile();
@@ -119,7 +124,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		/**
 		 * expression list and group by list is null.
 		 */
-		SqlIterator sqlIterator = new DataSourceSqlIterator(table, null, fileDataSource, null, relationNode.getExpression());
+		SqlIterator sqlIterator = new DataSourceSqlIterator(table, null, fileDataSource.getReader(), null, relationNode.getExpression());
 							
 		List <LeafValue[]> leafValueList = new ArrayList <>();
 		List <File> sortedFileBlocks = new ArrayList <>();
@@ -147,6 +152,9 @@ public class MergeJoinNode extends AbstractJoinNode {
 		}
 		
 		return sortedFileBlocks.toArray(new File[sortedFileBlocks.size()]);
+		}catch(IOException e){
+			throw new RuntimeException(e);
+		}
 	}
 	
 	private File sortAndFlushInFile(List <LeafValue[]>leafValueList, int colIndex, int fileCount) {

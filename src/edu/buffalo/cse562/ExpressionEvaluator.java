@@ -21,7 +21,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class ExpressionEvaluator extends Eval {
 	
-	private String[] colVals;
+	private LeafValue[] colVals;
 	private CreateTable table;
 	private HashMap<String, Integer> columnMapping = new HashMap <String, Integer> ();
 	private HashMap<String,Object> calculatedData = new HashMap <String, Object>();
@@ -54,7 +54,7 @@ public class ExpressionEvaluator extends Eval {
 	}
 	
 	public String getGroupByValueKey() throws SQLException{
-		StringBuffer key = new StringBuffer("");
+		StringBuilder key = new StringBuilder("");
 		for(String groupByColumn : groupByList) {
 			Column temp = convertStringToColumn(groupByColumn.toUpperCase());
 			LeafValue leafValue = eval(temp);
@@ -231,7 +231,7 @@ public class ExpressionEvaluator extends Eval {
 		};
 	}
 	
-	public LeafValue evaluateExpression(Expression exp,String []colVals,List<String> groupByList) throws SQLException{
+	public LeafValue evaluateExpression(Expression exp,LeafValue []colVals,List<String> groupByList) throws SQLException{
 		this.colVals=colVals;
 		this.groupByList = groupByList;
 		return super.eval(exp);
@@ -244,8 +244,10 @@ public class ExpressionEvaluator extends Eval {
 	@Override
 	public LeafValue eval(Column arg0) throws SQLException {	
 		String value = arg0.getWholeColumnName().toUpperCase();
-		return TableUtils.getLeafValue(value, columnMapping, colVals, table);
+		int index = columnMapping.get(value); 
+		return colVals[index];
 	}
+	
 	public String getLeafValue(LeafValue leafValue) {
 		if (leafValue instanceof DoubleValue)
 			return String.valueOf(((DoubleValue) leafValue).getValue());

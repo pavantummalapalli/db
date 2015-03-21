@@ -29,25 +29,25 @@ public class UnionOperatorNode implements Node {
 	public RelationNode eval() {
 
 		PrintWriter out = new PrintWriter(System.out);
-		try {
+//		try {
 			for (Node childNode : childNodes) {
 				RelationNode relationNode = childNode.eval();
 				//FileReader fileReader = new FileReader(relationNode.getFile().getReader());
-				BufferedReader bufferedReader = new BufferedReader(relationNode.getFile().getReader());
-				String rowVal;
-								
-				while ((rowVal = bufferedReader.readLine()) != null) {
-					if (rowVal.trim().isEmpty())
-						continue;
-					out.println(rowVal);
-				}
-				bufferedReader.close();
-				relationNode.getFile().close();
+//				BufferedReader bufferedReader = new BufferedReader(relationNode.getFile().getReader());
+//				String rowVal;
+//								
+//				while ((rowVal = bufferedReader.readLine()) != null) {
+//					if (rowVal.trim().isEmpty())
+//						continue;
+//					out.println(rowVal);
+//				}
+//				bufferedReader.close();
+				relationNode.getFile().clear();
 				//fileReader.close();
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+//		} catch (IOException e) {
+//			throw new RuntimeException(e);
+//		}
 		out.close();
 		//TODO as of now returning nothing. Just printing.
 		return null;

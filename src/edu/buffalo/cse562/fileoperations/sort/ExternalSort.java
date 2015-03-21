@@ -49,7 +49,7 @@ public class ExternalSort<V> {
 		List<InnerDataBlock> blocks = new ArrayList<InnerDataBlock>(sortedBlockFiles.length);
 		double eachBlockSize = ((0.8*getAvailableMemoryInKB().longValue())/(sortedBlockFiles.length+1));
 		//Assuming each V type object size to be 4KB
-		int threshold = Double.valueOf(eachBlockSize/(4.0)).intValue();  
+		int threshold = Double.valueOf(eachBlockSize/(1.0)).intValue();  
 		//System.out.println(threshold);
 		for(int i=0;i<sortedBlockFiles.length;i++){
 			InnerDataBlock tempBlock = new InnerDataBlock(sortedBlockFiles[i],threshold);

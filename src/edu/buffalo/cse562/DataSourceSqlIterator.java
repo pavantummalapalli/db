@@ -1,6 +1,5 @@
 package edu.buffalo.cse562;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,31 +13,32 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import edu.buffalo.cse562.queryplan.DataSource;
-import edu.buffalo.cse562.utils.TableUtils;
+import edu.buffalo.cse562.datasource.DataSourceReader;
 
 public class DataSourceSqlIterator implements SqlIterator {
 	//Schema Info, Expression and relation to be declared
 		private boolean aggregateModeOn;
-		private BufferedReader bufferedReader;
+		//private BufferedReader bufferedReader;
 		private List <Expression> selectExpressionList;
 		private CreateTable table;
 		private HashMap<String, Integer> columnMapping;
 		private HashMap<Integer,String> reverseColumnMapping;
-		private DataSource dataFile;
+		private DataSourceReader dataFileReader;
 		private String[] colVals;
 		private List <String> groupByList;
 		private List <ExpressionEvaluator> selectExpressionEvaluatorList;
 		private Expression filterExpression;
+		private ExpressionEvaluator evaluate ;
 		
-		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSource dataFile, List <String> groupByList,Expression filterExpression) {
+		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSourceReader dataFile, List <String> groupByList,Expression filterExpression) {
 			this.selectExpressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
 			reverseColumnMapping = new HashMap<>();
-			this.dataFile = dataFile;
+			this.dataFileReader = dataFile;
 			this.groupByList = groupByList;
 			this.filterExpression=filterExpression;
+			evaluate = new ExpressionEvaluator(table);
 			open();
 		}
 		
@@ -59,61 +59,54 @@ public class DataSourceSqlIterator implements SqlIterator {
 		}
 		
 		public void open() {
-			try {
-				//fileReader = new FileReader(dataFile);
-				bufferedReader = new BufferedReader(dataFile.getReader());
-				List<ColumnDefinition> colDefns = table.getColumnDefinitions();
-				Iterator<ColumnDefinition> iterator = colDefns.iterator();
-				int index = 0;
-				while(iterator.hasNext()) {
-					ColumnDefinition cd = iterator.next();
-					columnMapping.put(cd.getColumnName(), index);
-					reverseColumnMapping.put(index, cd.getColumnName());
-					index++;
+			List<ColumnDefinition> colDefns = table.getColumnDefinitions();
+			Iterator<ColumnDefinition> iterator = colDefns.iterator();
+			int index = 0;
+			while(iterator.hasNext()) {
+				ColumnDefinition cd = iterator.next();
+				columnMapping.put(cd.getColumnName(), index);
+				reverseColumnMapping.put(index, cd.getColumnName());
+				index++;
+			}
+			if(selectExpressionList!=null && selectExpressionList.size()>0){
+				selectExpressionEvaluatorList = new ArrayList<>(selectExpressionList.size());
+				for (int i = 0; i < selectExpressionList.size(); i++) {
+					selectExpressionEvaluatorList.add(new ExpressionEvaluator(table));
 				}
-				if(selectExpressionList!=null && selectExpressionList.size()>0){
-					selectExpressionEvaluatorList = new ArrayList<>(selectExpressionList.size());
-					for (int i = 0; i < selectExpressionList.size(); i++) {
-						selectExpressionEvaluatorList.add(new ExpressionEvaluator(table));
-					}
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
 			}
 		}
 				
 		public LeafValue[] next() {
 			try {
-				String row = bufferedReader.readLine();
-				if(row == null || row.trim().isEmpty())
+				LeafValue [] convertedValues = dataFileReader.readNextTuple();
+				if(convertedValues == null)
 					return null;
 				//TODO: detect n trim spaces
-				colVals = row.split("\\|");
+//				colVals = row.split("\\|");
+//				LeafValue [] convertedValues = new LeafValue[colVals.length];
+//				for(int i=0;i<colVals.length;i++){
+//					Integer index  = Integer.valueOf(i);
+//					String columnName = reverseColumnMapping.get(index);
+//					convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
+//				}
 				if(filterExpression!=null){
-					ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
-					LeafValue leafValue = evaluate.evaluateExpression(filterExpression, colVals, null);
+					LeafValue leafValue = evaluate.evaluateExpression(filterExpression, convertedValues, null);
 					BooleanValue value =(BooleanValue) leafValue;
 					if(value ==BooleanValue.FALSE)
 						return next();
 				}
 				if(selectExpressionList ==null || selectExpressionList.size()==0){
-					LeafValue [] resolvedValues = new LeafValue[colVals.length];
-					for(int i=0;i<colVals.length;i++){
-						Integer index  = Integer.valueOf(i);
-						String columnName = reverseColumnMapping.get(index);
-						resolvedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
-					}
-					return resolvedValues;
+					return convertedValues;
 				}
-				LeafValue [] resolvedValues = new LeafValue[selectExpressionList.size()];
 				int count = 0;
+				LeafValue[] resolvedValue = new LeafValue[convertedValues.length];
 				for (Expression expression : selectExpressionList) {
-					LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, colVals, null);
+					LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, convertedValues, null);
 					//resolvedValues[count] =expressionEvaluatorList.get(count).getLeafValue(leafValue);
-					resolvedValues[count] =leafValue;
+					resolvedValue[count] =leafValue;
 					count++;
 				}
-				return resolvedValues;
+				return resolvedValue;
 			}
 			catch (SQLException e) {
 				throw new RuntimeException("SQLException in SQLIterator next method 1", e);
@@ -126,12 +119,17 @@ public class DataSourceSqlIterator implements SqlIterator {
 		
 		public void nextAggregate() {
 			try {
-				String row = null;
-				while((row=bufferedReader.readLine()) != null && !row.trim().isEmpty()){
-					colVals = row.split("\\|");
+				LeafValue[] resolvedValues=null;
+				while((resolvedValues=dataFileReader.readNextTuple()) != null){
+//					colVals = row.split("\\|");
+//					LeafValue [] resolvedValues = new LeafValue[colVals.length];
+//					for(int i=0;i<colVals.length;i++){
+//						Integer index  = Integer.valueOf(i);
+//						String columnName = reverseColumnMapping.get(index);
+//						resolvedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
+//					}
 					if(filterExpression!=null){
-						ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
-						LeafValue leafValue = evaluate.evaluateExpression(filterExpression, colVals, null);
+						LeafValue leafValue = evaluate.evaluateExpression(filterExpression, resolvedValues, null);
 						BooleanValue value =(BooleanValue) leafValue;
 						if(value ==BooleanValue.FALSE)
 							continue;
@@ -139,7 +137,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 					if(selectExpressionList != null){
 						int count = 0;
 						for (Expression expression : selectExpressionList) {
-							LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, colVals, groupByList);
+							LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, resolvedValues, groupByList);
 							count++;
 						}
 					}
@@ -155,7 +153,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 		
 		public void close() {
 			try {
-				bufferedReader.close();
+				dataFileReader.close();
 			} catch (IOException e) {
 				throw new RuntimeException("Exception while closing SQLIterator close method ", e);
 			}	
