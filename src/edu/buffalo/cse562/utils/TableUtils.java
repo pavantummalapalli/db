@@ -347,5 +347,17 @@ public final class TableUtils {
 			joinExps.add(expression);
 		return joinExps;
 	}
+
+	public static int compareTwoLeafValuesList(LeafValue[] colVals1, LeafValue[] colVals2, List<Integer>[] columnIndexList) {
+		int res = 0;
+		for (int i = 0; i < columnIndexList[0].size(); i++) {
+			int col1 = columnIndexList[0].get(i);
+			int col2 = columnIndexList[1].get(i);
+			res = compareTwoLeafValues(colVals1[col1], colVals2[col2]);
+			if (res == 0) continue;
+			return res;
+		}
+		return res;
+	}
 	
 }
