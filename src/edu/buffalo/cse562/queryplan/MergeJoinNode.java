@@ -151,7 +151,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
 		long numberOfLines =(long)(eachBlockSizeInKB/ROW_SIZE_IN_KB); 
 		LeafValue[] leafValue = null;
-		while ((leafValue = sqlIterator.next()) != null) {
+		while ((leafValue = sqlIterator.next()) != null || leafValueList.size()==24000) {
 			leafValueList.add(leafValue);
 			if (numberOfLines==leafValueList.size()) {
 				File sortedFile = sortAndFlushInFile(leafValueList, colIndexList, fileCount++);
