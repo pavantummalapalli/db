@@ -275,9 +275,9 @@ public final class TableUtils {
 	public static int compareTwoLeafValues(LeafValue leafValue1, LeafValue leafValue2) {
 		int ans = 0;
 		if (leafValue1 instanceof DoubleValue && leafValue2 instanceof DoubleValue)
-			ans = ((DoubleValue) leafValue1).getValue() <= ((DoubleValue) leafValue2).getValue() ? -1 : 1;
+			ans = new Double(((DoubleValue) leafValue1).getValue()).compareTo(new Double(((DoubleValue) leafValue2).getValue()));
 		else if (leafValue1 instanceof LongValue && leafValue2 instanceof LongValue)
-			ans = ((LongValue) leafValue1).getValue() <= ((LongValue) leafValue2).getValue() ? -1 : 1;
+			ans = new Long(((LongValue) leafValue1).getValue()).compareTo(new Long(((LongValue) leafValue2).getValue()));
 		else if (leafValue1 instanceof StringValue && leafValue2 instanceof StringValue)
 			ans = ((StringValue) leafValue1).getValue().compareTo(((StringValue) leafValue2).getValue());
 		else if (leafValue1 instanceof DateValue && leafValue1 instanceof DateValue)

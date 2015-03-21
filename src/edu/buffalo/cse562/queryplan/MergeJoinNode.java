@@ -156,19 +156,23 @@ public class MergeJoinNode extends AbstractJoinNode {
 		File fileTemp = new File(TableUtils.getTempDataDir() + File.separator + "temp" + fileCount);
 		if (fileTemp.exists()) 
 			fileTemp.delete();
-		Collections.sort(leafValueList, new LeafValueComparator(colIndex));
-		
 		try {
-			PrintWriter pw = new PrintWriter(fileTemp);
-			for (LeafValue[] leafValue : leafValueList) {
-				for (int i = 0; i < leafValue.length - 1; i++) {
-					pw.print(toUnescapedString(leafValue[i]) + "|");
+			Collections.sort(leafValueList, new LeafValueComparator(colIndex));
+		
+			try {
+				PrintWriter pw = new PrintWriter(fileTemp);
+				for (LeafValue[] leafValue : leafValueList) {
+					for (int i = 0; i < leafValue.length - 1; i++) {
+						pw.print(toUnescapedString(leafValue[i]) + "|");
+					}
+					pw.println(toUnescapedString(leafValue[leafValue.length - 1]));
 				}
-				pw.println(toUnescapedString(leafValue[leafValue.length - 1]));
+				pw.close();
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException("Got FileNotFound Exception " );
 			}
-			pw.close();
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Got FileNotFound Exception " );
+		} catch (Exception e) {
+			System.out.println("Got exception");
 		}	
 		return fileTemp;
 	}

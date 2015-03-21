@@ -166,7 +166,7 @@ public class QueryOptimizer {
 	public Node optimizeQueryPlan(Node node){
 		ArrayList<Expression> extractedExpressionList = new ArrayList<Expression>();
 		iterateNode(node, extractedExpressionList);
-		System.out.println(node.toString());
+		//System.out.println(node.toString());
 		return node;
 	}
 }
