@@ -7,7 +7,6 @@ import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
-import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import edu.buffalo.cse562.ExtendedDateValue;
@@ -34,12 +33,7 @@ public class LeafValueConverter implements Convertor<LeafValue[]> {
 				leafValue[i] = new LongValue(colVals[i]);
 			else if (str.equalsIgnoreCase("date")) {
 				String dateValueStr="'"+ colVals[i] + "'";
-				DateValue dateValue = TableUtils.getPooledDateValue(dateValueStr);
-				if(dateValue==null){
-					dateValue=new ExtendedDateValue(dateValueStr);
-					TableUtils.addToDatePool(dateValueStr, dateValue);
-				}
-				leafValue[i] = dateValue;
+				leafValue[i] = TableUtils.getPooledDateValue(dateValueStr);
 			} else if (str.equalsIgnoreCase("string") || str.contains("char"))
 				leafValue[i] = new StringValue(" " + colVals[i] + " ");
 			else if (str.equalsIgnoreCase("double") || str.equalsIgnoreCase("decimal"))

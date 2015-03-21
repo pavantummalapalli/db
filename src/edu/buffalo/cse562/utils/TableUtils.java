@@ -73,9 +73,9 @@ public final class TableUtils {
 		else if(val instanceof Double)
 			return new DoubleValue(val.toString());
 		else if(val instanceof DateValue || val instanceof Date)
-			return new ExtendedDateValue(" "+val.toString()+" ");
+			return TableUtils.getPooledDateValue("'"+val.toString()+"'");
 		return null;
-}
+	}
 	
 	//Optimize this function more
 	public static LeafValue getLeafValue(String columnName,Map<String,Integer> columnMapping,String[]colVals,CreateTable table){
@@ -92,7 +92,7 @@ public final class TableUtils {
 		else if(data.equalsIgnoreCase("date")){
 			if((" "+colVals[index]+" ").length()!=12)
 				throw new RuntimeException("Illeagel value dates" + value);
-			return new ExtendedDateValue(" "+colVals[index]+" ");
+			return TableUtils.getPooledDateValue("'"+colVals[index]+"'");
 		}
 		else if(data.equalsIgnoreCase("string") || data.contains("char"))
 			return new StringValue(" " + colVals[index] + " ");
@@ -145,14 +145,12 @@ public final class TableUtils {
 	public static DateValue getPooledDateValue(String parameter){
 		if(pooledDateValue.containsKey(parameter))
 			return pooledDateValue.get(parameter);
-		return null;
+		else{
+			DateValue dateValue=new ExtendedDateValue(parameter);
+			pooledDateValue.put(parameter, dateValue);
+			return dateValue;
+		}
 	}
-	
-	public static void addToDatePool(String parameter,DateValue dateValue){
-		pooledDateValue.put(parameter, dateValue);
-	}
-	
-	
 	
 	public static List <ColumnDefinition> getColumnDefinitionForTable(String tableName,Map <String, CreateTable> tempTableSchemaMap){
 		CreateTable cd = tableSchemaMap.get(tableName);

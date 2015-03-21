@@ -212,12 +212,7 @@ public class ExpressionEvaluator extends Eval {
 			else if(function.getName().equalsIgnoreCase("DATE")){
 				Expression dateValueParam = (Expression) function.getParameters().getExpressions().get(0);
 				String dateStr = eval(dateValueParam).toString();
-				DateValue value= TableUtils.getPooledDateValue(dateStr);
-				if (value==null) {
-					value=new ExtendedDateValue(dateStr);
-					TableUtils.addToDatePool(dateStr,value );
-				}
-				return value;
+				return TableUtils.getPooledDateValue(dateStr);
 			}
 		}
 		catch(InvalidLeaf e){
