@@ -6,7 +6,6 @@ import net.sf.jsqlparser.expression.LeafValue;
 
 public interface DataSourceWriter {
 
-	public LeafValue[] readNextTuple() throws IOException ;
 	
 	public void writeNextTuple(LeafValue[] tuple) throws IOException ;
 	

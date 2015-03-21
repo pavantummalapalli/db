@@ -74,7 +74,6 @@ public class MergeJoinImpl {
 			LeafValue[] colVals1 = sqlIterator1.next();
 			LeafValue[] colVals2 = sqlIterator2.next();
 			while (colVals1 != null && colVals2 != null) {
-
 				int compareResults = TableUtils.compareTwoLeafValuesList(
 						colVals1, colVals2, columnIndexList);
 				if (compareResults == 0) {

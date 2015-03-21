@@ -8,7 +8,5 @@ public interface DataSourceReader {
 
 	public LeafValue[] readNextTuple() throws IOException ;
 	
-	public void writeNextTuple(LeafValue[] tuple) throws IOException ;
-	
 	public void close() throws IOException;
 }
