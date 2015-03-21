@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -125,11 +126,13 @@ public class HashJoin {
 				String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
 				if(hashMap.containsKey(hashKey)) {
 					List<LeafValue[]> leafValues = hashMap.get(hashKey);
-					for(int i=0; i<leafValues.size(); i++) {
-						LeafValue[] tuple = new LeafValue[leafValues.get(i).length+colVals2.length];
+					Iterator<LeafValue[]> it = leafValues.iterator();
+					while(it.hasNext()) {
+						LeafValue[] firstTuple = it.next();
+						LeafValue[] tuple = new LeafValue[firstTuple.length+colVals2.length];
 						int z=0;
-						for(int j=0; j<leafValues.get(i).length; j++,z++)
-							tuple[z]=leafValues.get(i)[j];
+						for(int j=0; j<firstTuple.length; j++,z++)
+							tuple[z]=firstTuple[j];
 						for(int j=0; j<colVals2.length; j++,z++)
 							tuple[z]=colVals2[j];
 						fileWriter.writeNextTuple(tuple);
