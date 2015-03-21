@@ -56,7 +56,8 @@ public class ExpressionEvaluator extends Eval {
 	public String getGroupByValueKey() throws SQLException{
 		StringBuilder key = new StringBuilder("");
 		for(String groupByColumn : groupByList) {
-			Column temp = convertStringToColumn(groupByColumn.toUpperCase());
+			//Column temp = convertStringToColumn(groupByColumn.toUpperCase());
+			Column temp = convertStringToColumn(groupByColumn);
 			LeafValue leafValue = eval(temp);
 			key.append(getLeafValue(leafValue)+"|");
 		}	
@@ -243,7 +244,8 @@ public class ExpressionEvaluator extends Eval {
 	
 	@Override
 	public LeafValue eval(Column arg0) throws SQLException {	
-		String value = arg0.getWholeColumnName().toUpperCase();
+		//String value = arg0.getWholeColumnName().toUpperCase();
+		String value = arg0.getWholeColumnName();
 		int index = columnMapping.get(value); 
 		return colVals[index];
 	}

@@ -80,7 +80,7 @@ WHERE customer.custkey = orders.custkey
   AND orders.orderdate >= date('1993-05-01')
   AND orders.orderdate < date('1993-08-01')
   AND lineitem.returnflag = 'R'
-  AND customer.nationkey = nation.nationkey GROUPBY customer.custkey,
+  AND customer.nationkey = nation.nationkey GROUP BY customer.custkey,
       customer.acctbal,
       customer.phone,
       nation.name,

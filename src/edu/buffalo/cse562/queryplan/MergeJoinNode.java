@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 
 	private Expression exp;
 	private static final double ROW_SIZE_IN_KB = 0.5;
+	private static final double SCALING_FACTOR = 5;
 
 	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression) {
 		setRelationNode1(relationNode1);
@@ -65,9 +67,8 @@ public class MergeJoinNode extends AbstractJoinNode {
 		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndexList[1]), new LeafValueMerger(),
 				new LeafValueConverter(columnDefList2));
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
-		System.gc();
 		externalSort2.externalSort(sortedBlockFiles2, finalSortedFiles2);
-
+		System.gc();
 		// setting sorted file1 to relation 1
 		FileDataSource fileDataSource1 = (FileDataSource) relationNode1.getFile();
 		fileDataSource1.setFile(finalSortedFiles1);
@@ -158,18 +159,16 @@ public class MergeJoinNode extends AbstractJoinNode {
 			long blocksCount = (long) ((fileSizeInKB * 2) / memoryAvailableInKB);
 			long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
 			long numberOfLines = (long) (eachBlockSizeInKB / ROW_SIZE_IN_KB);
+			numberOfLines = (long)(numberOfLines/SCALING_FACTOR);
 			LeafValue[] leafValue = null;
 			long startTime = System.currentTimeMillis();
 
 			while ((leafValue = sqlIterator.next()) != null) {
 				leafValueList.add(leafValue);
-				if (numberOfLines == leafValueList.size() || leafValueList.size() == 24000) {
+				if (numberOfLines == leafValueList.size()) {
 					long endTime = System.currentTimeMillis();
 					File sortedFile = sortAndFlushInFile(leafValueList, colIndexList, fileCount++);
 					sortedFileBlocks.add(sortedFile);
-					leafValueList.clear();
-					leafValueList = new LinkedList<>();
-					System.gc();
 					startTime = System.currentTimeMillis();
 				}
 			}
@@ -194,12 +193,16 @@ public class MergeJoinNode extends AbstractJoinNode {
 
 		try {
 			PrintWriter pw = new PrintWriter(fileTemp);
-			for (LeafValue[] leafValue : leafValueList) {
+			Iterator<LeafValue[]> iterator = leafValueList.iterator();
+			while (iterator.hasNext()) {
+				LeafValue[] leafValue  = iterator.next();
 				for (int i = 0; i < leafValue.length - 1; i++) {
 					pw.print(toUnescapedString(leafValue[i]) + "|");
 				}
 				pw.println(toUnescapedString(leafValue[leafValue.length - 1]));
+				iterator.remove();
 			}
+			System.gc();
 			pw.close();
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Got FileNotFound Exception ");

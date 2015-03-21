@@ -47,9 +47,9 @@ public class ExternalSort<V> {
 	public void externalSort(File[] sortedBlockFiles,File finalSortedFile){
 		try{
 		List<InnerDataBlock> blocks = new ArrayList<InnerDataBlock>(sortedBlockFiles.length);
-		double eachBlockSize = ((0.6*getAvailableMemoryInKB().longValue())/(sortedBlockFiles.length+1));
+		double eachBlockSize = ((0.8*getAvailableMemoryInKB().longValue())/(sortedBlockFiles.length+1));
 		//Assuming each V type object size to be 4KB
-		int threshold = Double.valueOf(eachBlockSize/(1.0)).intValue();  
+		int threshold = Double.valueOf(eachBlockSize/(5.0)).intValue();  
 		//System.out.println(threshold);
 		for(int i=0;i<sortedBlockFiles.length;i++){
 			InnerDataBlock tempBlock = new InnerDataBlock(sortedBlockFiles[i],threshold);
@@ -67,6 +67,7 @@ public class ExternalSort<V> {
 		while(ite.hasNext()){	
 			V mergedData = merger.writeMergedData(ite.next());
 			stream.write(convertor.convertToString(mergedData)+"\n");
+			stream.flush();
 			//Do not remove this line. 
 			//Free the contents once the block is written
 			ite.remove();

@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import javax.management.NotificationEmitter;
 
+import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
