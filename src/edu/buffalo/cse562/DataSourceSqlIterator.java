@@ -30,6 +30,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 		private List <String> groupByList;
 		private List <ExpressionEvaluator> selectExpressionEvaluatorList;
 		private Expression filterExpression;
+		private ExpressionEvaluator evaluate;
 		
 		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSource dataFile, List <String> groupByList,Expression filterExpression) {
 			this.selectExpressionList = expression;
@@ -80,6 +81,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+			evaluate = new ExpressionEvaluator(table);
 		}
 				
 		public LeafValue[] next() {
@@ -90,7 +92,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 				//TODO: detect n trim spaces
 				colVals = row.split("\\|");
 				if(filterExpression!=null){
-					ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
+					//ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 					LeafValue leafValue = evaluate.evaluateExpression(filterExpression, colVals, null);
 					BooleanValue value =(BooleanValue) leafValue;
 					if(value ==BooleanValue.FALSE)
@@ -130,7 +132,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 				while((row=bufferedReader.readLine()) != null && !row.trim().isEmpty()){
 					colVals = row.split("\\|");
 					if(filterExpression!=null){
-						ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
+						//ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
 						LeafValue leafValue = evaluate.evaluateExpression(filterExpression, colVals, null);
 						BooleanValue value =(BooleanValue) leafValue;
 						if(value ==BooleanValue.FALSE)

@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -45,14 +46,20 @@ public class MergeJoinNode extends AbstractJoinNode {
 		List <Integer>[] columnIndexList = getExpressionColumnIndexList(relationNode1,relationNode2, getJoinCondition());
 		
 		//external sorting relation 1
-		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndexList[0]);				
+		long startTime = System.currentTimeMillis();
+		File[] sortedBlockFiles1 = getSortedBlockFiles(relationNode1, columnIndexList[0]);
+		long endTime = System.currentTimeMillis();
+		//System.out.println("Time to create sorted blocks for Relation 1 " + relationNode1.getTableName() + " : "+ (endTime - startTime)/1000.);
 		List <ColumnDefinition> columnDefList1 = (relationNode1.getTable().getColumnDefinitions());
 		ExternalSort<LeafValue[]> externalSort1 = new ExternalSort<>(new LeafValueComparator(columnIndexList[0]), new LeafValueMerger(), new LeafValueConverter(columnDefList1));
 		File finalSortedFiles1 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile1");
 		externalSort1.externalSort(sortedBlockFiles1, finalSortedFiles1);
 		
 		//external sorting relation 2
+		startTime = System.currentTimeMillis();
 		File[] sortedBlockFiles2 = getSortedBlockFiles(relationNode2, columnIndexList[1]);
+		endTime = System.currentTimeMillis();
+		//System.out.println("Time to create sorted blocks for Relation 2" + relationNode2.getTableName() + ":" + (endTime - startTime)/1000.);
 		List <ColumnDefinition> columnDefList2 = (relationNode2.getTable().getColumnDefinitions());
 		ExternalSort<LeafValue[]> externalSort2 = new ExternalSort<>(new LeafValueComparator(columnIndexList[1]), new LeafValueMerger(), new LeafValueConverter(columnDefList2));
 		File finalSortedFiles2 = new File(TableUtils.getTempDataDir() + File.separator + "finalSortedFile2");
@@ -137,7 +144,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		 */
 		SqlIterator sqlIterator = new DataSourceSqlIterator(table, null, fileDataSource, null, relationNode.getExpression());
 							
-		List <LeafValue[]> leafValueList = new ArrayList <>();
+		List <LeafValue[]> leafValueList = new LinkedList <>();
 		List <File> sortedFileBlocks = new ArrayList <>();
 		
 		int fileCount = 1;
@@ -147,29 +154,37 @@ public class MergeJoinNode extends AbstractJoinNode {
 		long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
 		long numberOfLines =(long)(eachBlockSizeInKB/ROW_SIZE_IN_KB); 
 		LeafValue[] leafValue = null;
+		long startTime = System.currentTimeMillis();
 		while ((leafValue = sqlIterator.next()) != null) {
 			leafValueList.add(leafValue);
-			if (numberOfLines==leafValueList.size()) {
+			//if (leafValueList.size() % 40000 == 0) 
+				//System.out.println("Leaf Value size " + leafValueList.size() + " " + fileDataSource.getFile().getName() + " no of lines "  + numberOfLines);
+			if (numberOfLines==leafValueList.size() || leafValueList.size() == 24000) {
+				long endTime = System.currentTimeMillis();
+				//System.out.println("sorting each block and flushing in file " + fileDataSource.getFile().getName() + "  " + (endTime - startTime) / 1000.);
 				File sortedFile = sortAndFlushInFile(leafValueList, colIndexList, fileCount++);
 				sortedFileBlocks.add(sortedFile);
 				leafValueList.clear();
+				leafValueList = new LinkedList<>();
 				System.gc();
-			}			
+				startTime = System.currentTimeMillis();
+			} 
 		}
 		
 		if (leafValueList.size() > 0) {
 			File sortedFile = sortAndFlushInFile(leafValueList, colIndexList, fileCount++);
 			sortedFileBlocks.add(sortedFile);
 		}
-		
+		//System.out.println(" I am going to flush in disk leafValueSize = " + leafValueList.size() + "  no of lines " + numberOfLines);
 		return sortedFileBlocks.toArray(new File[sortedFileBlocks.size()]);
 	}
 	
 	private File sortAndFlushInFile(List <LeafValue[]>leafValueList, final List <Integer> colIndexList, int fileCount) {
+		long startTime = System.currentTimeMillis();
 		File fileTemp = new File(TableUtils.getTempDataDir() + File.separator + "temp" + fileCount);
 		if (fileTemp.exists()) 
 			fileTemp.delete();
-		try {
+		
 			Collections.sort(leafValueList, new LeafValueComparator(colIndexList));
 		
 			try {
@@ -184,9 +199,9 @@ public class MergeJoinNode extends AbstractJoinNode {
 			} catch (FileNotFoundException e) {
 				throw new RuntimeException("Got FileNotFound Exception " );
 			}
-		} catch (Exception e) {
-			System.out.println("Got exception");
-		}	
+		
+		long endTime = System.currentTimeMillis();
+		//System.out.println("File sortring and Flushing time = " + (endTime - startTime) /1000. + "  size leafvalue " + leafValueList.size());	
 		return fileTemp;
 	}
 	

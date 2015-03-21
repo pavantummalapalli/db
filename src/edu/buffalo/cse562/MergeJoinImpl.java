@@ -65,6 +65,7 @@ public class MergeJoinImpl {
 			PrintWriter pw = new PrintWriter(file.getWriter());
 			LeafValue[] colVals1 = sqlIterator1.next();
 			LeafValue[] colVals2 = sqlIterator2.next();
+			long startTime = System.currentTimeMillis();
 			while (colVals1 != null && colVals2 != null) {
 				
 				int compareResults = TableUtils.compareTwoLeafValuesList(colVals1, colVals2, columnIndexList);
@@ -111,6 +112,8 @@ public class MergeJoinImpl {
 					colVals2 = sqlIterator2.next();
 				}
 			}
+			long endTime = System.currentTimeMillis();
+			//System.out.println("Time taken on core merge join " + (endTime - startTime));
 			sqlIterator1.close();
 			sqlIterator2.close();
 			pw.close();
