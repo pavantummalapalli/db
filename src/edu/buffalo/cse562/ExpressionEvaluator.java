@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import javafx.scene.Group;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
@@ -24,9 +25,9 @@ public class ExpressionEvaluator extends Eval {
 	private LeafValue[] colVals;
 	private CreateTable table;
 	private HashMap<String, Integer> columnMapping = new HashMap <String, Integer> ();
-	private HashMap<String,Object> calculatedData = new HashMap <String, Object>();
-	private HashMap <String, Average> tempAverageMap = new HashMap <>();
-	private List<String> groupByList;
+	private HashMap<GroupBy,Object> calculatedData = new HashMap <>();
+	private HashMap <GroupBy, Average> tempAverageMap = new HashMap <>();
+	private List<Column> groupByList;
 	private boolean aggregateModeOn;
 		
 	private class Average {
@@ -53,20 +54,7 @@ public class ExpressionEvaluator extends Eval {
 		}
 	}
 	
-	public String getGroupByValueKey() throws SQLException{
-		StringBuilder key = new StringBuilder("");
-		for(String groupByColumn : groupByList) {
-			//Column temp = convertStringToColumn(groupByColumn.toUpperCase());
-			Column temp = convertStringToColumn(groupByColumn);
-			LeafValue leafValue = eval(temp);
-			key.append(getLeafValue(leafValue)+"|");
-		}	
-		return key.substring(0,key.length()-1);
-	}
 	
-	private Column convertStringToColumn(String columnStr){
-		return TableUtils.convertStringToColumn(columnStr);
-	}
 	
 	@Override
 	public LeafValue eval(Function function) throws SQLException {
@@ -74,7 +62,7 @@ public class ExpressionEvaluator extends Eval {
 			if(function.getName().equalsIgnoreCase("SUM")){
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
-				String key=null;
+				GroupBy key=null;
 				if(groupByList!=null && groupByList.size()>0){
 					key = getGroupByValueKey();
 				}
@@ -104,7 +92,7 @@ public class ExpressionEvaluator extends Eval {
 			else if(function.getName().equalsIgnoreCase("AVG")){
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
-				String key=null;
+				GroupBy key=null;
 								
 				if(groupByList!=null && groupByList.size()>0){
 					key = getGroupByValueKey();
@@ -143,7 +131,7 @@ public class ExpressionEvaluator extends Eval {
 			else if(function.getName().equalsIgnoreCase("MIN") || function.getName().equalsIgnoreCase("MAX")){
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
-				String key=null;
+				GroupBy key=null;
 				if(groupByList!=null && groupByList.size()>0){
 					key = getGroupByValueKey();
 				}
@@ -198,7 +186,7 @@ public class ExpressionEvaluator extends Eval {
 				}
 			}
 			else if(function.getName().equalsIgnoreCase("COUNT")){
-				String key=null;
+				GroupBy key=null;
 				if(groupByList!=null && groupByList.size()>0){
 					key = getGroupByValueKey();
 				}
@@ -232,13 +220,13 @@ public class ExpressionEvaluator extends Eval {
 		};
 	}
 	
-	public LeafValue evaluateExpression(Expression exp,LeafValue []colVals,List<String> groupByList) throws SQLException{
+	public LeafValue evaluateExpression(Expression exp,LeafValue []colVals,List<Column> groupByList) throws SQLException{
 		this.colVals=colVals;
 		this.groupByList = groupByList;
 		return super.eval(exp);
 	}
 	
-	public HashMap<String, Object> getCalculatedData() {
+	public HashMap<GroupBy, Object> getCalculatedData() {
 		return calculatedData;
 	}
 	
@@ -250,25 +238,15 @@ public class ExpressionEvaluator extends Eval {
 		return colVals[index];
 	}
 	
-	public String getLeafValue(LeafValue leafValue) {
-		if (leafValue instanceof DoubleValue)
-			return String.valueOf(((DoubleValue) leafValue).getValue());
-		else if (leafValue instanceof LongValue)
-			return String.valueOf(((LongValue) leafValue).getValue());
-		else if (leafValue instanceof StringValue)
-			return ((StringValue) leafValue).getValue();
-		else if (leafValue instanceof DateValue)
-			return String.valueOf(((DateValue) leafValue).toString());
-		//TODO throw Unsupported 
-		return "";
+	public GroupBy getGroupByValueKey() throws SQLException{
+		LeafValue[] leafValues = new LeafValue[groupByList.size()];
+		int i=0;
+		for(Column groupByColumn : groupByList) {
+			//Column temp = convertStringToColumn(groupByColumn.toUpperCase());
+			//Column temp = convertStringToColumn(groupByColumn);
+			leafValues[i++] = eval(groupByColumn);
+		}	
+		return new GroupBy(leafValues);
 	}
-	public String getLeafValue(LongValue leafValue) {
-		return String.valueOf(leafValue.getValue());
-	}
-	public String getLeafValue(StringValue leafValue) {
-		return leafValue.getValue();
-	}
-	public String getLeafValue(DateValue leafValue) {
-		return leafValue.toString();
-	}
+	
 }

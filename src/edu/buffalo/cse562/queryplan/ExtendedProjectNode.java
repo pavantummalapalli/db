@@ -11,12 +11,14 @@ import java.util.Map;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import edu.buffalo.cse562.DataSourceSqlIterator;
+import edu.buffalo.cse562.GroupBy;
 import edu.buffalo.cse562.datasource.DataSource;
 import edu.buffalo.cse562.datasource.DataSourceWriter;
 import edu.buffalo.cse562.utils.TableUtils;
@@ -25,7 +27,7 @@ public class ExtendedProjectNode implements Node {
 
 	private Node parentNode;
 	private List<SelectExpressionItem> functionList;
-	private List<String> groupByList;
+	private List<Column> groupByList;
 	private Expression havingExpression;
 	private Node childNode;
 
@@ -78,13 +80,13 @@ public class ExtendedProjectNode implements Node {
 				// Create Column Definitions
 				List<ColumnDefinition> newList = new ArrayList<>();
 				if (groupByList != null) {
-					for (String group : groupByList) {
-						ColumnDefinition cd = columnDefnMap.get(group);
+					for (Column group : groupByList) {
+						ColumnDefinition cd = columnDefnMap.get(group.getWholeColumnName());
 						newList.add(cd);
 					}
 				}
-				Map<String, Object> aggDataMap = sqlIter.getAggregateData(0);
-				String tempKey = aggDataMap.keySet().iterator().next();
+				Map<GroupBy, Object> aggDataMap = sqlIter.getAggregateData(0);
+				GroupBy tempKey = aggDataMap.keySet().iterator().next();
 				for (int i = 0; i < functionList.size(); i++) {
 					aggDataMap = sqlIter.getAggregateData(i);
 					Object val = aggDataMap.get(tempKey);
@@ -126,19 +128,15 @@ public class ExtendedProjectNode implements Node {
 				DataSourceWriter fileWriter = file.getWriter();
 				Map<String, Integer> columnMapping = TableUtils
 						.getColumnMapping(newList);
-				for (String key : aggDataMap.keySet()) {
+				for (GroupBy key : aggDataMap.keySet()) {
 					int z = 0;// tuple index
 					int groupBySize=groupByList!=null?groupByList.size():0;
 					int functionListSize = functionList!=null?functionList.size():0;
 					LeafValue[] tuple = new LeafValue[groupBySize+functionListSize];
-					StringBuilder sb = new StringBuilder("");
 					if (key != null) {
-						sb.append(key);
-						String colsVals[] = key.split("\\|");
+						LeafValue colsVals[] = key.getLeafValue();
 						for (int i = 0; i < colsVals.length; i++, z++) {
-							tuple[z] = TableUtils.getLeafValue(
-									groupByList.get(i), columnMapping,
-									colsVals, newTable);
+							tuple[z] = colsVals[i];
 						}
 					}
 					for (int i = 0; i < functionList.size(); i++, z++) {
@@ -163,11 +161,11 @@ public class ExtendedProjectNode implements Node {
 		}
 	}
 
-	public void setGroupByList(List<String> groupByList) {
+	public void setGroupByList(List<Column> groupByList) {
 		this.groupByList = groupByList;
 	}
 
-	public List<String> getGroupByList() {
+	public List<Column> getGroupByList() {
 		return groupByList;
 	}
 

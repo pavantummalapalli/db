@@ -103,7 +103,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		}
 		selectExpressionItems = prjImp.getSelectExpressionItemList();
 		List groupByColumns = arg0.getGroupByColumnReferences();
-		List<String> groupByList = new LinkedList<>();
+		List<Column> groupByList = new LinkedList<>();
 		boolean extendedMode = false;
 		//PROCESS AGGREGATES
 		ExtendedProjectNode epn = new ExtendedProjectNode();
@@ -116,7 +116,8 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 						wholeCoumnName =  TableUtils.resolveColumnTableName(columnTableMap, column);
 					else
 						wholeCoumnName=column.getWholeColumnName();
-					groupByList.add(wholeCoumnName.toUpperCase());
+					
+					groupByList.add(TableUtils.convertStringToColumn(wholeCoumnName.toUpperCase()));
 				}
 				epn.setGroupByList(groupByList);
 			}

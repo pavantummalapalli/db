@@ -11,6 +11,7 @@ import java.util.Map;
 import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.datasource.DataSourceReader;
@@ -25,12 +26,12 @@ public class DataSourceSqlIterator implements SqlIterator {
 		private HashMap<Integer,String> reverseColumnMapping;
 		private DataSourceReader dataFileReader;
 		private String[] colVals;
-		private List <String> groupByList;
+		private List <Column> groupByList;
 		private List <ExpressionEvaluator> selectExpressionEvaluatorList;
 		private Expression filterExpression;
 		private ExpressionEvaluator evaluate ;
 		
-		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSourceReader dataFile, List <String> groupByList,Expression filterExpression) {
+		public DataSourceSqlIterator(CreateTable table, List <Expression> expression, DataSourceReader dataFile, List <Column> groupByList,Expression filterExpression) {
 			this.selectExpressionList = expression;
 			this.table = table;
 			columnMapping = new HashMap<>();
@@ -161,7 +162,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 			}	
 		}
 		
-		public Map<String,Object> getAggregateData(int index) {
+		public Map<GroupBy,Object> getAggregateData(int index) {
 			return selectExpressionEvaluatorList.get(index).getCalculatedData();
 		}
 }
