@@ -4,7 +4,6 @@ import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,6 +27,8 @@ import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import edu.buffalo.cse562.DataSourceSqlIterator;
+import edu.buffalo.cse562.datasource.DataSource;
+import edu.buffalo.cse562.datasource.DataSourceWriter;
 import edu.buffalo.cse562.utils.TableUtils;
 public class ProjectNode implements Node {
 
@@ -103,13 +104,14 @@ public class ProjectNode implements Node {
 
 	@Override
 	public RelationNode eval() {
-		RelationNode relationNode = childNode.eval();
 		try{
+		RelationNode relationNode = childNode.eval();
+		
 		DataSourceSqlIterator iterator = new DataSourceSqlIterator(
 				relationNode.getTable(),
 				TableUtils
 						.convertSelectExpressionItemIntoExpressions(selectItemsList),
-				relationNode.getFile(), null,relationNode.getExpression());
+				relationNode.getFile().getReader(), null,relationNode.getExpression());
 		List<ColumnDefinition> columnDefList = TableUtils.convertSelectExpressionItemsIntoColumnDefinition(selectItemsList);
 		//List<ColumnDefinition> columnDefList = relationNode.getTable()
 		//		.getColumnDefinitions();
@@ -135,21 +137,45 @@ public class ProjectNode implements Node {
 			}
 			projectList.add(colVals);
 		}
-		relationNode.getFile().close();
+		relationNode.getFile().clear();
 		System.gc();
 		DataSource file = null;
-		PrintWriter pw = null;
-		
+		RelationNode relationNode1=null;
+		DataSourceWriter fileWriter = null;
 		if (parentNode == false) {
 			String newTableName = relationNode.getTableName() + "_new";
+			List<ColumnDefinition> newList = new ArrayList<>();
+			int i=0;
+			List<Column> projectedColumns =TableUtils.convertSelectExpressionItemIntoColumn(selectItemsList);
+			for (LeafValue column : projectedSchema) {
+				ColumnDefinition cd = new ColumnDefinition();
+				cd.setColumnName(projectedColumns.get(i).getColumnName());
+				ColDataType type = new ColDataType();
+				if(column instanceof LongValue)
+					type.setDataType("int");
+				else if(column instanceof DoubleValue)
+					type.setDataType("double");
+				else if(column instanceof StringValue)
+					type.setDataType("string");	
+				else if(column instanceof DateValue)
+					type.setDataType("date");	
+				cd.setColDataType(type);
+				newList.add(cd);
+				i++;
+			}
+			CreateTable newTable = new CreateTable();
+			newTable.setTable(new Table(null, preferredAliasName));
+			newTable.setColumnDefinitions(newList);
 			if(TableUtils.isSwapOn){
 				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator
-						+ newTableName + ".dat"));
+						+ newTableName + ".dat"),newList);
 			}
 			else{
 				file = new BufferDataSource();
 			}
-			pw = new PrintWriter(file.getWriter());
+			fileWriter= file.getWriter();
+			relationNode1 = new RelationNode(preferredAliasName,
+					preferredAliasName, file, newTable);
 		}
 		if (orderByElements != null && orderByElements.size() > 0) {
 			Collections.sort(projectList, new Comparator<LeafValue[]>() {
@@ -191,50 +217,25 @@ public class ProjectNode implements Node {
 		
 		while (it.hasNext() && offset-- > 0) {
 			LeafValue[] rowArr = it.next();
-			int j = 0;
-			for (; j < columnList.size() - 1; j++) {
-				if (parentNode)
+			if(!parentNode)
+				fileWriter.writeNextTuple(rowArr);
+			else{
+				int j = 0;
+				for (; j < columnList.size() - 1; j++) {
 					System.out.print(toUnescapedString(rowArr[j]) + "|");
-				else
-					pw.print(toUnescapedString(rowArr[j]) + "|");
-			}
-			if (columnList.size() > 0) {
-				if (parentNode)
+				}
+				if (columnList.size() > 0) {
 					System.out.println(toUnescapedString(rowArr[j]));
-				else
-					pw.println(toUnescapedString(rowArr[j]));
+				}
 			}
 			it.remove();
 		}
+		if(!parentNode)
+			fileWriter.close();
 		projectList.clear();
 		System.gc();
 		if (parentNode == false) {
-			pw.close();
 			relationNode.setFile(file);
-			List<ColumnDefinition> newList = new ArrayList<>();
-			int i=0;
-			List<Column> projectedColumns =TableUtils.convertSelectExpressionItemIntoColumn(selectItemsList);
-			for (LeafValue column : projectedSchema) {
-				ColumnDefinition cd = new ColumnDefinition();
-				cd.setColumnName(projectedColumns.get(i).getColumnName());
-				ColDataType type = new ColDataType();
-				if(column instanceof LongValue)
-					type.setDataType("int");
-				else if(column instanceof DoubleValue)
-					type.setDataType("double");
-				else if(column instanceof StringValue)
-					type.setDataType("string");	
-				else if(column instanceof DateValue)
-					type.setDataType("date");	
-				cd.setColDataType(type);
-				newList.add(cd);
-				i++;
-			}
-			CreateTable newTable = new CreateTable();
-			newTable.setTable(new Table(null, preferredAliasName));
-			newTable.setColumnDefinitions(newList);
-			RelationNode relationNode1 = new RelationNode(preferredAliasName,
-					preferredAliasName, file, newTable);
 			return relationNode1;
 		}
 		}catch(IOException e){

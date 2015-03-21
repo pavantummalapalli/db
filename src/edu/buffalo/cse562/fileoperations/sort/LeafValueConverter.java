@@ -14,6 +14,7 @@ import edu.buffalo.cse562.utils.TableUtils;
 public class LeafValueConverter implements Convertor<LeafValue[]> {
 
 	private List<ColumnDefinition> columnDefList;
+	
 
 	public LeafValueConverter(List<ColumnDefinition> columnDefList) {
 		this.columnDefList = columnDefList;

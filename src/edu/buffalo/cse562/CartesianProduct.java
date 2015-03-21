@@ -2,31 +2,26 @@ package edu.buffalo.cse562;
 
 import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSelectExpressionItems;
 import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
-import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
-import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+import edu.buffalo.cse562.datasource.DataSource;
+import edu.buffalo.cse562.datasource.DataSourceReader;
+import edu.buffalo.cse562.datasource.DataSourceWriter;
 import edu.buffalo.cse562.queryplan.BufferDataSource;
-import edu.buffalo.cse562.queryplan.DataSource;
 import edu.buffalo.cse562.queryplan.FileDataSource;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.RelationNode;
@@ -46,6 +41,7 @@ public class CartesianProduct {
 	}
 
 	public RelationNode doCartesianProduct() {
+		try {
 		RelationNode relationNode1 = node1.eval();
 		RelationNode relationNode2 = node2.eval();
 		CreateTable table1 = relationNode1.getTable();
@@ -63,59 +59,58 @@ public class CartesianProduct {
 		String newTableName = getNewTableName(table1, table2);
 		joinedTable.setTable(new Table(null, newTableName));
 		joinedTable.setColumnDefinitions(newList);
-		DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1,null,relationNode1.getExpression());
+		DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1.getReader(),null,relationNode1.getExpression());
 		LeafValue[] colVals1, colVals2;
 		DataSource file = null;
 		if(TableUtils.isSwapOn)
-			file =new FileDataSource( new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"));
+			file =new FileDataSource( new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"),newList);
 		else
 			file = new BufferDataSource();
-		try {
-			
-			PrintWriter pw = new PrintWriter(file.getWriter());
+		
+			DataSourceWriter fileWriter = file.getWriter();
 			while((colVals1 = sqlIterator1.next()) != null) {
-				DataSourceSqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2,null,relationNode2.getExpression());
+				DataSourceSqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,convertSelectExpressionItemIntoExpressions( TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())), dataFile2.getReader(),null,relationNode2.getExpression());
 				while((colVals2 = sqlIterator2.next()) != null) {
 					List<LeafValue> fusedColumnValsList = new ArrayList<LeafValue>();
 					fusedColumnValsList.addAll(Arrays.asList(colVals1));
 					LeafValue[] fusedColsVals = new LeafValue[colVals1.length+colVals2.length];
 					fusedColumnValsList.addAll(Arrays.asList(colVals2));
 					fusedColumnValsList.toArray(fusedColsVals);
-					String[] fusedColsValsString = new String[fusedColsVals.length]; 
-					for(int j=0;j<fusedColsValsString.length;j++){
-						fusedColsValsString[j]=toUnescapedString(fusedColsVals[j]);
-					}
+//					String[] fusedColsValsString = new String[fusedColsVals.length]; 
+//					for(int j=0;j<fusedColsValsString.length;j++){
+//						fusedColsValsString[j]=toUnescapedString(fusedColsVals[j]);
+//					}
 					if(expression!=null){
 						ExpressionEvaluator evaluate = new ExpressionEvaluator(joinedTable);
-						LeafValue leafValue = evaluate.evaluateExpression(expression, fusedColsValsString, null);
+						LeafValue leafValue = evaluate.evaluateExpression(expression, fusedColsVals, null);
 						BooleanValue value =(BooleanValue) leafValue;
 						if(value ==BooleanValue.FALSE)
 							continue;
 					}
-					int i;
-					for(i=0; i<colVals1.length; i++) {
-						pw.print(toUnescapedString(colVals1[i]) + "|");
+					int z=0;
+					LeafValue[] joinedTuple = new LeafValue[colVals1.length+colVals2.length];
+					for(int i=0; i<colVals1.length; i++,z++) {
+						joinedTuple[z]=colVals1[i];
 					}
-					for(i=1; i<colVals2.length; i++) {
-						pw.print(toUnescapedString(colVals2[i-1]) + "|");
+					for(int i=0; i<colVals2.length; i++,z++) {
+						joinedTuple[z]=colVals2[i];
 					}
-					if(colVals2.length > 0)
-						pw.println(toUnescapedString(colVals2[i-1]));
+					fileWriter.writeNextTuple(joinedTuple);
 				}
 				sqlIterator2.close();
 			}
-			pw.close();
-			relationNode1.getFile().close();
-			relationNode2.getFile().close();
+			fileWriter.close();
+			sqlIterator1.close();
+			dataFile1.clear();
+			dataFile2.clear();
+		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
+		RelationNode relationNode = new RelationNode(newTableName, null,file,joinedTable);
+		return relationNode;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		sqlIterator1.close();
-		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
-		RelationNode relationNode = new RelationNode(newTableName, null,file,joinedTable);
-		return relationNode;
 	}
 
 //	private DataSource optimizeRelationNode(CreateTable table, DataSource dataFile) {

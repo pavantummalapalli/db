@@ -40,7 +40,7 @@ public class FromItemImpl implements FromItemVisitor {
 		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName().toUpperCase());
 		if(table.getAlias()==null)
 			table.setAlias(table.getName());
-		node = new RelationNode(table.getName(),table.getAlias(),new FileDataSource(filePath),schema);
+		node = new RelationNode(table.getName(),table.getAlias(),new FileDataSource(filePath,schema.getColumnDefinitions()),schema);
 		tableList.add(table);
 		tableNames.add(table.getAlias().toUpperCase());
 	}
