@@ -27,9 +27,10 @@ public class ExpressionEvaluator extends Eval {
 	private HashMap<String, Integer> columnMapping = new HashMap <String, Integer> ();
 	private HashMap<GroupBy,Object> calculatedData = new HashMap <>();
 	private HashMap <GroupBy, Average> tempAverageMap = new HashMap <>();
-	private List<Column> groupByList;
 	private GroupBy groupByKey;
 	private boolean aggregateModeOn;
+	private List<Column> groupByList;
+	//private HashMap<Column,String> columnWholeNameMap = new HashMap<Column, String>();
 		
 	private class Average {
 		Double value;
@@ -226,9 +227,13 @@ public class ExpressionEvaluator extends Eval {
 	}
 	
 	@Override
-	public LeafValue eval(Column arg0) throws SQLException {	
-		//String value = arg0.getWholeColumnName().toUpperCase();
-		String value = arg0.getWholeColumnName();
+	public LeafValue eval(Column arg0) throws SQLException {
+		String value=arg0.getWholeColumnName();
+//		if((value =columnWholeNameMap.get(arg0))==null){
+//			value = arg0.getWholeColumnName();
+//			//Assuming collisions will not occur since the number of values are very very less
+//			columnWholeNameMap.put(arg0, value);
+//		}
 		int index = columnMapping.get(value); 
 		return colVals[index];
 	}
