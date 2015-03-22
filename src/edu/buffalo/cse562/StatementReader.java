@@ -10,7 +10,6 @@ import java.util.Collection;
 
 import javax.management.NotificationEmitter;
 
-import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -27,7 +26,7 @@ public class StatementReader {
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
 			long startTime = System.currentTimeMillis();
-			attachMemoryListeners();
+			//attachMemoryListeners();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
 				CCJSqlParser parser = new CCJSqlParser(new FileReader(file));

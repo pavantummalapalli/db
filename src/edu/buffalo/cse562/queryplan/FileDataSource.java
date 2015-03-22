@@ -61,11 +61,10 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 		String row = reader.readLine();
 		if(row==null || row.isEmpty())
 			return null;
-		String[] colVals = row.split("\\|");
+		String[] colVals = TableUtils.pattern.split(row);
 		LeafValue [] convertedValues = new LeafValue[colVals.length];
 		for(int i=0;i<colVals.length;i++){
-			Integer index  = Integer.valueOf(i);
-			String columnName = reverseColumnMapping.get(index);
+			String columnName = reverseColumnMapping.get(i);
 			convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, colDefns);
 		}
 		return convertedValues;

@@ -55,18 +55,14 @@ public class ExpressionEvaluator extends Eval {
 		}
 	}
 	
-	
-	
 	@Override
 	public LeafValue eval(Function function) throws SQLException {
 		try{
-			if(function.getName().equalsIgnoreCase("SUM")){
+			String functionName =function.getName(); 
+			if(functionName.equalsIgnoreCase("SUM")){
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
-				GroupBy key=null;
-				if(groupByList!=null && groupByList.size()>0){
-					key = getGroupByValueKey();
-				}
+				GroupBy key=groupByKey;
 				Object value= calculatedData.get(key);
 				if(evaluatedValue instanceof LongValue){
 					if(value==null){
@@ -90,14 +86,11 @@ public class ExpressionEvaluator extends Eval {
 					value=0;
 				}
 			}
-			else if(function.getName().equalsIgnoreCase("AVG")){
+			else if(functionName.equalsIgnoreCase("AVG")){
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
-				GroupBy key=null;
+				GroupBy key=groupByKey;
 								
-				if(groupByList!=null && groupByList.size()>0){
-					key = getGroupByValueKey();
-				}
 				Object value= calculatedData.get(key);
 				Average avg = tempAverageMap.get(key);
 				
@@ -129,20 +122,17 @@ public class ExpressionEvaluator extends Eval {
 					value=0;
 				}
 			}
-			else if(function.getName().equalsIgnoreCase("MIN") || function.getName().equalsIgnoreCase("MAX")){
+			else if(functionName.equalsIgnoreCase("MIN") || functionName.equalsIgnoreCase("MAX")){
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
-				GroupBy key=null;
-				if(groupByList!=null && groupByList.size()>0){
-					key = getGroupByValueKey();
-				}
+				GroupBy key=groupByKey;
 				Object value= calculatedData.get(key);
 				if(evaluatedValue instanceof LongValue){
 					if(value==null){
 						value = evaluatedValue.toLong();
 					}
 					else{
-						if(function.getName().equalsIgnoreCase("MIN"))
+						if(functionName.equalsIgnoreCase("MIN"))
 							value = Math.min((Long)value, evaluatedValue.toLong());
 						else
 							value = Math.max((Long)value, evaluatedValue.toLong());
@@ -154,7 +144,7 @@ public class ExpressionEvaluator extends Eval {
 						value = evaluatedValue.toDouble();
 					}
 					else{
-						if(function.getName().equalsIgnoreCase("MIN"))
+						if(functionName.equalsIgnoreCase("MIN"))
 							value = Math.min(((Double)value),evaluatedValue.toDouble());
 						else
 							value = Math.max(((Double)value),evaluatedValue.toDouble());
@@ -166,7 +156,7 @@ public class ExpressionEvaluator extends Eval {
 						value = ((StringValue) evaluatedValue).toString();
 					}
 					else{
-						if(function.getName().equalsIgnoreCase("MIN"))
+						if(functionName.equalsIgnoreCase("MIN"))
 							value = value.toString().compareToIgnoreCase(evaluatedValue.toString())<=0?value.toString():evaluatedValue.toString();
 						else
 							value = value.toString().compareToIgnoreCase(evaluatedValue.toString())>=0?value.toString():evaluatedValue.toString();
@@ -178,7 +168,7 @@ public class ExpressionEvaluator extends Eval {
 						value = ((DateValue) evaluatedValue).getValue();
 					}
 					else{
-						if(function.getName().equalsIgnoreCase("MIN"))
+						if(functionName.equalsIgnoreCase("MIN"))
 							value = ((DateValue) value).getValue().compareTo(((DateValue) evaluatedValue).getValue())<=0?((DateValue) value).getValue():((DateValue) evaluatedValue).getValue();
 						else
 							value = ((DateValue) value).getValue().compareTo(((DateValue) evaluatedValue).getValue())>=0?((DateValue) value).getValue():((DateValue) evaluatedValue).getValue();
@@ -186,11 +176,8 @@ public class ExpressionEvaluator extends Eval {
 					calculatedData.put(key,value);
 				}
 			}
-			else if(function.getName().equalsIgnoreCase("COUNT")){
-				GroupBy key=null;
-				if(groupByList!=null && groupByList.size()>0){
-					key = getGroupByValueKey();
-				}
+			else if(functionName.equalsIgnoreCase("COUNT")){
+				GroupBy key=groupByKey;
 				Object value= calculatedData.get(key);
 				if(value==null)
 					value=1;
@@ -198,7 +185,7 @@ public class ExpressionEvaluator extends Eval {
 					value= (int)value + 1;
 				calculatedData.put(key,value);
 			}
-			else if(function.getName().equalsIgnoreCase("DATE")){
+			else if(functionName.equalsIgnoreCase("DATE")){
 				Expression dateValueParam = (Expression) function.getParameters().getExpressions().get(0);
 				String dateStr = eval(dateValueParam).toString();
 				return TableUtils.getPooledDateValue(dateStr);

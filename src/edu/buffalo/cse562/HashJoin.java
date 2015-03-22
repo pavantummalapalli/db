@@ -99,11 +99,12 @@ public class HashJoin {
 		while((colVals1 = sqlIterator1.next()) != null) { 
 			StringBuilder hashKeyBuilder = new StringBuilder();
 			for(int[] colIndex: colIndexList) {
-				hashKeyBuilder.append(toUnescapedString(colVals1[colIndex[0]]) + delimiter); 
+				hashKeyBuilder.append(toUnescapedString( colVals1[colIndex[0]]) + delimiter); 
 			}
 			String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
-			if(hashMap.containsKey(hashKey)) {
-				hashMap.get(hashKey).add(colVals1);
+			List<LeafValue[]> temp;
+			if( (temp = hashMap.get(hashKey))!=null) {
+				temp.add(colVals1);
 			}
 			else {
 				List<LeafValue[]> list = new ArrayList<>();
@@ -124,8 +125,8 @@ public class HashJoin {
 					hashKeyBuilder.append(toUnescapedString(colVals2[colIndex[1]]) + delimiter); 
 				}
 				String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
-				if(hashMap.containsKey(hashKey)) {
-					List<LeafValue[]> leafValues = hashMap.get(hashKey);
+				List<LeafValue[]> leafValues=null;
+				if((leafValues=hashMap.get(hashKey))!=null) {
 					Iterator<LeafValue[]> it = leafValues.iterator();
 					while(it.hasNext()) {
 						LeafValue[] firstTuple = it.next();

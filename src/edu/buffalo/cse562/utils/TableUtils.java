@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
@@ -31,6 +32,7 @@ import edu.buffalo.cse562.ExtendedDateValue;
 
 public final class TableUtils {
 	
+	public static Pattern pattern = Pattern.compile("\\|");
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
@@ -87,20 +89,19 @@ public final class TableUtils {
 		String value = colVals[index];
 		ColDataType dataType = colDefns.get(index).getColDataType();
 		String data = dataType.getDataType();
-		if(data.equalsIgnoreCase("int"))
+		if(data.equals("INT") || data.equals("int"))
 			return new LongValue(colVals[index]);
-		else if(data.equalsIgnoreCase("date")){
-			if((" "+colVals[index]+" ").length()!=12)
+		else if(data.equals("DATE") || data.equals("date")){
+			if((colVals[index]).length()!=10)
 				throw new RuntimeException("Illeagel value dates" + value);
 			return TableUtils.getPooledDateValue("'"+colVals[index]+"'");
 		}
-		else if(data.equalsIgnoreCase("string") || data.toLowerCase().contains("char"))
+		else if(data.contains("CHAR") || data.contains("char") || data.equals("STRING") || data.equals("string"))
 			return new StringValue(" " + colVals[index] + " ");
-		else if(data.equalsIgnoreCase("double") || data.equalsIgnoreCase("decimal"))
+		else if(data.equals("DECIMAL") || data.equals("decimal") || data.equals("DOUBLE") || data.equals("double"))
 			return new DoubleValue(colVals[index]);
 		return null;
 	}
-	
 	
 //	public static LeafValue getLeafValue(String columnName,Map<String,Integer> columnMapping,LeafValue[]colVals,CreateTable table){
 //		int index = columnMapping.get(columnName); 
@@ -116,6 +117,7 @@ public final class TableUtils {
 	
 	public static Column convertStringToColumn(String columnStr){
 		String [] splitColumnNames = columnStr.split("\\.");
+		//String [] splitColumnNames = pattern.split(columnStr, 0);
 		Column column = new Column();
 		if(splitColumnNames.length==2){
 			column.setColumnName(splitColumnNames[1]);
@@ -143,10 +145,12 @@ public final class TableUtils {
 	}
 	
 	public static DateValue getPooledDateValue(String parameter){
-		if(pooledDateValue.containsKey(parameter))
-			return pooledDateValue.get(parameter);
+		DateValue dateValue=pooledDateValue.get(parameter);
+		if(dateValue!=null){
+			return dateValue;
+		}
 		else{
-			DateValue dateValue=new ExtendedDateValue(parameter);
+			dateValue=new ExtendedDateValue(parameter);
 			pooledDateValue.put(parameter, dateValue);
 			return dateValue;
 		}
@@ -367,5 +371,21 @@ public final class TableUtils {
 		}
 		return res;
 	}
+	
+	public static Long getAvailableMemory(){
+		Long maxMem=Runtime.getRuntime().maxMemory();
+		Long freeMem=Runtime.getRuntime().freeMemory();
+		Long totMem=Runtime.getRuntime().totalMemory();
+		Long totalFreeMem = maxMem - (totMem - freeMem);
+		return totalFreeMem;
+	}
+	
+	public static Long getAvailableMemoryInKB(){
+		return getAvailableMemory()/1024;
+	}
+	
+	public static Long getAvailableMemoryInMB(){
+		return getAvailableMemoryInKB()/1024;
+	}	
 	
 }
