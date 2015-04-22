@@ -9,3 +9,5 @@
 /bin/
 /data/*
 **/temp/
+**/db.iml
+.idea/

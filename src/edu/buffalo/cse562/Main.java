@@ -13,7 +13,7 @@ public class Main {
 			return;
 		}
 		
-		String dataDir = "", swapDir = null;
+		String dataDir = "", swapDir = null, dbDir = null;
 		List <String> fileList = new ArrayList <>();
 		int index = 0;
 		boolean flag = true;
@@ -25,7 +25,12 @@ public class Main {
 			} else if (args[i].equals("--swap")) {
 				swapDir = args[i + 1];
 				i++;
-			} else {
+			} else if (args[i].equals("--load")) {
+                TableUtils.isLoadPhase = true;
+            } else if (args[i].equals("--db")) {
+                dbDir = args[i + 1];
+                i++;
+            } else {
 				fileList.add(args[i]);
 			}
 		}
@@ -33,7 +38,10 @@ public class Main {
 		if (swapDir != null) {
 			TableUtils.setTempDataDir(swapDir);
 			TableUtils.isSwapOn = true;
-		}	
+		}
+        if (dbDir != null) {
+            TableUtils.setDbDir(dbDir);
+        }
 		//createTempFolder();
 		new StatementReader().readSqlFile(dataDir, fileList.toArray(new String[fileList.size()]));
 	}
