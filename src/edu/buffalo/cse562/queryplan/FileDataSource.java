@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -61,8 +62,12 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 		String row = reader.readLine();
 		if(row==null || row.isEmpty())
 			return null;
-		String[] colVals = TableUtils.pattern.split(row);
-		LeafValue [] convertedValues = new LeafValue[colVals.length];
+		StringTokenizer tokenizer = new StringTokenizer(row, "|");
+		int count = tokenizer.countTokens();
+		String[] colVals = new String[count];
+		for(int i=0;i<count;i++)
+			colVals[i]=tokenizer.nextToken();
+		LeafValue [] convertedValues = new LeafValue[count];
 		for(int i=0;i<colVals.length;i++){
 			String columnName = reverseColumnMapping.get(i);
 			convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, colDefns);
@@ -97,6 +102,5 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 	@Override
 	public void clear() {
 		// TODO Auto-generated method stub
-		
 	}
 }
