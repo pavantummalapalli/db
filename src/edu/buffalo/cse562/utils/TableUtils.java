@@ -36,10 +36,20 @@ public final class TableUtils {
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
-	public static boolean isSwapOn=false; 
+    private static String dbDir;
+	public static boolean isSwapOn=false;
+    public static boolean isLoadPhase = false;
 	private static Map<String,DateValue> pooledDateValue = new HashMap<String, DateValue>();
 
-	private static class TableFileFilter implements FileFilter{
+    public static String getDbDir() {
+        return dbDir;
+    }
+
+    public static void setDbDir(String dbDir) {
+        TableUtils.dbDir = dbDir;
+    }
+
+    private static class TableFileFilter implements FileFilter{
 		
 		private String tableName;
 		
