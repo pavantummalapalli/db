@@ -13,6 +13,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 
+import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
 import edu.buffalo.cse562.datasource.DataSourceReader;
 import edu.buffalo.cse562.queryplan.FileDataSource;
 

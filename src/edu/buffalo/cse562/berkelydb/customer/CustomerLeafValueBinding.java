@@ -1,4 +1,4 @@
-package edu.buffalo.cse562.berkelydb;
+package edu.buffalo.cse562.berkelydb.customer;
 
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.LeafValue;
@@ -16,7 +16,7 @@ public class CustomerLeafValueBinding extends TupleBinding<LeafValue[]> {
 	public void objectToEntry(LeafValue[] arg0, TupleOutput to) {
 		int i=0;
 		 try {
-			 to.writeLong(arg0[i++].toLong());//custkey
+			 to.writeLong(arg0[i++].toLong()); //custkey
 			 to.writeString(arg0[i++].toString()); //name 
 			 to.writeString(arg0[i++].toString()); //address
 			 to.writeLong(arg0[i++].toLong()); //nationkey
