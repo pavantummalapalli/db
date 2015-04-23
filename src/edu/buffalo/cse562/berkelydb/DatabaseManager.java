@@ -51,7 +51,7 @@ public class DatabaseManager {
 	public void createSecondaryIndexedTable(Database primaryDatabase,String tableName,SecondaryKeyCreator secondaryKey){
 		SecondaryConfig mySecConfig = new SecondaryConfig();
 		mySecConfig.setAllowCreate(true);
-		mySecConfig.setAllowPopulate(true); 
+		mySecConfig.setAllowPopulate(true);
 		mySecConfig.setSortedDuplicates(true);
 		mySecConfig.setKeyCreator(secondaryKey);
 		mySecConfig.setDeferredWrite(true);
@@ -66,7 +66,7 @@ public class DatabaseManager {
 		secondaryTableMap.put(tableName, db);
 	}
 	
-	public void createIndexedTable(String indexName,File sourceData,TupleBinding<LeafValue[]> tupleBinding,List<ColumnDefinition> colDefns){		
+	public void createIndexedTable(String indexName,int indexPosition, File sourceData,TupleBinding<LeafValue[]> binding,List<ColumnDefinition> colDefns){		
 		Database myDatabase = null;
 		try {
 		    myDatabase = myDbEnvironment.openDatabase(null, indexName, dbConfig); 
@@ -75,11 +75,11 @@ public class DatabaseManager {
 			DataSourceReader reader =  source.getReader();
 			LeafValue[] row = null;
 			while( (row = reader.readNextTuple())!=null){
-				CustomerLeafValueBinding binding = new CustomerLeafValueBinding();
 				DatabaseEntry tuple = new DatabaseEntry();
-				binding.objectToEntry(row, tuple);
 				DatabaseEntry key = new DatabaseEntry();
-				TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(row[0].toLong(), key);
+				binding.objectToEntry(row, tuple);
+				TableUtils.bindLeafValueToKey(row[indexPosition], key);
+				//TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(row[0].toLong(), key);
 				myDatabase.put(null, key, tuple);
 			}
 			myDatabase.sync();

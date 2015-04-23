@@ -32,5 +32,4 @@ public class Customer {
 	public void setPhoneKey(SecondaryKeyCreator phoneKey) {
 		this.phoneKey = phoneKey;
 	}
-
 }

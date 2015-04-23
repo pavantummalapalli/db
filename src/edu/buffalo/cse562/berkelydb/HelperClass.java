@@ -70,7 +70,7 @@ public class HelperClass {
 		colDefns.add(generateColumnDef("h", "char"));
 		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
 		long start = System.currentTimeMillis();
-		manager.createIndexedTable("customer", file, new CustomerLeafValueBinding(), colDefns);
+		manager.createIndexedTable("customer", 0,file, new CustomerLeafValueBinding(), colDefns);
 		System.out.println("Time Taken to Index"+(System.currentTimeMillis() - start));
 		manager.close();
 	}
@@ -122,7 +122,7 @@ public class HelperClass {
         DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
         TupleBinding<LeafValue[]> binding = new OrdersLeafValueBinding();
         FileDataSource source = new FileDataSource(file, colDefns);
-        manager.createIndexedTable("orders", source.getFile(), binding, colDefns);
+        manager.createIndexedTable("orders", 0,source.getFile(), binding, colDefns);
         Database orders =  manager.getPrimaryIndex("orders");
         DataSourceReader reader =  source.getReader();
         LeafValue[] row = null;

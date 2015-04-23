@@ -22,7 +22,6 @@ import com.sleepycat.je.SecondaryKeyCreator;
 import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.berkelydb.DatabaseManager;
 import edu.buffalo.cse562.berkelydb.IndexMetaData;
-import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
 import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
@@ -68,13 +67,12 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public LeafValue[] readNextTuple() throws IOException {
 		if(primaryIndexExp!=null){
-			return lookupPrimaryIndex(node.getTableName(), primaryIndexExp.getLeafValue());
+			return lookupPrimaryIndex(node.getTableName(), primaryIndexExp.getLeafValue(),binding);
 		}else{
 			String secIndexName = node.getTableName()+"."+secondaryIndexExp.getColumn().getColumnName();
 			new Thread(new Runnable() {
@@ -88,25 +86,19 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	
 	@Override
 	public void close() throws IOException {
-		
 	}
 	
-	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue){
-		//DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
+	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding){
 		Database customer =manager.getPrimaryIndex(primaryIndex);
 		DatabaseEntry key = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(leafValue, key);
 		DatabaseEntry tuple = new DatabaseEntry();
 		customer.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
-		CustomerLeafValueBinding binding = new CustomerLeafValueBinding();
 		LeafValue[] results = binding.entryToObject(tuple);
-		manager.close();
 		return results;
 	}
 	
 	public synchronized void lookupSecondaryIndexes(String primaryIndexName,String indexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryKeyCreator secondaryKey){
-//		long start = System.currentTimeMillis();
-		//DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
 		SecondaryDatabase customer =manager.getSecondaryIndex(manager.getPrimaryIndex(primaryIndexName), indexName, secondaryKey);
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry pkey = new DatabaseEntry();
@@ -118,13 +110,9 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		while(returnVal== OperationStatus.SUCCESS){
 			LeafValue[] results = binding.entryToObject(tuple);
 			buffer.add(results);
-//			for(int i=0;i<results.length;i++)
-//				System.out.print(results[i].toString()+ " ");
-//			System.out.println();
 			returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
 		}
+		buffer.add(null);
 		cursor.close();
-//		System.out.println("Time Taken"+(System.currentTimeMillis() - start));
-		//manager.close();
 	}
 }
