@@ -3,7 +3,6 @@ package edu.buffalo.cse562.berkelydb;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColDataType;
@@ -17,10 +16,11 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryCursor;
 import com.sleepycat.je.SecondaryDatabase;
-import com.sleepycat.je.dbi.RangeConstraint;
-import com.sleepycat.util.keyrange.RangeCursor;
 
 import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
+import edu.buffalo.cse562.berkelydb.orders.OrdersLeafValueBinding;
+import edu.buffalo.cse562.datasource.DataSourceReader;
+import edu.buffalo.cse562.datasource.FileDataSource;
 
 public class HelperClass {
 
@@ -105,4 +105,51 @@ public class HelperClass {
 		def.setColumnName(columnName);
 		return def;
 	}
+    private static void cksTest() throws Exception {
+        //Index Build
+
+        File file = new File("/home/cksharma/data/git/db-prjs/dbgen/sf5/orders.csv");
+        List<ColumnDefinition> colDefns = new ArrayList<>();
+        colDefns.add(generateColumnDef("a", "int"));
+        colDefns.add(generateColumnDef("b", "int"));
+        colDefns.add(generateColumnDef("c", "char"));
+        colDefns.add(generateColumnDef("d", "decimal"));
+        colDefns.add(generateColumnDef("e", "date"));
+        colDefns.add(generateColumnDef("f", "char"));
+        colDefns.add(generateColumnDef("g", "char"));
+        colDefns.add(generateColumnDef("h", "int"));
+        colDefns.add(generateColumnDef("i", "char"));
+        DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
+        TupleBinding<LeafValue[]> binding = new OrdersLeafValueBinding();
+        FileDataSource source = new FileDataSource(file, colDefns);
+        manager.createIndexedTable("orders", source.getFile(), binding, colDefns);
+        Database orders =  manager.getPrimaryIndex("orders");
+        DataSourceReader reader =  source.getReader();
+        LeafValue[] row = null;
+        long start = System.currentTimeMillis();
+        while( (row = reader.readNextTuple())!=null){
+            DatabaseEntry tuple = new DatabaseEntry();
+            binding.objectToEntry(row, tuple);
+            DatabaseEntry key = new DatabaseEntry();
+            TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(row[0].toLong(), key);
+            orders.put(null, key, tuple);
+        }
+        orders.sync();
+        System.out.println("Time Taken to Index"+(System.currentTimeMillis() - start));
+        manager.close();
+
+        //index lookup
+
+        start = System.currentTimeMillis();
+        manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
+        orders =manager.getPrimaryIndex("orders");
+        DatabaseEntry key = new DatabaseEntry();
+        TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(327L, key);
+        DatabaseEntry tuple = new DatabaseEntry();
+        orders.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
+        System.out.println("Time Taken"+(System.currentTimeMillis() - start));
+        LeafValue[] results = binding.entryToObject(tuple);
+        for(int i=0;i<results.length;i++)
+            System.out.println(results[i].toString());
+    }
 }

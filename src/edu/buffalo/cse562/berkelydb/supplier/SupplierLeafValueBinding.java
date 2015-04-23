@@ -1,4 +1,4 @@
-package edu.buffalo.cse562.berkelydb.customer;
+package edu.buffalo.cse562.berkelydb.supplier;
 
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.LeafValue;
@@ -10,19 +10,18 @@ import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
 
-public class CustomerLeafValueBinding extends TupleBinding<LeafValue[]> {
+public class SupplierLeafValueBinding extends TupleBinding<LeafValue[]> {
 
 	@Override
 	public void objectToEntry(LeafValue[] arg0, TupleOutput to) {
 		int i=0;
 		 try {
-			 to.writeLong(arg0[i++].toLong()); //custkey
+			 to.writeLong(arg0[i++].toLong()); //suppkey
 			 to.writeString(arg0[i++].toString()); //name 
 			 to.writeString(arg0[i++].toString()); //address
 			 to.writeLong(arg0[i++].toLong()); //nationkey
 			 to.writeString(arg0[i++].toString()); //phone
 			 to.writeDouble(arg0[i++].toDouble()); //acctbal
-			 to.writeString(arg0[i++].toString()); // mktsegment
 			 to.writeString(arg0[i++].toString()); //comment
 		 } catch (InvalidLeaf e) {
 				e.printStackTrace();
@@ -31,7 +30,7 @@ public class CustomerLeafValueBinding extends TupleBinding<LeafValue[]> {
 
 	@Override
 	public LeafValue[] entryToObject(TupleInput ti) {
-		LeafValue[] results = new LeafValue[8];
+		LeafValue[] results = new LeafValue[7];
 		int i=0;
 		results[i++]=new LongValue(ti.readLong());
 		results[i++]=new StringValue(ti.readString());
@@ -39,7 +38,6 @@ public class CustomerLeafValueBinding extends TupleBinding<LeafValue[]> {
 		results[i++]=new LongValue(ti.readLong()); 
 		results[i++]=new StringValue(ti.readString()); 
 		results[i++]=new DoubleValue(ti.readDouble());
-		results[i++]=new StringValue(ti.readString());
 		results[i++]=new StringValue(ti.readString());
 		return results;
 	}
