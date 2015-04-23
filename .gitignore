@@ -8,6 +8,7 @@
 **/*.SQL
 /bin/
 /data/*
+/db/*
 **/temp/
 **/db.iml
 .idea/
