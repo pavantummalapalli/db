@@ -202,13 +202,12 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	}
 	
 	private Map <String, String> mapColumnAndTable(List <Table> tableList) {
-		
 		for (Table table : tableList) {
 			List <ColumnDefinition> colDefList = TableUtils.getTableSchemaMap().get(table.getName().toUpperCase()).getColumnDefinitions();
 			for (ColumnDefinition columnDef : colDefList) {
 				columnTableMap.put(columnDef.getColumnName().toUpperCase(), table.getAlias().toUpperCase());
 			}
-		}	
+		}
 		return columnTableMap;
 	}
 	

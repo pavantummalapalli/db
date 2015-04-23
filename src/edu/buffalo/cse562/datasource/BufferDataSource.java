@@ -1,4 +1,4 @@
-package edu.buffalo.cse562.queryplan;
+package edu.buffalo.cse562.datasource;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -6,9 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.LeafValue;
-import edu.buffalo.cse562.datasource.DataSource;
-import edu.buffalo.cse562.datasource.DataSourceReader;
-import edu.buffalo.cse562.datasource.DataSourceWriter;
 
 public class BufferDataSource implements DataSource,DataSourceReader,DataSourceWriter {
 	

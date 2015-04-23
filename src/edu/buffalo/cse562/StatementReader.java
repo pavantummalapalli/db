@@ -11,6 +11,7 @@ import java.util.Collection;
 import javax.management.NotificationEmitter;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
@@ -43,8 +44,13 @@ public class StatementReader {
 					} else if (statement instanceof CreateTable) {
 						try {
 							CreateTable createTableStmt = (CreateTable) statement;
-							String tableName = createTableStmt.getTable().getName();
-							TableUtils.getTableSchemaMap().put(tableName.toUpperCase(), createTableStmt);
+							Table table = createTableStmt.getTable();
+							String tableName = table.getName();
+							TableUtils.getTableSchemaMap().put(table.getName(), createTableStmt);
+//							if(table.getAlias()==null)
+//								table.setAlias(createTableStmt.getTable().getName());
+//							TableUtils.getColumnTableMap(createTableStmt.getColumnDefinitions(), table);
+//							TableUtils.res
 						} catch (Exception ex) {	
 							throw new RuntimeException("CREATE TABLE THROW NEW EXCEPTION : " + statement, ex);
 						}

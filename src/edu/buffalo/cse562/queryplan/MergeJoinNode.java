@@ -21,6 +21,7 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.DataSourceSqlIterator;
 import edu.buffalo.cse562.MergeJoinImpl;
 import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.fileoperations.sort.ExternalSort;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueConverter;

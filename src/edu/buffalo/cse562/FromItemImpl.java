@@ -12,7 +12,7 @@ import net.sf.jsqlparser.statement.select.FromItemVisitor;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import edu.buffalo.cse562.queryplan.FileDataSource;
+import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.QueryDomain;

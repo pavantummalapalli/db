@@ -1,4 +1,4 @@
-package edu.buffalo.cse562.berkelydb;
+package edu.buffalo.cse562.berkelydb.customer;
 
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.LeafValue;

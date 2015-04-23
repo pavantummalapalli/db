@@ -1,4 +1,4 @@
-package edu.buffalo.cse562.queryplan;
+package edu.buffalo.cse562.datasource;
 
 import static edu.buffalo.cse562.utils.TableUtils.toUnescapedString;
 
@@ -14,9 +14,6 @@ import java.util.StringTokenizer;
 
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
-import edu.buffalo.cse562.datasource.DataSource;
-import edu.buffalo.cse562.datasource.DataSourceReader;
-import edu.buffalo.cse562.datasource.DataSourceWriter;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class FileDataSource implements DataSource,DataSourceReader,DataSourceWriter{

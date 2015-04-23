@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.DatabaseEntry;
+
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
@@ -20,6 +23,7 @@ import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.schema.Column;
@@ -48,7 +52,7 @@ public final class TableUtils {
     public static void setDbDir(String dbDir) {
         TableUtils.dbDir = dbDir;
     }
-
+    
     private static class TableFileFilter implements FileFilter{
 		
 		private String tableName;
@@ -65,6 +69,32 @@ public final class TableUtils {
 		}
 	}
 	
+    public static void bindLeafValueToKey(LeafValue leafValue, DatabaseEntry key) {
+		if(leafValue instanceof LongValue){
+			try {
+				TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(leafValue.toLong(), key);
+			} catch (InvalidLeaf e) {
+				e.printStackTrace();
+			}
+		}else if(leafValue instanceof StringValue){
+			TupleBinding.getPrimitiveBinding(String.class).objectToEntry(((StringValue) leafValue).getValue(), key);
+		}
+		else if(leafValue instanceof DoubleValue){
+			TupleBinding.getPrimitiveBinding(Double.class).objectToEntry(((DoubleValue)leafValue).toDouble(), key);
+		}
+		else if(leafValue instanceof DateValue){
+			TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(((DateValue)leafValue).getValue().getTime(), key);
+		}
+	}
+    
+    public static Map<String,String> getColumnTableMap(List<ColumnDefinition> colDefList,Table table){
+    	Map<String,String> columnTableMap = new HashMap<>(); 
+		for (ColumnDefinition columnDef : colDefList) {
+			columnTableMap.put(columnDef.getColumnName().toUpperCase(), table.getAlias().toUpperCase());
+		}
+		return columnTableMap;
+    }
+    
 	public static Map<String,Integer> getColumnMapping(List<ColumnDefinition> colDefns){
 		Map<String,Integer> columnMapping = new HashMap<String, Integer>();
 		Iterator<ColumnDefinition> iterator = colDefns.iterator();
