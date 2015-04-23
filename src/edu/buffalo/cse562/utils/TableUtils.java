@@ -3,14 +3,12 @@ package edu.buffalo.cse562.utils;
 import java.io.File;
 import java.io.FileFilter;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.regex.Pattern;
 
+import edu.buffalo.cse562.Eval;
+import edu.buffalo.cse562.ExpressionEvaluator;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
@@ -404,5 +402,46 @@ public final class TableUtils {
         DateValue dateValue = new DateValue("'1970-01-01'");
         dateValue.setValue(date);
         return dateValue;
+    }
+
+    static class ExpressionTriplets {
+        Column column;
+        BinaryExpression operator;
+        LeafValue leafValue;
+
+        ExpressionTriplets(Column column, BinaryExpression operator, LeafValue leafValue) {
+            this.column = column;
+            this.operator = operator;
+            this.leafValue = leafValue;
+        }
+    }
+
+    private static void getIndexableColumns(Expression where, List<ExpressionTriplets> columnList) throws SQLException {
+        if (where == null || where instanceof  Column || where instanceof LeafValue) return;
+
+        Expression leftExpression = ((BinaryExpression)where).getLeftExpression();
+        Expression rightExpression = ((BinaryExpression)where).getRightExpression();
+
+        if ( (leftExpression instanceof Column)) {
+            if (rightExpression instanceof LeafValue) {
+                columnList.add(new ExpressionTriplets((Column) leftExpression, (BinaryExpression) where, (LeafValue) rightExpression));
+                return;
+            }
+            if (rightExpression instanceof Function) {
+                CreateTable newTable = new CreateTable();
+                newTable.setColumnDefinitions(Arrays.asList(new ColumnDefinition()));
+                ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(newTable);
+                LeafValue evaluatedLeafValue = expressionEvaluator.eval(rightExpression);
+                columnList.add(new ExpressionTriplets((Column)leftExpression, (BinaryExpression)where, evaluatedLeafValue));
+            }
+        }
+        getIndexableColumns(leftExpression, columnList);
+        getIndexableColumns(rightExpression, columnList);
+    }
+
+    public static List<ExpressionTriplets> getIndexableColumns(Expression where) throws SQLException {
+        List<ExpressionTriplets> indexableColumnsList = new ArrayList<>();
+        getIndexableColumns(where, indexableColumnsList);
+        return indexableColumnsList;
     }
 }
