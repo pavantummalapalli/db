@@ -396,6 +396,13 @@ public final class TableUtils {
 	
 	public static Long getAvailableMemoryInMB(){
 		return getAvailableMemoryInKB()/1024;
-	}	
-	
+	}
+
+    //TODO caching
+    public static DateValue getDateValueFromLongValue(long value) {
+        Date date = new Date(value);
+        DateValue dateValue = new DateValue("'1970-01-01'");
+        dateValue.setValue(date);
+        return dateValue;
+    }
 }

@@ -2,7 +2,7 @@
 
 CREATE TABLE LINEITEM (
   orderkey int REFERENCES ORDERS,
-  partkey int REFERENCES PARTS,
+  partkey int REFERENCES PART,
   suppkey int REFERENCES SUPPLIERS,
   linenumber int,
   quantity decimal,
