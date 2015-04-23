@@ -36,7 +36,6 @@ public class DatabaseManager {
 	private Map<String,SecondaryDatabase> secondaryTableMap = new HashMap<>();
 	private DatabaseConfig dbConfig = new DatabaseConfig();
 	
-	
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
 		//envConfig.setConfigParam("je.log.fileMax", "10000");

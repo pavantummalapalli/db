@@ -4,23 +4,25 @@ import java.io.File;
 import java.io.FileFilter;
 import java.sql.Date;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.DatabaseEntry;
-
-import edu.buffalo.cse562.ExpressionEvaluator;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
-import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.schema.Column;
@@ -29,7 +31,14 @@ import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+
+import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.DatabaseEntry;
+
+import edu.buffalo.cse562.ExpressionEvaluator;
+import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.ExtendedDateValue;
+import edu.buffalo.cse562.berkelydb.IndexMetaData;
 
 public final class TableUtils {
 	
@@ -41,6 +50,7 @@ public final class TableUtils {
 	public static boolean isSwapOn=false;
     public static boolean isLoadPhase = false;
 	private static Map<String,DateValue> pooledDateValue = new HashMap<String, DateValue>();
+	public static Map<String,IndexMetaData> tableIndexMetaData = new HashMap<>();
 
     public static String getDbDir() {
         return dbDir;
@@ -431,18 +441,6 @@ public final class TableUtils {
         DateValue dateValue = new DateValue("'1970-01-01'");
         dateValue.setValue(date);
         return dateValue;
-    }
-
-    static class ExpressionTriplets {
-        Column column;
-        BinaryExpression operator;
-        LeafValue leafValue;
-
-        ExpressionTriplets(Column column, BinaryExpression operator, LeafValue leafValue) {
-            this.column = column;
-            this.operator = operator;
-            this.leafValue = leafValue;
-        }
     }
 
     private static void getIndexableColumns(Expression where, List<ExpressionTriplets> columnList) throws SQLException {
