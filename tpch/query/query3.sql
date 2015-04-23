@@ -1,45 +1,96 @@
 --INCLUDE 'examples/queries/tpch/schemas.sql';
 
 CREATE TABLE LINEITEM (
-         orderkey       INT,
-        partkey        INT,
-        suppkey        INT,
-        linenumber     INT,
-        quantity       DECIMAL,
-        extendedprice  DECIMAL,
-        discount       DECIMAL,
-        tax            DECIMAL,
-        returnflag     CHAR(1),
-        linestatus     CHAR(1),
-        shipdate       DATE,
-        commitdate     DATE,
-        receiptdate    DATE,
-        shipinstruct   CHAR(25),
-        shipmode       CHAR(10),
-        comment        VARCHAR(44)
+  orderkey int REFERENCES ORDERS,
+  partkey int REFERENCES PARTS,
+  suppkey int REFERENCES SUPPLIERS,
+  linenumber int,
+  quantity decimal,
+  extendedprice decimal,
+  discount decimal,
+  tax decimal,
+  returnflag char(1),
+  linestatus char(1),
+  shipdate date,
+  commitdate date,
+  receiptdate date,
+  shipinstruct char(25),
+  shipmode char(10),
+  comment varchar(44),
+  PRIMARY KEY (orderkey, linenumber)
 );
 
-CREATE TABLE ORDERS (
-        orderkey      INT,
-        custkey        INT,
-        orderstatus    CHAR(1),
-        totalprice     DECIMAL,
-        orderdate      DATE,
-        orderpriority  CHAR(15),
-        clerk          CHAR(15),
-        shippriority   INT,
-        comment        VARCHAR(79)
+ CREATE TABLE ORDERS (
+  orderkey int,
+  custkey int REFERENCES CUSTOMER,
+  orderstatus char(1),
+  totalprice decimal,
+  orderdate date,
+  orderpriority char(15),
+  clerk char(15),
+  shippriority int,
+  comment varchar(79),
+  PRIMARY KEY (orderkey)
+);
+
+CREATE TABLE PART (
+  partkey int,
+  name varchar(55),
+  mfgr char(25),
+  brand char(10),
+  type varchar(25),
+  size int,
+  container char(10),
+  retailprice decimal,
+  comment varchar(23),
+  PRIMARY KEY (partkey)
 );
 
 CREATE TABLE CUSTOMER (
-        custkey      INT,
-        name         VARCHAR(25),
-        address      VARCHAR(40),
-        nationkey    INT,
-        phone        CHAR(15),
-        acctbal      DECIMAL,
-        mktsegment   CHAR(10),
-        comment      VARCHAR(117)
+  custkey int,
+  name varchar(25),
+  address varchar(40),
+  nationkey int REFERENCES NATION,
+  phone char(15),
+  acctbal decimal,
+  mktsegment char(10),
+  comment varchar(117),
+  PRIMARY KEY (custkey)
+);
+
+CREATE TABLE SUPPLIER (
+  suppkey int,
+  name char(25),
+  address varchar(40),
+  nationkey int REFERENCES NATION,
+  phone char(15),
+  acctbal decimal,
+  comment varchar(101),
+  PRIMARY KEY (suppkey)
+);
+
+CREATE TABLE PARTSUPP (
+  partkey int REFERENCES PART,
+  suppkey int REFERENCES SUPPLIER,
+  availqty int,
+  supplycost decimal,
+  comment varchar(199),
+  PRIMARY KEY (partkey, suppkey)
+);
+
+CREATE TABLE NATION (
+  nationkey int,
+  name char(25),
+  regionkey int REFERENCES REGION,
+  comment varchar(152),
+  PRIMARY KEY (nationkey)
+);
+
+CREATE TABLE REGION (
+  regionkey int,
+  name char(25),
+  comment varchar(152),
+  PRIMARY KEY (regionkey)
 );
 
 
