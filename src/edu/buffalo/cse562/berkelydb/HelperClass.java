@@ -38,7 +38,7 @@ public class HelperClass {
 		long start = System.currentTimeMillis();
 		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
 		SecondaryKeyCreaterImpl phoneKey = new SecondaryKeyCreaterImpl(new CustomerLeafValueBinding(), 4);
-		SecondaryDatabase customer =manager.getSecondaryIndex(manager.getPrimaryIndex("customer"), "custphone", phoneKey);
+		SecondaryDatabase customer =manager.getSecondaryIndex("custphone");
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry pkey = new DatabaseEntry();
 		TupleBinding.getPrimitiveBinding(String.class).objectToEntry("21-120-483-4861", key);

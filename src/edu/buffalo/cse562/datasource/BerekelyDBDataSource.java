@@ -78,7 +78,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					lookupSecondaryIndexes(node.getTableName(),secIndexName, secondaryIndexExp.getLeafValue(), binding, indexData.getSecondaryIndexes().get(secIndexName));
+					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding);
 				}}).start();
 		}
 		return buffer.poll();
@@ -98,8 +98,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		return results;
 	}
 	
-	public synchronized void lookupSecondaryIndexes(String primaryIndexName,String indexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryKeyCreator secondaryKey){
-		SecondaryDatabase customer =manager.getSecondaryIndex(manager.getPrimaryIndex(primaryIndexName), indexName, secondaryKey);
+	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding){
+		SecondaryDatabase customer =manager.getSecondaryIndex(secondaryIndexName);
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry pkey = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(value, key);

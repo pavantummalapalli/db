@@ -5,12 +5,13 @@ import java.util.Map;
 import net.sf.jsqlparser.expression.LeafValue;
 
 import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
 
 public class IndexMetaData {
 
 	private String primaryIndexName;
-	private Map<String,SecondaryKeyCreator> secondaryIndexes;
+	private Map<String,SecondaryDatabase> secondaryIndexes;
 	private TupleBinding<LeafValue[]> binding;
 	
 	public void setBinding(TupleBinding<LeafValue[]> binding) {
@@ -29,12 +30,12 @@ public class IndexMetaData {
 		this.primaryIndexName = primaryIndexName;
 	}
 	
-	public Map<String, SecondaryKeyCreator> getSecondaryIndexes() {
+	public Map<String, SecondaryDatabase> getSecondaryIndexes() {
 		return secondaryIndexes;
 	}
 	
 	public void setSecondaryIndexes(
-			Map<String, SecondaryKeyCreator> secondaryIndex) {
+			Map<String, SecondaryDatabase> secondaryIndex) {
 		this.secondaryIndexes = secondaryIndex;
 	}
 }

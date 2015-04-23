@@ -90,23 +90,10 @@ public class DatabaseManager {
 	}
 	
 	public Database getPrimaryIndex(String tableName){
-		DatabaseConfig dbConfig  = new DatabaseConfig();
-		 // Open the database. Create it if it does not already exist.
-	    dbConfig.setReadOnly(true);
-		if(!tableMap.containsKey(tableName)){
-		    tableMap.put(tableName,myDbEnvironment.openDatabase(null, tableName, dbConfig));
-		}
 		return tableMap.get(tableName);
 	}
 	
-	public SecondaryDatabase getSecondaryIndex(Database primaryDatabase,String secondaryIndexName,SecondaryKeyCreator secondaryKey){
-		SecondaryConfig dbConfig  = new SecondaryConfig();
-		dbConfig.setKeyCreator(secondaryKey);
-		dbConfig.setReadOnly(true);
-		dbConfig.setSortedDuplicates(true);
-		if(!secondaryTableMap.containsKey(secondaryIndexName)){
-			secondaryTableMap.put(secondaryIndexName,myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase,dbConfig));
-		}
+	public SecondaryDatabase getSecondaryIndex(String secondaryIndexName){
 		return secondaryTableMap.get(secondaryIndexName);
 	}
 	
@@ -122,10 +109,10 @@ public class DatabaseManager {
 		return results;
 	}
 
-	public void lookupSecondaryIndexes(String primaryIndexName,String indexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryKeyCreator secondaryKey){
+	public void lookupSecondaryIndexes(String indexName,LeafValue value,TupleBinding<LeafValue[]> binding){
 		long start = System.currentTimeMillis();
 		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
-		SecondaryDatabase customer =manager.getSecondaryIndex(manager.getPrimaryIndex(primaryIndexName), indexName, secondaryKey);
+		SecondaryDatabase customer =manager.getSecondaryIndex(indexName);
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry pkey = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(value, key);
