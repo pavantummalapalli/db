@@ -456,7 +456,7 @@ public final class TableUtils {
     }
 
     private static void getIndexableColumns(Expression where, List<ExpressionTriplets> columnList) throws SQLException {
-        if (where == null || where instanceof  Column || where instanceof LeafValue || where instanceof Function) return;
+        if (where == null || where instanceof  Column || where instanceof LeafValue || where instanceof Function || where instanceof Parenthesis) return;
 
         Expression leftExpression = ((BinaryExpression)where).getLeftExpression();
         Expression rightExpression = ((BinaryExpression)where).getRightExpression();

@@ -1,5 +1,23 @@
 package edu.buffalo.cse562;
 
+import java.io.File;
+import java.io.FileReader;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
+import java.util.Collection;
+
+import javax.management.NotificationEmitter;
+
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.Select;
+
+import com.sleepycat.je.StatsConfig;
+
 import edu.buffalo.cse562.berkelydb.CreateTableIndex;
 import edu.buffalo.cse562.berkelydb.DatabaseManager;
 import edu.buffalo.cse562.berkelydb.InitializeTableIndexMetaData;
@@ -8,21 +26,6 @@ import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.QueryOptimizer;
 import edu.buffalo.cse562.utils.TableUtils;
-import net.sf.jsqlparser.parser.CCJSqlParser;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.select.Select;
-
-import javax.management.NotificationEmitter;
-
-import java.io.File;
-import java.io.FileReader;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
-import java.util.Collection;
 
 public class StatementReader {
 
@@ -47,6 +50,7 @@ public class StatementReader {
 						Node node = selectVistor.getQueryPlanTreeRoot();
 						node=new QueryOptimizer().optimizeQueryPlan((ProjectNode)node);
 						node.eval();
+//						manager.publishStats();
 					} else if (statement instanceof CreateTable) {
 						try {
 							CreateTable createTableStmt = (CreateTable) statement;

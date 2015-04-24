@@ -18,6 +18,7 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
+import com.sleepycat.je.StatsConfig;
 
 import edu.buffalo.cse562.berkelydb.lineitem.LineItemPrimaryKeyBinding;
 import edu.buffalo.cse562.datasource.DataSourceReader;
@@ -34,7 +35,6 @@ public class DatabaseManager {
 	
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
-		envConfig.setSharedCache(true);
 		envConfig.setConfigParam("je.log.fileMax", "100000000");
 	    envConfig.setAllowCreate(true);
 	    envConfig.setLocking(false);
@@ -150,8 +150,15 @@ public class DatabaseManager {
 //		}
 //		System.out.println("Time Taken"+(System.currentTimeMillis() - start));
 //	}
+    
+    public void publishStats(){
+    	StatsConfig config = new StatsConfig();
+		config.setClear(true);
+		System.err.println(myDbEnvironment.getStats(config));
+    }
 	
 	public void close(){
+		
 		closeDB(openSecondaryDatabases);
 		closeDB(openPrimaryDatabases);
 		myDbEnvironment.close();

@@ -175,8 +175,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			DatabaseEntry pkey = new DatabaseEntry();
 			TableUtils.bindLeafValueToKey(value, key);
 			DatabaseEntry tuple = new DatabaseEntry();
-			cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
-	//		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+			cursor = secondaryDb.openCursor(null, null);
 			OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
 			while(returnVal== OperationStatus.SUCCESS){
 				LeafValue[] results = binding.entryToObject(tuple);
