@@ -45,6 +45,8 @@ public class ExpressionEvaluator extends Eval {
 	}
 	
 	public ExpressionEvaluator(CreateTable table){
+		if(table==null)
+			return;
 		this.table = table;
 		List<ColumnDefinition> colDefns = table.getColumnDefinitions();
 		Iterator<ColumnDefinition> iterator = colDefns.iterator();

@@ -1,28 +1,19 @@
 package edu.buffalo.cse562.utils;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-
-import net.sf.jsqlparser.expression.BinaryExpression;
-import net.sf.jsqlparser.expression.DateValue;
-import net.sf.jsqlparser.expression.DoubleValue;
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.expression.LeafValue;
+import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.DatabaseEntry;
+import edu.buffalo.cse562.ExpressionEvaluator;
+import edu.buffalo.cse562.ExpressionTriplets;
+import edu.buffalo.cse562.ExtendedDateValue;
+import edu.buffalo.cse562.berkelydb.IndexMetaData;
+import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
+import edu.buffalo.cse562.berkelydb.lineitem.LineItemLeafValueBinding;
+import edu.buffalo.cse562.berkelydb.nation.NationLeafValueBinding;
+import edu.buffalo.cse562.berkelydb.orders.OrdersLeafValueBinding;
+import edu.buffalo.cse562.berkelydb.region.RegionLeafValueBinding;
+import edu.buffalo.cse562.berkelydb.supplier.SupplierLeafValueBinding;
+import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
-import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.Parenthesis;
-import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.schema.Column;
@@ -32,13 +23,12 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 
-import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.DatabaseEntry;
-
-import edu.buffalo.cse562.ExpressionEvaluator;
-import edu.buffalo.cse562.ExpressionTriplets;
-import edu.buffalo.cse562.ExtendedDateValue;
-import edu.buffalo.cse562.berkelydb.IndexMetaData;
+import java.io.File;
+import java.io.FileFilter;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public final class TableUtils {
 	
@@ -51,6 +41,23 @@ public final class TableUtils {
     public static boolean isLoadPhase = false;
 	private static Map<String,DateValue> pooledDateValue = new HashMap<String, DateValue>();
 	public static Map<String,IndexMetaData> tableIndexMetaData = new HashMap<>();
+
+    public static Map<String, Integer> tableNamePrimaryIndexMap = new HashMap<String, Integer>(){{
+        put("CUSTOMER", 0);
+        put("LINEITEM", 0);
+        put("ORDERS", 0);
+        put("SUPPLIER", 0);
+        put("NATION", 0);
+        put("REGION", 0);
+    }};
+
+    public static Map<String, List<Integer>> tableNameSecondaryIndexMap = new HashMap<String, List<Integer>>(){{
+        put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
+        //put("LINEITEM", new ArrayList<>(Arrays.asList(0, 3, 4, 6, 8, 10, 12, 14)));
+        put("LINEITEM", new ArrayList<>(Arrays.asList(8, 10)));
+        put("ORDERS", new ArrayList<>(Arrays.asList(4)));
+        put("REGION", new ArrayList<>(Arrays.asList(1)));
+    }};
 
     public static String getDbDir() {
         return dbDir;
@@ -444,7 +451,7 @@ public final class TableUtils {
     }
 
     private static void getIndexableColumns(Expression where, List<ExpressionTriplets> columnList) throws SQLException {
-        if (where == null || where instanceof  Column || where instanceof LeafValue) return;
+        if (where == null || where instanceof  Column || where instanceof LeafValue || where instanceof Function) return;
 
         Expression leftExpression = ((BinaryExpression)where).getLeftExpression();
         Expression rightExpression = ((BinaryExpression)where).getRightExpression();
@@ -457,7 +464,7 @@ public final class TableUtils {
             if (rightExpression instanceof Function) {
                 CreateTable newTable = new CreateTable();
                 newTable.setColumnDefinitions(Arrays.asList(new ColumnDefinition()));
-                ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(newTable);
+                ExpressionEvaluator expressionEvaluator = new ExpressionEvaluator(null);
                 LeafValue evaluatedLeafValue = expressionEvaluator.eval(rightExpression);
                 columnList.add(new ExpressionTriplets((Column)leftExpression, (BinaryExpression)where, evaluatedLeafValue));
             }
@@ -470,5 +477,24 @@ public final class TableUtils {
         List<ExpressionTriplets> indexableColumnsList = new ArrayList<>();
         getIndexableColumns(where, indexableColumnsList);
         return indexableColumnsList;
+    }
+
+    public static TupleBinding<LeafValue[]> getTupleBindingForTable(String tableName) {
+        switch(tableName) {
+            case "CUSTOMER":
+                return new CustomerLeafValueBinding();
+            case "LINEITEM":
+                return new LineItemLeafValueBinding();
+            case "NATION":
+                return new NationLeafValueBinding();
+            case "ORDERS":
+                return new OrdersLeafValueBinding();
+            case "REGION":
+                return new RegionLeafValueBinding();
+            case "SUPPLIER":
+                return new SupplierLeafValueBinding();
+            default:
+                return null;
+        }
     }
 }

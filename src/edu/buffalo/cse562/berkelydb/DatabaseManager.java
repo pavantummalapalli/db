@@ -1,6 +1,7 @@
 package edu.buffalo.cse562.berkelydb;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ public class DatabaseManager {
 	private Environment myDbEnvironment = null;
 	private EnvironmentConfig envConfig;
 	private DatabaseConfig dbConfig = new DatabaseConfig();
+	private List<Database> openPrimaryDatabases = new ArrayList<>();
+	private List<Database> openSecondaryDatabases = new ArrayList<>();
 	
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
@@ -55,6 +58,7 @@ public class DatabaseManager {
 	                                     // the db that we're indexing. 
 	                    mySecConfig);    // The secondary config
 		db.sync();
+		openSecondaryDatabases.add(db);
 		return db;
 	}
 	
@@ -75,11 +79,24 @@ public class DatabaseManager {
 				myDatabase.put(null, key, tuple);
 			}
 			myDatabase.sync();
+			openPrimaryDatabases.add(myDatabase);
 			return myDatabase;
 		} catch (Exception dbe) {
 			throw new RuntimeException(dbe);
 		}
 	}
+
+    public Database getPrimaryDatabase(String tableName){
+        return myDbEnvironment.openDatabase(null, tableName, dbConfig);
+    }
+
+    public SecondaryDatabase getSecondaryDatabase(Database primaryDatabase,String secondaryIndexName,SecondaryKeyCreator secondaryKey){
+        SecondaryConfig dbConfig  = new SecondaryConfig();
+        dbConfig.setKeyCreator(secondaryKey);
+        dbConfig.setReadOnly(true);
+        dbConfig.setSortedDuplicates(true);
+        return myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase, dbConfig);
+    }
 	
 //	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue){
 //		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
@@ -114,6 +131,8 @@ public class DatabaseManager {
 //	}
 	
 	public void close(){
+		closeDB(openSecondaryDatabases);
+		closeDB(openPrimaryDatabases);
 		myDbEnvironment.close();
 	}
 	
@@ -123,4 +142,12 @@ public class DatabaseManager {
 			tableMap.get(iterator.next()).close();
 		}
 	}
+	private void closeDB(List<Database> databases){
+		Iterator<Database> iterator = databases.iterator();
+		while(iterator.hasNext()){
+			iterator.next().close();
+		}
+	}
+	
+	
 }

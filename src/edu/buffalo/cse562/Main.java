@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.buffalo.cse562.berkelydb.InitializeTableIndexMetaData;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class Main {

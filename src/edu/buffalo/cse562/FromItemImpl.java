@@ -1,6 +1,5 @@
 package edu.buffalo.cse562;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,7 @@ import net.sf.jsqlparser.statement.select.FromItemVisitor;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import edu.buffalo.cse562.datasource.FileDataSource;
+import edu.buffalo.cse562.datasource.BerekelyDBDataSource;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.QueryDomain;
@@ -36,11 +35,13 @@ public class FromItemImpl implements FromItemVisitor {
 	
 	@Override
 	public void visit(Table table) {
-		File filePath = TableUtils.getAssociatedTableFile(table.getName());
+		//File filePath = TableUtils.getAssociatedTableFile(table.getName());
 		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName().toUpperCase());
 		if(table.getAlias()==null)
 			table.setAlias(table.getName());
-		node = new RelationNode(table.getName(),table.getAlias(),new FileDataSource(filePath,schema.getColumnDefinitions()),schema);
+		
+		//node = new RelationNode(table.getName(),table.getAlias(),new FileDataSource(filePath,schema.getColumnDefinitions()),schema);
+		node = new RelationNode(table.getName(),table.getAlias(),new BerekelyDBDataSource(table.getName().toUpperCase()),schema);
 		tableList.add(table);
 		tableNames.add(table.getAlias().toUpperCase());
 	}

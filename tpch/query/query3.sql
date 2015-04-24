@@ -134,4 +134,3 @@ GROUP BY
 ORDER BY
    revenue DESC,
    orderdate LIMIT 10
-

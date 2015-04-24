@@ -14,6 +14,8 @@ import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.DiskOrderedCursor;
+import com.sleepycat.je.DiskOrderedCursorConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryCursor;
@@ -21,7 +23,6 @@ import com.sleepycat.je.SecondaryDatabase;
 
 import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.berkelydb.IndexMetaData;
-import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class BerekelyDBDataSource implements DataSource,DataSourceReader{
@@ -30,17 +31,15 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private TupleBinding<LeafValue[]> binding;
 	private ExpressionTriplets primaryIndexExp;
 	private ExpressionTriplets secondaryIndexExp;
-	private RelationNode node;
 	private IndexMetaData indexData;
+	private String tableName;
 	
-	public BerekelyDBDataSource(RelationNode node) {
-		this.node=node;
-		Expression exp =node.getExpression();
+	public void setExpression(Expression expression) {
 		try {
-			List<ExpressionTriplets> triplets  = TableUtils.getIndexableColumns(exp);
-			indexData = TableUtils.tableIndexMetaData.get(node.getTableName());
+			List<ExpressionTriplets> triplets  = TableUtils.getIndexableColumns(expression);
+			indexData = TableUtils.tableIndexMetaData.get(tableName);
 			for(ExpressionTriplets temp : triplets){
-				if(indexData.getSecondaryIndexes().containsKey(node.getTableName())){
+				if(indexData.getPrimaryIndexName().equals(temp.getColumn())){
 					primaryIndexExp = temp;
 				}
 				else{
@@ -51,6 +50,10 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	public BerekelyDBDataSource(String tableName) {
+		this.tableName = tableName;
 	}
 	
 	@Override
@@ -69,13 +72,20 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 
 	@Override
 	public LeafValue[] readNextTuple() throws IOException {
-		if(primaryIndexExp!=null){
-			return lookupPrimaryIndex(node.getTableName(), primaryIndexExp.getLeafValue(),binding, indexData.getPrimaryDatabase());
+		if(primaryIndexExp==null && secondaryIndexExp==null){
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					lookupAll(binding, indexData.getPrimaryDatabase());
+				}}).start();
+		}
+		else if(primaryIndexExp!=null){
+			return lookupPrimaryIndex(tableName, primaryIndexExp.getLeafValue(),binding, indexData.getPrimaryDatabase());
 		}else{
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					String secIndexName = node.getTableName()+"."+secondaryIndexExp.getColumn().getColumnName();
+					String secIndexName = tableName+"."+secondaryIndexExp.getColumn().getColumnName();
 					SecondaryDatabase db = indexData.getSecondaryIndexes().get(secIndexName);
 					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding,db);
 				}}).start();
@@ -85,6 +95,19 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	
 	@Override
 	public void close() throws IOException {
+	}
+	
+	public synchronized void lookupAll(TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+		DatabaseEntry pkey = new DatabaseEntry();
+		DatabaseEntry tuple = new DatabaseEntry();
+		DiskOrderedCursor cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
+		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+		while(cursor.getNext(pkey, tuple, LockMode.READ_UNCOMMITTED)== OperationStatus.SUCCESS){
+			LeafValue[] results = binding.entryToObject(tuple);
+			buffer.add(results);
+		}
+		buffer.add(null);
+		cursor.close();
 	}
 	
 	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
@@ -102,7 +125,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		TableUtils.bindLeafValueToKey(value, key);
 		DatabaseEntry tuple = new DatabaseEntry();
 		SecondaryCursor cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
-		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+//		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
 		OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
 		while(returnVal== OperationStatus.SUCCESS){
 			LeafValue[] results = binding.entryToObject(tuple);
