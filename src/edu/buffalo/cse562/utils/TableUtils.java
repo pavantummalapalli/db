@@ -40,6 +40,7 @@ public final class TableUtils {
 	public static boolean isSwapOn=false;
     public static boolean isLoadPhase = false;
 	private static Map<String,DateValue> pooledDateValue = new HashMap<String, DateValue>();
+	private static Map<Long,DateValue> pooledLongDateValue = new HashMap<>();
 	public static Map<String,IndexMetaData> tableIndexMetaData = new HashMap<>();
 
     public static Map<String, Integer> tableNamePrimaryIndexMap = new HashMap<String, Integer>(){{
@@ -444,9 +445,13 @@ public final class TableUtils {
 
     //TODO caching
     public static DateValue getDateValueFromLongValue(long value) {
-        Date date = new Date(value);
-        DateValue dateValue = new DateValue("'1970-01-01'");
-        dateValue.setValue(date);
+    	DateValue dateValue=pooledLongDateValue.get(value);
+    	if(dateValue==null){
+    		Date date = new Date(value);
+            dateValue = new ExtendedDateValue("'1970-01-01'");
+            dateValue.setValue(date);
+            pooledLongDateValue.put(value, dateValue);
+    	}
         return dateValue;
     }
 
