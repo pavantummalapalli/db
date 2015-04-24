@@ -18,35 +18,38 @@ public class InitializeTableIndexMetaData {
     private String tableName;
     private DatabaseManager manager;
 
-    public InitializeTableIndexMetaData(CreateTable createTable,DatabaseManager manager) {
-    	this.manager=manager;
+    public InitializeTableIndexMetaData(CreateTable createTable, DatabaseManager manager) {
+        this.manager = manager;
         this.createTable = createTable;
         this.tableName = this.createTable.getTable().getName().toUpperCase();
     }
 
     public void initializeIndexMetaData() {
         IndexMetaData indexMetaData = new IndexMetaData();
-        String primaryIndexName = tableName;
-        Database primaryDatabase = manager.getPrimaryDatabase(tableName);
-        TupleBinding<LeafValue[]> binding = TableUtils.getTupleBindingForTable(tableName);
-        Map<String, SecondaryDatabase> secondaryDatabases = null;
+        Integer primaryKeyIndex = TableUtils.tableNamePrimaryIndexMap.get(tableName);
+        if (primaryKeyIndex != null) {
+            String primaryIndexName = tableName + "." + ((ColumnDefinition)createTable.getColumnDefinitions().get(primaryKeyIndex)).getColumnName().toUpperCase();
+            Database primaryDatabase = manager.getPrimaryDatabase(primaryIndexName);
+            TupleBinding<LeafValue[]> binding = TableUtils.getTupleBindingForTable(tableName);
+            Map<String, SecondaryDatabase> secondaryDatabases = null;
 
-        List<Integer> secondaryKeyIndexList = TableUtils.tableNameSecondaryIndexMap.get(tableName);
-        if (secondaryKeyIndexList != null) {
-            secondaryDatabases = new HashMap<>();
-            for (int secondaryKeyIndex : secondaryKeyIndexList) {
-                SecondaryKeyCreaterImpl secondaryKeyCreater = new SecondaryKeyCreaterImpl(binding, secondaryKeyIndex);
-                String secondaryIndexName = tableName + "." + ((ColumnDefinition) createTable.getColumnDefinitions().get(secondaryKeyIndex)).getColumnName().toUpperCase();
-                SecondaryDatabase secDb = manager.getSecondaryDatabase(primaryDatabase, secondaryIndexName, secondaryKeyCreater);
-                secondaryDatabases.put(secondaryIndexName, secDb);
+            List<Integer> secondaryKeyIndexList = TableUtils.tableNameSecondaryIndexMap.get(tableName);
+            if (secondaryKeyIndexList != null) {
+                secondaryDatabases = new HashMap<>();
+                for (int secondaryKeyIndex : secondaryKeyIndexList) {
+                    SecondaryKeyCreaterImpl secondaryKeyCreater = new SecondaryKeyCreaterImpl(binding, secondaryKeyIndex);
+                    String secondaryIndexName = tableName + "." + ((ColumnDefinition) createTable.getColumnDefinitions().get(secondaryKeyIndex)).getColumnName().toUpperCase();
+                    SecondaryDatabase secDb = manager.getSecondaryDatabase(primaryDatabase, secondaryIndexName, secondaryKeyCreater);
+                    secondaryDatabases.put(secondaryIndexName, secDb);
+                }
             }
+
+            indexMetaData.setPrimaryIndexName(primaryIndexName);
+            indexMetaData.setPrimaryDatabase(primaryDatabase);
+            indexMetaData.setBinding(binding);
+            indexMetaData.setSecondaryIndexes(secondaryDatabases);
+
+            TableUtils.tableIndexMetaData.put(tableName, indexMetaData);
         }
-
-        indexMetaData.setPrimaryIndexName(primaryIndexName);
-        indexMetaData.setPrimaryDatabase(primaryDatabase);
-        indexMetaData.setBinding(binding);
-        indexMetaData.setSecondaryIndexes(secondaryDatabases);
-
-        TableUtils.tableIndexMetaData.put(tableName, indexMetaData);
     }
 }

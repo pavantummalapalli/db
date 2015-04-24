@@ -36,7 +36,8 @@ public class CreateTableIndex {
             List<ColumnDefinition> colDefns = createTable.getColumnDefinitions();
             TupleBinding<LeafValue[]> tupleBinding = TableUtils.getTupleBindingForTable(tableName);
             System.out.println("building index for :"+tableName);
-            primaryDatabase = manager.createIndexedTable(tableName, primaryKeyIndex, file, tupleBinding, colDefns);
+            String primaryIndexName = tableName + "." + ((ColumnDefinition)createTable.getColumnDefinitions().get(primaryKeyIndex)).getColumnName().toUpperCase();
+            primaryDatabase = manager.createIndexedTable(primaryIndexName, primaryKeyIndex, file, tupleBinding, colDefns);
         }
     }
 
