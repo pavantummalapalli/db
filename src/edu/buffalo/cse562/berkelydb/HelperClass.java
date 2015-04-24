@@ -16,6 +16,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryCursor;
 import com.sleepycat.je.SecondaryDatabase;
+import com.sun.javafx.image.impl.IntArgb;
 
 import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
 import edu.buffalo.cse562.berkelydb.orders.OrdersLeafValueBinding;
@@ -25,18 +26,12 @@ import edu.buffalo.cse562.datasource.FileDataSource;
 public class HelperClass {
 
 //	public static void main(String[] args) throws Exception{
-//		indexTable();
-//		long start = System.currentTimeMillis();
-//		createPhoneIndex();
-//		System.out.println("Time Taken to build secondary Index"+(System.currentTimeMillis() - start));
-//		lookup();
-//		lookupSecondaryIndexes(null, null, null);
-//		lookupSecondaryIndexes(null, null, null);
+//		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
+//		InitializeTableIndexMetaData metaData = new InitializeTableIndexMetaData(createTable, manager);
 //	}
 //	
 //	private static void lookupSecondaryIndexes(String indexName,LeafValue value,TupleBinding<LeafValue[]> tupleBinding){
 //		long start = System.currentTimeMillis();
-//		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
 //		SecondaryKeyCreaterImpl phoneKey = new SecondaryKeyCreaterImpl(new CustomerLeafValueBinding(), 4);
 //		SecondaryDatabase customer =manager.getSecondaryIndex("custphone");
 //		DatabaseEntry key = new DatabaseEntry();

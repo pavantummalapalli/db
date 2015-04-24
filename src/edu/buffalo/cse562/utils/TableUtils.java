@@ -47,16 +47,16 @@ public final class TableUtils {
         put("LINEITEM", 0);
         put("ORDERS", 0);
         put("SUPPLIER", 0);
-        put("NATION", 0);
-        put("REGION", 0);
+//        put("NATION", 0);
+//        put("REGION", 0);
     }};
 
     public static Map<String, List<Integer>> tableNameSecondaryIndexMap = new HashMap<String, List<Integer>>(){{
         put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
         //put("LINEITEM", new ArrayList<>(Arrays.asList(0, 3, 4, 6, 8, 10, 12, 14)));
-        put("LINEITEM", new ArrayList<>(Arrays.asList(8, 10)));
+        put("LINEITEM", new ArrayList<>(Arrays.asList(8)));
         put("ORDERS", new ArrayList<>(Arrays.asList(4)));
-        put("REGION", new ArrayList<>(Arrays.asList(1)));
+//        put("REGION", new ArrayList<>(Arrays.asList(1)));
     }};
 
     public static String getDbDir() {

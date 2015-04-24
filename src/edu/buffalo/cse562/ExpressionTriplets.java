@@ -6,7 +6,6 @@ import net.sf.jsqlparser.schema.Column;
 
 public class ExpressionTriplets {
 
-	
 	 private Column column;
 	 private BinaryExpression operator;
 	 private LeafValue leafValue;
@@ -40,7 +39,4 @@ public class ExpressionTriplets {
 	public void setLeafValue(LeafValue leafValue) {
 		this.leafValue = leafValue;
 	}
-      
-       
-      
 }

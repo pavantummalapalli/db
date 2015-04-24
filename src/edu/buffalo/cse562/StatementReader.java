@@ -29,8 +29,10 @@ public class StatementReader {
 	String query = "";
 	public void readSqlFile(String dataDir, String[] sqlfiles) {
 		try {
-			DatabaseManager manager = new DatabaseManager(TableUtils.getDbDir());
 			long startTime = System.currentTimeMillis();
+			DatabaseManager manager = new DatabaseManager(TableUtils.getDbDir());
+			System.out.println("Time in seconds to initt :  " + (System.currentTimeMillis() - startTime) / 1000.0);
+			startTime = System.currentTimeMillis();
 			//attachMemoryListeners();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
@@ -61,10 +63,12 @@ public class StatementReader {
                                 CreateTableIndex createTableIndex = new CreateTableIndex(createTableStmt,manager);
                                 createTableIndex.createIndexForTable();
                             } else {
+                            	
                                 if (TableUtils.tableIndexMetaData.containsKey(tableName.toUpperCase()) == false) {
                                     InitializeTableIndexMetaData init = new InitializeTableIndexMetaData(createTableStmt,manager);
                                     init.initializeIndexMetaData();
                                 }
+                                
                             }
 						} catch (Exception ex) {	
 							throw new RuntimeException("CREATE TABLE THROW NEW EXCEPTION : " + statement, ex);
@@ -72,9 +76,9 @@ public class StatementReader {
 					}
 				}
 			}
-			long endTime = System.currentTimeMillis();
 			manager.close();
-			System.out.println("Time in seconds " + (endTime - startTime) / 1000.);
+			long endTime = System.currentTimeMillis();
+			System.out.println("Time in seconds " + (endTime - startTime) / 1000.0);
 		} catch (Throwable e) {
 			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}

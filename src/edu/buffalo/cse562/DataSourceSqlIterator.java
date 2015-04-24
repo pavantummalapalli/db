@@ -82,36 +82,38 @@ public class DataSourceSqlIterator implements SqlIterator {
 				
 		public LeafValue[] next() {
 			try {
-				LeafValue [] convertedValues = dataFileReader.readNextTuple();
-				if(convertedValues == null)
-					return null;
-				//TODO: detect n trim spaces
-//				colVals = row.split("\\|");
-//				LeafValue [] convertedValues = new LeafValue[colVals.length];
-//				for(int i=0;i<colVals.length;i++){
-//					Integer index  = Integer.valueOf(i);
-//					String columnName = reverseColumnMapping.get(index);
-//					convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
-//				}
-				if(filterExpression!=null){
-					//ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
-					LeafValue leafValue = evaluate.evaluateExpression(filterExpression, convertedValues, null);
-					BooleanValue value =(BooleanValue) leafValue;
-					if(value ==BooleanValue.FALSE)
-						return next();
+				while(true){
+					LeafValue [] convertedValues = dataFileReader.readNextTuple();
+					if(convertedValues == null)
+						return null;
+					//TODO: detect n trim spaces
+	//				colVals = row.split("\\|");
+	//				LeafValue [] convertedValues = new LeafValue[colVals.length];
+	//				for(int i=0;i<colVals.length;i++){
+	//					Integer index  = Integer.valueOf(i);
+	//					String columnName = reverseColumnMapping.get(index);
+	//					convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, table);
+	//				}
+					if(filterExpression!=null){
+						//ExpressionEvaluator evaluate = new ExpressionEvaluator(table);
+						LeafValue leafValue = evaluate.evaluateExpression(filterExpression, convertedValues, null);
+						BooleanValue value =(BooleanValue) leafValue;
+						if(value ==BooleanValue.FALSE)
+							continue;
+					}
+					if(selectExpressionList ==null || selectExpressionList.size()==0){
+						return convertedValues;
+					}
+					int count = 0;
+					LeafValue[] resolvedValue = new LeafValue[convertedValues.length];
+					for (Expression expression : selectExpressionList) {
+						LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, convertedValues, null);
+						//resolvedValues[count] =expressionEvaluatorList.get(count).getLeafValue(leafValue);
+						resolvedValue[count] =leafValue;
+						count++;
+					}
+					return resolvedValue;
 				}
-				if(selectExpressionList ==null || selectExpressionList.size()==0){
-					return convertedValues;
-				}
-				int count = 0;
-				LeafValue[] resolvedValue = new LeafValue[convertedValues.length];
-				for (Expression expression : selectExpressionList) {
-					LeafValue leafValue = selectExpressionEvaluatorList.get(count).evaluateExpression(expression, convertedValues, null);
-					//resolvedValues[count] =expressionEvaluatorList.get(count).getLeafValue(leafValue);
-					resolvedValue[count] =leafValue;
-					count++;
-				}
-				return resolvedValue;
 			}
 			catch (SQLException e) {
 				throw new RuntimeException("SQLException in SQLIterator next method 1", e);

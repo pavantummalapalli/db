@@ -1,14 +1,17 @@
 package edu.buffalo.cse562.berkelydb.lineitem;
 
+import net.sf.jsqlparser.expression.DateValue;
+import net.sf.jsqlparser.expression.DoubleValue;
+import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
+import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.StringValue;
+
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
-import edu.buffalo.cse562.ExtendedDateValue;
-import edu.buffalo.cse562.utils.TableUtils;
-import net.sf.jsqlparser.expression.*;
-import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
 
-import java.sql.Date;
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class LineItemLeafValueBinding extends TupleBinding<LeafValue[]> {
 

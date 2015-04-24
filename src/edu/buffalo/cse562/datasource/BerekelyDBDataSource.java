@@ -27,26 +27,31 @@ import edu.buffalo.cse562.utils.TableUtils;
 
 public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 
-	private BlockingQueue<LeafValue[]> buffer = new ArrayBlockingQueue<>(20);
+	private BlockingQueue<LeafValue[]> buffer = new ArrayBlockingQueue<>(QUEUE_SIZE);
 	private TupleBinding<LeafValue[]> binding;
 	private ExpressionTriplets primaryIndexExp;
 	private ExpressionTriplets secondaryIndexExp;
 	private IndexMetaData indexData;
 	private String tableName;
+	private Thread producerThread;
+	private volatile boolean start;
+	private static final int QUEUE_SIZE=2000;
 	
 	public void setExpression(Expression expression) {
 		try {
 			List<ExpressionTriplets> triplets  = TableUtils.getIndexableColumns(expression);
-			indexData = TableUtils.tableIndexMetaData.get(tableName);
 			for(ExpressionTriplets temp : triplets){
-				if(indexData.getPrimaryIndexName().equals(temp.getColumn())){
+				if(indexData.getPrimaryIndexName().equals(temp.getColumn().getWholeColumnName())){
 					primaryIndexExp = temp;
 				}
 				else{
-					if(temp.getOperator() instanceof EqualsTo)
+					if(temp.getOperator() instanceof EqualsTo){
+						if(indexData.getSecondaryIndexes().containsKey(temp.getColumn().getWholeColumnName()))
 						secondaryIndexExp=temp;
+					}
 				}
 			}
+			
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -54,10 +59,37 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	
 	public BerekelyDBDataSource(String tableName) {
 		this.tableName = tableName;
+		indexData = TableUtils.tableIndexMetaData.get(tableName);
+		binding=indexData.getBinding();
 	}
 	
 	@Override
 	public DataSourceReader getReader() throws IOException {
+		close();
+		if(primaryIndexExp==null && secondaryIndexExp==null){
+			producerThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					lookupAll(binding, indexData.getPrimaryDatabase());
+				}});
+		}
+		else if(primaryIndexExp!=null){
+			producerThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					lookupPrimaryIndex(tableName, primaryIndexExp.getLeafValue(),binding, indexData.getPrimaryDatabase());
+				}});
+		}else{
+			producerThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					String secIndexName = tableName+"."+secondaryIndexExp.getColumn().getColumnName();
+					SecondaryDatabase db = indexData.getSecondaryIndexes().get(secIndexName);
+					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding,db);
+				}});
+		}
+		producerThread.setDaemon(true);
+		start=false;
 		return this;
 	}
 
@@ -72,68 +104,92 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 
 	@Override
 	public LeafValue[] readNextTuple() throws IOException {
-		if(primaryIndexExp==null && secondaryIndexExp==null){
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					lookupAll(binding, indexData.getPrimaryDatabase());
-				}}).start();
+		try {
+			if(!start){
+				start=true;
+				producerThread.start();
+			}
+			LeafValue[] values = buffer.take();
+			if(values.length == 1 && values[0]==null){
+				producerThread=null;
+				start=false;
+				return null;
+			}
+			else
+				return values;
+		} catch (InterruptedException e) {
+			System.out.println("Thread interrupted");
 		}
-		else if(primaryIndexExp!=null){
-			return lookupPrimaryIndex(tableName, primaryIndexExp.getLeafValue(),binding, indexData.getPrimaryDatabase());
-		}else{
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					String secIndexName = tableName+"."+secondaryIndexExp.getColumn().getColumnName();
-					SecondaryDatabase db = indexData.getSecondaryIndexes().get(secIndexName);
-					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding,db);
-				}}).start();
-		}
-		return buffer.poll();
+		return null;
 	}
 	
 	@Override
 	public void close() throws IOException {
+		if(producerThread!=null){
+//			producerThread.interrupt();
+//			System.out.println("Thread interrupted :"+producerThread.getName());
+			buffer=new ArrayBlockingQueue<>(QUEUE_SIZE);
+		}
 	}
 	
 	public synchronized void lookupAll(TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+		DiskOrderedCursor cursor=null;
+		try{
 		DatabaseEntry pkey = new DatabaseEntry();
 		DatabaseEntry tuple = new DatabaseEntry();
-		DiskOrderedCursor cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
-		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+		//DiskOrderedCursor cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
+		cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
+		//cursor.get(null, null, LockMode.READ_COMMITTED);
 		while(cursor.getNext(pkey, tuple, LockMode.READ_UNCOMMITTED)== OperationStatus.SUCCESS){
 			LeafValue[] results = binding.entryToObject(tuple);
-			buffer.add(results);
+			buffer.put(results);
 		}
-		buffer.add(null);
-		cursor.close();
+		buffer.put(new LeafValue[1]);
+		} catch (InterruptedException e) {
+			System.out.println("Thread interrupted");
+		}finally{
+			if(cursor!=null)
+				cursor.close();
+		}
 	}
 	
-	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+	
+	public synchronized void lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+		try{
 		DatabaseEntry key = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(leafValue, key);
 		DatabaseEntry tuple = new DatabaseEntry();
 		primaryDatabase.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
 		LeafValue[] results = binding.entryToObject(tuple);
-		return results;
+		buffer.put(results);
+		buffer.put(new LeafValue[1]);
+		} catch (InterruptedException e) {
+			System.out.println("Thread interrupted");
+		}
 	}
 	
 	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
-		DatabaseEntry key = new DatabaseEntry();
-		DatabaseEntry pkey = new DatabaseEntry();
-		TableUtils.bindLeafValueToKey(value, key);
-		DatabaseEntry tuple = new DatabaseEntry();
-		SecondaryCursor cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
-//		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
-		OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
-		while(returnVal== OperationStatus.SUCCESS){
-			LeafValue[] results = binding.entryToObject(tuple);
-			buffer.add(results);
-			returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+		SecondaryCursor cursor=null;
+		try{
+			DatabaseEntry key = new DatabaseEntry();
+			DatabaseEntry pkey = new DatabaseEntry();
+			TableUtils.bindLeafValueToKey(value, key);
+			DatabaseEntry tuple = new DatabaseEntry();
+			cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
+	//		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+			OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
+			while(returnVal== OperationStatus.SUCCESS){
+				LeafValue[] results = binding.entryToObject(tuple);
+				buffer.put(results);
+				returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+			}
+			buffer.put(new LeafValue[1]);
+		} catch (InterruptedException e) {
+			System.out.println("Thread interrupted");
+		}finally{
+			if(cursor!=null)
+				cursor.close();
 		}
-		buffer.add(null);
-		cursor.close();
 	}
 	
 //	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){

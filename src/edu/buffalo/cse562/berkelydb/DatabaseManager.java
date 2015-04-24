@@ -1,7 +1,7 @@
 package edu.buffalo.cse562.berkelydb;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +19,7 @@ import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
 
+import edu.buffalo.cse562.berkelydb.lineitem.LineItemPrimaryKeyBinding;
 import edu.buffalo.cse562.datasource.DataSourceReader;
 import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.utils.TableUtils;
@@ -28,13 +29,15 @@ public class DatabaseManager {
 	private Environment myDbEnvironment = null;
 	private EnvironmentConfig envConfig;
 	private DatabaseConfig dbConfig = new DatabaseConfig();
-	private List<Database> openPrimaryDatabases = new ArrayList<>();
-	private List<Database> openSecondaryDatabases = new ArrayList<>();
+	private Map<String,Database> openPrimaryDatabases = new HashMap<>();
+	private Map<String,SecondaryDatabase> openSecondaryDatabases = new HashMap<>();
 	
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
-		//envConfig.setConfigParam("je.log.fileMax", "10000");
+		envConfig.setSharedCache(true);
+		envConfig.setConfigParam("je.log.fileMax", "100000000");
 	    envConfig.setAllowCreate(true);
+	    envConfig.setLocking(false);
 	    // Open the environment. Create it if it does not already exist.
 	    myDbEnvironment = new Environment(new File(envHome),envConfig);
 	    // Open the database. Create it if it does not already exist.
@@ -58,7 +61,7 @@ public class DatabaseManager {
 	                                     // the db that we're indexing. 
 	                    mySecConfig);    // The secondary config
 		db.sync();
-		openSecondaryDatabases.add(db);
+		openSecondaryDatabases.put(tableName,db);
 		return db;
 	}
 	
@@ -69,17 +72,24 @@ public class DatabaseManager {
 		    // start indexing table
 		    FileDataSource source = new FileDataSource(sourceData, colDefns);
 			DataSourceReader reader =  source.getReader();
+			TupleBinding<LeafValue[]> pKeyBinding = new LineItemPrimaryKeyBinding();
+			String tableName = indexName.split("\\.")[0];
+			boolean lineItemTable = tableName.equals("LINEITEM");
 			LeafValue[] row = null;
 			while( (row = reader.readNextTuple())!=null){
 				DatabaseEntry tuple = new DatabaseEntry();
 				DatabaseEntry key = new DatabaseEntry();
 				binding.objectToEntry(row, tuple);
-				TableUtils.bindLeafValueToKey(row[indexPosition], key);
+				if(lineItemTable){
+					pKeyBinding.objectToEntry(row, key);
+				}else{
+					TableUtils.bindLeafValueToKey(row[indexPosition], key);
+				}
 				//TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(row[0].toLong(), key);
 				myDatabase.put(null, key, tuple);
 			}
 			myDatabase.sync();
-			openPrimaryDatabases.add(myDatabase);
+			openPrimaryDatabases.put(indexName, myDatabase);
 			return myDatabase;
 		} catch (Exception dbe) {
 			throw new RuntimeException(dbe);
@@ -87,15 +97,26 @@ public class DatabaseManager {
 	}
 
     public Database getPrimaryDatabase(String tableName){
-        return myDbEnvironment.openDatabase(null, tableName, dbConfig);
+    	if(!openPrimaryDatabases.containsKey(tableName)){
+    		 DatabaseConfig dbConfig = new DatabaseConfig();
+    		 dbConfig.setReadOnly(true);
+    		 dbConfig.setSortedDuplicates(false);
+    		 dbConfig.setTransactional(false);
+    		 openPrimaryDatabases.put(tableName,myDbEnvironment.openDatabase(null, tableName, dbConfig));
+    	}
+        return openPrimaryDatabases.get(tableName);
     }
 
     public SecondaryDatabase getSecondaryDatabase(Database primaryDatabase,String secondaryIndexName,SecondaryKeyCreator secondaryKey){
-        SecondaryConfig dbConfig  = new SecondaryConfig();
-        dbConfig.setKeyCreator(secondaryKey);
-        dbConfig.setReadOnly(true);
-        dbConfig.setSortedDuplicates(true);
-        return myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase, dbConfig);
+    	if(!openSecondaryDatabases.containsKey(secondaryIndexName)){
+    		SecondaryConfig dbConfig  = new SecondaryConfig();
+            dbConfig.setKeyCreator(secondaryKey);
+            dbConfig.setReadOnly(true);
+            dbConfig.setSortedDuplicates(true);
+            dbConfig.setTransactional(false);
+            openSecondaryDatabases.put(secondaryIndexName, myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase, dbConfig));
+    	}
+        return openSecondaryDatabases.get(secondaryIndexName);
     }
 	
 //	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue){
@@ -148,6 +169,4 @@ public class DatabaseManager {
 			iterator.next().close();
 		}
 	}
-	
-	
 }
