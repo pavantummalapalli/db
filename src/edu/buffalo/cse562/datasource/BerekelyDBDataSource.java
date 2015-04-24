@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.je.CursorConfig;
@@ -19,7 +20,6 @@ import com.sleepycat.je.SecondaryCursor;
 import com.sleepycat.je.SecondaryDatabase;
 
 import edu.buffalo.cse562.ExpressionTriplets;
-import edu.buffalo.cse562.berkelydb.DatabaseManager;
 import edu.buffalo.cse562.berkelydb.IndexMetaData;
 import edu.buffalo.cse562.queryplan.RelationNode;
 import edu.buffalo.cse562.utils.TableUtils;
@@ -32,11 +32,9 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private ExpressionTriplets secondaryIndexExp;
 	private RelationNode node;
 	private IndexMetaData indexData;
-	private DatabaseManager manager;
 	
-	public BerekelyDBDataSource(RelationNode node,DatabaseManager dbManager) {
+	public BerekelyDBDataSource(RelationNode node) {
 		this.node=node;
-		this.manager=dbManager;
 		Expression exp =node.getExpression();
 		try {
 			List<ExpressionTriplets> triplets  = TableUtils.getIndexableColumns(exp);
@@ -46,7 +44,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 					primaryIndexExp = temp;
 				}
 				else{
-					secondaryIndexExp=temp;
+					if(temp.getOperator() instanceof EqualsTo)
+						secondaryIndexExp=temp;
 				}
 			}
 		} catch (SQLException e) {
@@ -113,4 +112,21 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		buffer.add(null);
 		cursor.close();
 	}
+	
+//	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+//		DatabaseEntry key = new DatabaseEntry();
+//		DatabaseEntry pkey = new DatabaseEntry();
+//		TableUtils.bindLeafValueToKey(value, key);
+//		DatabaseEntry tuple = new DatabaseEntry();
+//		SecondaryCursor cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
+//		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+//		OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
+//		while(returnVal== OperationStatus.SUCCESS){
+//			LeafValue[] results = binding.entryToObject(tuple);
+//			buffer.add(results);
+//			returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+//		}
+//		buffer.add(null);
+//		cursor.close();
+//	}
 }

@@ -1,7 +1,6 @@
 package edu.buffalo.cse562.berkelydb;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -10,20 +9,15 @@ import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.LockMode;
-import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryConfig;
-import com.sleepycat.je.SecondaryCursor;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
 
-import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
 import edu.buffalo.cse562.datasource.DataSourceReader;
 import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.utils.TableUtils;
