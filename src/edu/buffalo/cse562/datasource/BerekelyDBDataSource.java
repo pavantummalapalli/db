@@ -17,7 +17,6 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.SecondaryCursor;
 import com.sleepycat.je.SecondaryDatabase;
-import com.sleepycat.je.SecondaryKeyCreator;
 
 import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.berkelydb.DatabaseManager;
@@ -72,13 +71,14 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	@Override
 	public LeafValue[] readNextTuple() throws IOException {
 		if(primaryIndexExp!=null){
-			return lookupPrimaryIndex(node.getTableName(), primaryIndexExp.getLeafValue(),binding);
+			return lookupPrimaryIndex(node.getTableName(), primaryIndexExp.getLeafValue(),binding, indexData.getPrimaryDatabase());
 		}else{
-			String secIndexName = node.getTableName()+"."+secondaryIndexExp.getColumn().getColumnName();
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding);
+					String secIndexName = node.getTableName()+"."+secondaryIndexExp.getColumn().getColumnName();
+					SecondaryDatabase db = indexData.getSecondaryIndexes().get(secIndexName);
+					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding,db);
 				}}).start();
 		}
 		return buffer.poll();
@@ -88,23 +88,21 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	public void close() throws IOException {
 	}
 	
-	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding){
-		Database customer =manager.getPrimaryIndex(primaryIndex);
+	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
 		DatabaseEntry key = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(leafValue, key);
 		DatabaseEntry tuple = new DatabaseEntry();
-		customer.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
+		primaryDatabase.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
 		LeafValue[] results = binding.entryToObject(tuple);
 		return results;
 	}
 	
-	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding){
-		SecondaryDatabase customer =manager.getSecondaryIndex(secondaryIndexName);
+	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry pkey = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(value, key);
 		DatabaseEntry tuple = new DatabaseEntry();
-		SecondaryCursor cursor = customer.openSecondaryCursor(null, new CursorConfig());
+		SecondaryCursor cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
 		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
 		OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
 		while(returnVal== OperationStatus.SUCCESS){

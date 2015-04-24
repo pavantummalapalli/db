@@ -32,8 +32,6 @@ public class DatabaseManager {
 	
 	private Environment myDbEnvironment = null;
 	private EnvironmentConfig envConfig;
-	private Map<String,Database> tableMap = new HashMap<>();
-	private Map<String,SecondaryDatabase> secondaryTableMap = new HashMap<>();
 	private DatabaseConfig dbConfig = new DatabaseConfig();
 	
 	public DatabaseManager(String envHome){
@@ -48,7 +46,7 @@ public class DatabaseManager {
 	    dbConfig.setDeferredWrite(true);
 	}
 	
-	public void createSecondaryIndexedTable(Database primaryDatabase,String tableName,SecondaryKeyCreator secondaryKey){
+	public SecondaryDatabase createSecondaryIndexedTable(Database primaryDatabase,String tableName,SecondaryKeyCreator secondaryKey){
 		SecondaryConfig mySecConfig = new SecondaryConfig();
 		mySecConfig.setAllowCreate(true);
 		mySecConfig.setAllowPopulate(true);
@@ -63,10 +61,10 @@ public class DatabaseManager {
 	                                     // the db that we're indexing. 
 	                    mySecConfig);    // The secondary config
 		db.sync();
-		secondaryTableMap.put(tableName, db);
+		return db;
 	}
 	
-	public void createIndexedTable(String indexName,int indexPosition, File sourceData,TupleBinding<LeafValue[]> binding,List<ColumnDefinition> colDefns){		
+	public Database createIndexedTable(String indexName,int indexPosition, File sourceData,TupleBinding<LeafValue[]> binding,List<ColumnDefinition> colDefns){		
 		Database myDatabase = null;
 		try {
 		    myDatabase = myDbEnvironment.openDatabase(null, indexName, dbConfig); 
@@ -83,56 +81,45 @@ public class DatabaseManager {
 				myDatabase.put(null, key, tuple);
 			}
 			myDatabase.sync();
-		    tableMap.put(indexName, myDatabase);
+			return myDatabase;
 		} catch (Exception dbe) {
 			throw new RuntimeException(dbe);
 		}
 	}
 	
-	public Database getPrimaryIndex(String tableName){
-		return tableMap.get(tableName);
-	}
-	
-	public SecondaryDatabase getSecondaryIndex(String secondaryIndexName){
-		return secondaryTableMap.get(secondaryIndexName);
-	}
-	
-	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue){
-		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
-		Database customer =manager.getPrimaryIndex(primaryIndex);
-		DatabaseEntry key = new DatabaseEntry();
-		TableUtils.bindLeafValueToKey(leafValue, key);
-		DatabaseEntry tuple = new DatabaseEntry();
-		customer.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
-		CustomerLeafValueBinding binding = new CustomerLeafValueBinding();
-		LeafValue[] results = binding.entryToObject(tuple);
-		return results;
-	}
-
-	public void lookupSecondaryIndexes(String indexName,LeafValue value,TupleBinding<LeafValue[]> binding){
-		long start = System.currentTimeMillis();
-		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
-		SecondaryDatabase customer =manager.getSecondaryIndex(indexName);
-		DatabaseEntry key = new DatabaseEntry();
-		DatabaseEntry pkey = new DatabaseEntry();
-		TableUtils.bindLeafValueToKey(value, key);
-		DatabaseEntry tuple = new DatabaseEntry();
-		SecondaryCursor cursor = customer.openSecondaryCursor(null, new CursorConfig());
-		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
-		OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
-		while(returnVal== OperationStatus.SUCCESS){
-			LeafValue[] results = binding.entryToObject(tuple);
-			for(int i=0;i<results.length;i++)
-				System.out.print(results[i].toString()+ " ");
-			System.out.println();
-			returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
-		}
-		System.out.println("Time Taken"+(System.currentTimeMillis() - start));
-	}
+//	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue){
+//		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
+//		Database customer =manager.getPrimaryIndex(primaryIndex);
+//		DatabaseEntry key = new DatabaseEntry();
+//		TableUtils.bindLeafValueToKey(leafValue, key);
+//		DatabaseEntry tuple = new DatabaseEntry();
+//		customer.get(null, key, tuple, LockMode.READ_UNCOMMITTED);
+//		CustomerLeafValueBinding binding = new CustomerLeafValueBinding();
+//		LeafValue[] results = binding.entryToObject(tuple);
+//		return results;
+//	}
+//
+//	public void lookupSecondaryIndexes(String indexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+//		long start = System.currentTimeMillis();
+//		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");
+//		DatabaseEntry key = new DatabaseEntry();
+//		DatabaseEntry pkey = new DatabaseEntry();
+//		TableUtils.bindLeafValueToKey(value, key);
+//		DatabaseEntry tuple = new DatabaseEntry();
+//		SecondaryCursor cursor = secondaryDb.openSecondaryCursor(null, new CursorConfig());
+//		cursor.getCurrent(null, null, LockMode.READ_UNCOMMITTED);
+//		OperationStatus returnVal = cursor.getSearchKey(key, pkey,tuple, LockMode.READ_UNCOMMITTED);
+//		while(returnVal== OperationStatus.SUCCESS){
+//			LeafValue[] results = binding.entryToObject(tuple);
+//			for(int i=0;i<results.length;i++)
+//				System.out.print(results[i].toString()+ " ");
+//			System.out.println();
+//			returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+//		}
+//		System.out.println("Time Taken"+(System.currentTimeMillis() - start));
+//	}
 	
 	public void close(){
-		closeDB(secondaryTableMap);
-		closeDB(tableMap);
 		myDbEnvironment.close();
 	}
 	

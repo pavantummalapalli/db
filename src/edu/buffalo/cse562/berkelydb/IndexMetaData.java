@@ -5,14 +5,23 @@ import java.util.Map;
 import net.sf.jsqlparser.expression.LeafValue;
 
 import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.Database;
 import com.sleepycat.je.SecondaryDatabase;
-import com.sleepycat.je.SecondaryKeyCreator;
 
 public class IndexMetaData {
 
 	private String primaryIndexName;
+	private Database primaryDatabase;
 	private Map<String,SecondaryDatabase> secondaryIndexes;
 	private TupleBinding<LeafValue[]> binding;
+	
+	public void setPrimaryDatabase(Database primaryDatabase) {
+		this.primaryDatabase = primaryDatabase;
+	}
+	
+	public Database getPrimaryDatabase() {
+		return primaryDatabase;
+	}
 	
 	public void setBinding(TupleBinding<LeafValue[]> binding) {
 		this.binding = binding;
