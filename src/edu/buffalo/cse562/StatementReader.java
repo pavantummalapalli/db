@@ -2,26 +2,15 @@ package edu.buffalo.cse562;
 
 import java.io.File;
 import java.io.FileReader;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
-import java.util.Collection;
-
-import javax.management.NotificationEmitter;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Select;
-
-import com.sleepycat.je.StatsConfig;
-
 import edu.buffalo.cse562.berkelydb.CreateTableIndex;
 import edu.buffalo.cse562.berkelydb.DatabaseManager;
 import edu.buffalo.cse562.berkelydb.InitializeTableIndexMetaData;
-import edu.buffalo.cse562.memmanage.Listener;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
 import edu.buffalo.cse562.queryplan.QueryOptimizer;
@@ -36,7 +25,6 @@ public class StatementReader {
 			DatabaseManager manager = new DatabaseManager(TableUtils.getDbDir());
 			System.out.println("Time in seconds to initt :  " + (System.currentTimeMillis() - startTime) / 1000.0);
 			startTime = System.currentTimeMillis();
-			//attachMemoryListeners();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
 				CCJSqlParser parser = new CCJSqlParser(new FileReader(file));
@@ -50,19 +38,13 @@ public class StatementReader {
 						Node node = selectVistor.getQueryPlanTreeRoot();
 						node=new QueryOptimizer().optimizeQueryPlan((ProjectNode)node);
 						node.eval();
-//						manager.publishStats();
+						// manager.publishStats();
 					} else if (statement instanceof CreateTable) {
 						try {
 							CreateTable createTableStmt = (CreateTable) statement;
 							Table table = createTableStmt.getTable();
 							String tableName = table.getName();
 							TableUtils.getTableSchemaMap().put(table.getName(), createTableStmt);
-//							if(table.getAlias()==null)
-//								table.setAlias(createTableStmt.getTable().getName());
-//							TableUtils.getColumnTableMap(createTableStmt.getColumnDefinitions(), table);
-//							TableUtils.res
-
-                            //Load Phase is On. Have to create primary and secondary indexes
                             if (TableUtils.isLoadPhase) {
                                 CreateTableIndex createTableIndex = new CreateTableIndex(createTableStmt,manager);
                                 createTableIndex.createIndexForTable();
@@ -86,21 +68,5 @@ public class StatementReader {
 		} catch (Throwable e) {
 			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}
-	}
-	
-	private void attachMemoryListeners(){
-		MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
-		Collection<MemoryPoolMXBean> pool = ManagementFactory.getMemoryPoolMXBeans();
-		for(MemoryPoolMXBean temp:pool){
-			if(temp.getType().compareTo(MemoryType.HEAP)==0){
-				if(temp.isUsageThresholdSupported()){
-					//Set at 80% usage
-					temp.setUsageThreshold(new Double(temp.getUsage().getMax()*.6).longValue());
-				}
-			}
-		}
-		NotificationEmitter emitter = (NotificationEmitter) mbean;
-		Listener listener = new Listener();
-		emitter.addNotificationListener(listener, null, null);
-	}
+	}	
 }

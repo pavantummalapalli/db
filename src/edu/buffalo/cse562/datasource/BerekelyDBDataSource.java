@@ -2,16 +2,24 @@ package edu.buffalo.cse562.datasource;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 
 import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DiskOrderedCursor;
@@ -23,6 +31,7 @@ import com.sleepycat.je.SecondaryDatabase;
 
 import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.berkelydb.IndexMetaData;
+import edu.buffalo.cse562.berkelydb.Range;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class BerekelyDBDataSource implements DataSource,DataSourceReader{
@@ -30,7 +39,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private BlockingQueue<LeafValue[]> buffer = new ArrayBlockingQueue<>(QUEUE_SIZE);
 	private TupleBinding<LeafValue[]> binding;
 	private ExpressionTriplets primaryIndexExp;
-	private ExpressionTriplets secondaryIndexExp;
+	private Map<String, Range> secIndexMap = new HashMap<>();
 	private IndexMetaData indexData;
 	private String tableName;
 	private Thread producerThread;
@@ -38,6 +47,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private static final int QUEUE_SIZE=2000;
 	
 	public void setExpression(Expression expression) {
+		secIndexMap = new HashMap<>();
 		try {
 			List<ExpressionTriplets> triplets  = TableUtils.getIndexableColumns(expression);
 			for(ExpressionTriplets temp : triplets){
@@ -45,9 +55,30 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 					primaryIndexExp = temp;
 				}
 				else{
-					if(temp.getOperator() instanceof EqualsTo){
-						if(indexData.getSecondaryIndexes().containsKey(temp.getColumn().getWholeColumnName()))
-						secondaryIndexExp=temp;
+					String columnName = temp.getColumn().getWholeColumnName();
+					if (indexData.getSecondaryIndexes().containsKey(columnName)) {
+						Range range = secIndexMap.get(columnName);
+						if (range == null) {
+							range = new Range();
+							range.setExpressionTriplets(temp);
+						}
+						if (temp.getOperator() instanceof EqualsTo) {
+							range.setEquals(true);
+							range.setEqualValue(temp.getLeafValue());
+						} else if (temp.getOperator() instanceof MinorThan) {
+							range.setMaxValue(temp.getLeafValue());
+						} else if (temp.getOperator() instanceof MinorThanEquals) {
+							range.setMaxValue(temp.getLeafValue());
+							range.setMaxValueIncluded(true);
+						} else if (temp.getOperator() instanceof GreaterThanEquals) {
+							range.setMinValue(temp.getLeafValue());
+							range.setMinValueIncluded(true);
+						} else if (temp.getOperator() instanceof GreaterThan) {
+							range.setMinValue(temp.getLeafValue());
+						} else {
+							continue;
+						}
+						secIndexMap.put(columnName, range);
 					}
 				}
 			}
@@ -63,10 +94,34 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		binding=indexData.getBinding();
 	}
 	
+	private Range evaluateBestAvailableSecondaryIndex() {
+		Iterator<String> iterator = secIndexMap.keySet().iterator();
+		Set<Range> equalitySet = new HashSet<>();
+		Set<Range> rangeSet = new HashSet<>();
+		Set<Range> bothRangeSet = new HashSet<>();
+		while (iterator.hasNext()) {
+			String temp = iterator.next();
+			Range range = secIndexMap.get(temp);
+			if (range.isMaxValueIncluded() && range.isMinValueIncluded())
+				bothRangeSet.add(range);
+			else if (range.isEquals())
+				equalitySet.add(range);
+			else
+				rangeSet.add(range);
+		}
+		if (equalitySet.size() > 0)
+			return equalitySet.iterator().next();
+		if (bothRangeSet.size() > 0)
+			return bothRangeSet.iterator().next();
+		if (rangeSet.size() > 0)
+			return rangeSet.iterator().next();
+		return null;
+	}
+
 	@Override
 	public DataSourceReader getReader() throws IOException {
 		close();
-		if(primaryIndexExp==null && secondaryIndexExp==null){
+		if (primaryIndexExp == null && secIndexMap.isEmpty()) {
 			producerThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -83,9 +138,20 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			producerThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
+					Range range = evaluateBestAvailableSecondaryIndex();
+					ExpressionTriplets secondaryIndexExp = range.getExpressionTriplets();
 					String secIndexName = tableName+"."+secondaryIndexExp.getColumn().getColumnName();
 					SecondaryDatabase db = indexData.getSecondaryIndexes().get(secIndexName);
-					lookupSecondaryIndexes(secIndexName, secondaryIndexExp.getLeafValue(), binding,db);
+					if (!range.isEquals())
+						rangeLookupSecondaryIndex(secIndexName,
+								range.getMinValue(),
+								range.isMinValueIncluded(),
+								range.isMaxValueIncluded(),
+								range.getMaxValue(), binding, db);
+					else
+						lookupSecondaryIndexes(secIndexName,
+								secondaryIndexExp.getLeafValue(), binding, db);
+
 				}});
 		}
 		producerThread.setDaemon(true);
@@ -153,6 +219,72 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 	}
 	
+	public synchronized void rangeLookupSecondaryIndex(String secondaryIndexName,LeafValue minValue, boolean minIncluded, boolean maxIncuded, LeafValue maxValue,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+		SecondaryCursor cursor=null;
+		try{
+			DatabaseEntry key = new DatabaseEntry();
+			if(minValue==null && maxValue==null){
+				return ;
+			}
+			if(minValue==null){
+				TableUtils.bindLeafValueToKey(maxValue, key);
+				DatabaseEntry tuple = new DatabaseEntry();
+				cursor = secondaryDb.openCursor(null, null);
+				OperationStatus returnVal = cursor.getSearchKeyRange(key, tuple, LockMode.READ_UNCOMMITTED);
+				if(returnVal!=OperationStatus.SUCCESS){
+					return;
+				}
+				if(maxIncuded){
+					do {
+						LeafValue unwrappedValue = TableUtils.unbindLeafValueToKey(maxValue, key);
+						if (TableUtils.compareTwoLeafValues(unwrappedValue, maxValue) > 0)
+							break;
+						LeafValue[] results = binding.entryToObject(tuple);
+						buffer.put(results);
+					} while (cursor.getNext(key, tuple, LockMode.READ_UNCOMMITTED) == OperationStatus.SUCCESS);
+					cursor.getSearchKey(key, tuple, LockMode.READ_UNCOMMITTED);
+				}
+				while (cursor.getPrev(key, tuple, LockMode.READ_UNCOMMITTED) == OperationStatus.SUCCESS) {
+					LeafValue[] results = binding.entryToObject(tuple);
+					buffer.put(results);
+				}
+			}else{
+				TableUtils.bindLeafValueToKey(minValue, key);
+				DatabaseEntry tuple = new DatabaseEntry();
+				cursor = secondaryDb.openCursor(null, null);
+				OperationStatus returnVal = cursor.getSearchKeyRange(key, tuple, LockMode.READ_UNCOMMITTED);
+				if(returnVal!=OperationStatus.SUCCESS){
+					return;
+				}
+				if (!minIncluded) {
+					// Skip to next no duplicate entry
+					if (cursor.getNextNoDup(key, tuple, LockMode.READ_UNCOMMITTED) != OperationStatus.SUCCESS) {
+						return;
+					}
+				}
+				do {
+					if(maxValue!=null){
+						LeafValue unwrappedValue = TableUtils.unbindLeafValueToKey(maxValue, key);
+						if(maxIncuded){
+							if(TableUtils.compareTwoLeafValues(unwrappedValue, maxValue)>0)
+								break;
+						}else{
+							if(TableUtils.compareTwoLeafValues(unwrappedValue, maxValue)>=0)
+								break;
+						}
+					}
+					LeafValue[] results = binding.entryToObject(tuple);
+					buffer.put(results);
+				} while (cursor.getNext(key, tuple, LockMode.READ_UNCOMMITTED) == OperationStatus.SUCCESS);
+			}
+			buffer.put(new LeafValue[1]);
+		} catch (InterruptedException e) {
+			System.out.println("Thread interrupted");
+		}finally{
+			if(cursor!=null)
+				cursor.close();
+		}
+	}
 	
 	public synchronized void lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
 		try{

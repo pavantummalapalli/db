@@ -10,6 +10,7 @@ import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.CacheMode;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
@@ -36,6 +37,7 @@ public class DatabaseManager {
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
 		envConfig.setConfigParam("je.log.fileMax", "100000000");
+		envConfig.setCachePercent(50);
 	    envConfig.setAllowCreate(true);
 	    envConfig.setLocking(false);
 	    // Open the environment. Create it if it does not already exist.

@@ -2,6 +2,7 @@ package edu.buffalo.cse562.utils;
 
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.je.DatabaseEntry;
+
 import edu.buffalo.cse562.ExpressionEvaluator;
 import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.ExtendedDateValue;
@@ -99,6 +100,22 @@ public final class TableUtils {
 		}
 		else if(leafValue instanceof DateValue){
 			TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(((DateValue)leafValue).getValue().getTime(), key);
+		}
+	}
+    
+    public static LeafValue unbindLeafValueToKey(LeafValue leafValue, DatabaseEntry key) {
+		if(leafValue instanceof LongValue){
+			return new LongValue(TupleBinding.getPrimitiveBinding(Long.class).entryToObject(key));
+		}else if(leafValue instanceof StringValue){
+			return new StringValue(TupleBinding.getPrimitiveBinding(String.class).entryToObject(key));
+		}
+		else if(leafValue instanceof DoubleValue){
+			return new DoubleValue(TupleBinding.getPrimitiveBinding(Double.class).entryToObject(key));
+		}
+		else if(leafValue instanceof DateValue){
+			return TableUtils.getDateValueFromLongValue(TupleBinding.getPrimitiveBinding(Long.class).entryToObject(key));
+		}else{
+			return null;
 		}
 	}
     
