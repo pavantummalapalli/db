@@ -1,32 +1,17 @@
 package edu.buffalo.cse562.berkelydb;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import net.sf.jsqlparser.expression.LeafValue;
-import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
-
 import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.CursorConfig;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.LockMode;
-import com.sleepycat.je.OperationStatus;
-import com.sleepycat.je.SecondaryConfig;
-import com.sleepycat.je.SecondaryCursor;
-import com.sleepycat.je.SecondaryDatabase;
-import com.sleepycat.je.SecondaryKeyCreator;
-
-import edu.buffalo.cse562.berkelydb.customer.CustomerLeafValueBinding;
+import com.sleepycat.je.*;
 import edu.buffalo.cse562.datasource.DataSourceReader;
 import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.utils.TableUtils;
+import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+
+import java.io.File;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class DatabaseManager {
 	
@@ -86,6 +71,18 @@ public class DatabaseManager {
 			throw new RuntimeException(dbe);
 		}
 	}
+
+    public Database getPrimaryDatabase(String tableName){
+        return myDbEnvironment.openDatabase(null, tableName, dbConfig);
+    }
+
+    public SecondaryDatabase getSecondaryDatabase(Database primaryDatabase,String secondaryIndexName,SecondaryKeyCreator secondaryKey){
+        SecondaryConfig dbConfig  = new SecondaryConfig();
+        dbConfig.setKeyCreator(secondaryKey);
+        dbConfig.setReadOnly(true);
+        dbConfig.setSortedDuplicates(true);
+        return myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase, dbConfig);
+    }
 	
 //	public LeafValue[] lookupPrimaryIndex(String primaryIndex,LeafValue leafValue){
 //		DatabaseManager manager = new DatabaseManager(System.getProperty("user.dir")+"/db");

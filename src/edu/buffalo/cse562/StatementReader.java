@@ -1,5 +1,19 @@
 package edu.buffalo.cse562;
 
+import edu.buffalo.cse562.berkelydb.CreateTableIndex;
+import edu.buffalo.cse562.berkelydb.InitializeTableIndexMetaData;
+import edu.buffalo.cse562.memmanage.Listener;
+import edu.buffalo.cse562.queryplan.Node;
+import edu.buffalo.cse562.queryplan.ProjectNode;
+import edu.buffalo.cse562.queryplan.QueryOptimizer;
+import edu.buffalo.cse562.utils.TableUtils;
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.Select;
+
+import javax.management.NotificationEmitter;
 import java.io.File;
 import java.io.FileReader;
 import java.lang.management.ManagementFactory;
@@ -7,19 +21,6 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.util.Collection;
-
-import javax.management.NotificationEmitter;
-
-import net.sf.jsqlparser.parser.CCJSqlParser;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.select.Select;
-import edu.buffalo.cse562.memmanage.Listener;
-import edu.buffalo.cse562.queryplan.Node;
-import edu.buffalo.cse562.queryplan.ProjectNode;
-import edu.buffalo.cse562.queryplan.QueryOptimizer;
-import edu.buffalo.cse562.utils.TableUtils;
 
 public class StatementReader {
 
@@ -51,6 +52,17 @@ public class StatementReader {
 //								table.setAlias(createTableStmt.getTable().getName());
 //							TableUtils.getColumnTableMap(createTableStmt.getColumnDefinitions(), table);
 //							TableUtils.res
+
+                            //Load Phase is On. Have to create primary and secondary indexes
+                            if (TableUtils.isLoadPhase) {
+                                CreateTableIndex createTableIndex = new CreateTableIndex(createTableStmt);
+                                createTableIndex.createIndexForTable();
+                            } else {
+                                if (TableUtils.tableIndexMetaData.containsKey(tableName.toUpperCase()) == false) {
+                                    InitializeTableIndexMetaData init = new InitializeTableIndexMetaData(createTableStmt);
+                                    init.initializeIndexMetaData();
+                                }
+                            }
 						} catch (Exception ex) {	
 							throw new RuntimeException("CREATE TABLE THROW NEW EXCEPTION : " + statement, ex);
 						}
