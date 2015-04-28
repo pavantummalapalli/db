@@ -1,16 +1,18 @@
 package edu.buffalo.cse562.berkelydb;
 
-import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.SecondaryDatabase;
-import edu.buffalo.cse562.utils.TableUtils;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.SecondaryDatabase;
+
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class InitializeTableIndexMetaData {
 
@@ -32,7 +34,6 @@ public class InitializeTableIndexMetaData {
             Database primaryDatabase = manager.getPrimaryDatabase(primaryIndexName);
             TupleBinding<LeafValue[]> binding = TableUtils.getTupleBindingForTable(tableName);
             Map<String, SecondaryDatabase> secondaryDatabases = null;
-
             List<Integer> secondaryKeyIndexList = TableUtils.tableNameSecondaryIndexMap.get(tableName);
             if (secondaryKeyIndexList != null) {
                 secondaryDatabases = new HashMap<>();

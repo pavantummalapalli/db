@@ -32,13 +32,16 @@ public class StatementReader {
 				
 				while ((statement = parser.Statement()) != null) {
 					if (statement instanceof Select) {
+						long startQuery = System.currentTimeMillis();
 						query = statement.toString();
 						SelectVisitorImpl selectVistor=new SelectVisitorImpl();
 						((Select)statement).getSelectBody().accept(selectVistor);
 						Node node = selectVistor.getQueryPlanTreeRoot();
 						node=new QueryOptimizer().optimizeQueryPlan((ProjectNode)node);
 						node.eval();
-						// manager.publishStats();
+						System.out.println(System.currentTimeMillis() - startQuery);
+						manager.publishStats();
+						// manager.printCacheMisses();
 					} else if (statement instanceof CreateTable) {
 						try {
 							CreateTable createTableStmt = (CreateTable) statement;
@@ -49,12 +52,15 @@ public class StatementReader {
                                 CreateTableIndex createTableIndex = new CreateTableIndex(createTableStmt,manager);
                                 createTableIndex.createIndexForTable();
                             } else {
-                            	
-                                if (TableUtils.tableIndexMetaData.containsKey(tableName.toUpperCase()) == false) {
+								// if
+								// (TableUtils.tableIndexMetaData.containsKey(tableName.toUpperCase())
+								// == false &&
+								// !table.getName().toUpperCase().equals("LINEITEM"))
+								// {
+								if (TableUtils.tableIndexMetaData.containsKey(tableName.toUpperCase()) == false) {
                                     InitializeTableIndexMetaData init = new InitializeTableIndexMetaData(createTableStmt,manager);
                                     init.initializeIndexMetaData();
                                 }
-                                
                             }
 						} catch (Exception ex) {	
 							throw new RuntimeException("CREATE TABLE THROW NEW EXCEPTION : " + statement, ex);

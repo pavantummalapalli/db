@@ -100,4 +100,9 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 	public void clear() {
 		// TODO Auto-generated method stub
 	}
+
+	@Override
+	public long getEstimatedDataSourceSize() {
+		return file.length();
+	}
 }

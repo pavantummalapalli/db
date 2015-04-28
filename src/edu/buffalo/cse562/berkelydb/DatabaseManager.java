@@ -10,12 +10,12 @@ import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.CacheMode;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.PreloadConfig;
 import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
@@ -36,16 +36,19 @@ public class DatabaseManager {
 	
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
-		envConfig.setConfigParam("je.log.fileMax", "100000000");
-		envConfig.setCachePercent(50);
-	    envConfig.setAllowCreate(true);
+		// envConfig.setConfigParam("je.log.fileMax", "100000000");
+		if (TableUtils.isLoadPhase)
+			envConfig.setCachePercent(80);
+		else
+			envConfig.setCacheSize(1024 * 1024 * 600);
+		envConfig.setAllowCreate(true);
 	    envConfig.setLocking(false);
 	    // Open the environment. Create it if it does not already exist.
 	    myDbEnvironment = new Environment(new File(envHome),envConfig);
-	    // Open the database. Create it if it does not already exist.
-	    dbConfig.setAllowCreate(true);
-	    // Make it deferred write
-	    dbConfig.setDeferredWrite(true);
+		// Open the database. Create it if it does not already exist.
+		dbConfig.setAllowCreate(true);
+		// Make it deferred write
+		dbConfig.setDeferredWrite(true);
 	}
 	
 	public SecondaryDatabase createSecondaryIndexedTable(Database primaryDatabase,String tableName,SecondaryKeyCreator secondaryKey){
@@ -62,7 +65,7 @@ public class DatabaseManager {
 	                    primaryDatabase,     // Primary database handle. This is
 	                                     // the db that we're indexing. 
 	                    mySecConfig);    // The secondary config
-		db.sync();
+		// db.sync();
 		openSecondaryDatabases.put(tableName,db);
 		return db;
 	}
@@ -90,7 +93,7 @@ public class DatabaseManager {
 				//TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(row[0].toLong(), key);
 				myDatabase.put(null, key, tuple);
 			}
-			myDatabase.sync();
+			// myDatabase.sync();
 			openPrimaryDatabases.put(indexName, myDatabase);
 			return myDatabase;
 		} catch (Exception dbe) {
@@ -100,11 +103,17 @@ public class DatabaseManager {
 
     public Database getPrimaryDatabase(String tableName){
     	if(!openPrimaryDatabases.containsKey(tableName)){
-    		 DatabaseConfig dbConfig = new DatabaseConfig();
-    		 dbConfig.setReadOnly(true);
-    		 dbConfig.setSortedDuplicates(false);
-    		 dbConfig.setTransactional(false);
-    		 openPrimaryDatabases.put(tableName,myDbEnvironment.openDatabase(null, tableName, dbConfig));
+			DatabaseConfig dbConfig = new DatabaseConfig();
+			dbConfig.setReadOnly(true);
+			dbConfig.setSortedDuplicates(false);
+			dbConfig.setTransactional(false);
+			openPrimaryDatabases.put(tableName, myDbEnvironment.openDatabase(null, tableName, dbConfig));
+			PreloadConfig config = new PreloadConfig();
+			long start = System.currentTimeMillis();
+			config.setMaxMillisecs(10000);
+			config.setLoadLNs(true);
+			System.out.println(openPrimaryDatabases.get(tableName).preload(config).toString());
+			System.out.println("Pre loaded index :" + tableName + (System.currentTimeMillis() - start));
     	}
         return openPrimaryDatabases.get(tableName);
     }
@@ -117,6 +126,13 @@ public class DatabaseManager {
             dbConfig.setSortedDuplicates(true);
             dbConfig.setTransactional(false);
             openSecondaryDatabases.put(secondaryIndexName, myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase, dbConfig));
+			long start = System.currentTimeMillis();
+			PreloadConfig config = new PreloadConfig();
+			config.setLoadLNs(true);
+			config.setMaxMillisecs(10000);
+			// if (secondaryIndexName.startsWith("LINEITEM"))
+			System.out.println(openSecondaryDatabases.get(secondaryIndexName).preload(config).toString());
+			System.out.println("Pre loaded index :" + secondaryIndexName + (System.currentTimeMillis() - start));
     	}
         return openSecondaryDatabases.get(secondaryIndexName);
     }
@@ -158,9 +174,14 @@ public class DatabaseManager {
 		config.setClear(true);
 		System.err.println(myDbEnvironment.getStats(config));
     }
+
+	public void printCacheMisses() {
+		StatsConfig config = new StatsConfig();
+		config.setFast(true);
+		System.out.println("Cache misses :" + myDbEnvironment.getStats(config).getNCacheMiss());
+	}
 	
 	public void close(){
-		
 		closeDB(openSecondaryDatabases);
 		closeDB(openPrimaryDatabases);
 		myDbEnvironment.close();
@@ -172,7 +193,8 @@ public class DatabaseManager {
 			tableMap.get(iterator.next()).close();
 		}
 	}
-	private void closeDB(List<Database> databases){
+
+	private void closeDB(List<Database> databases) {
 		Iterator<Database> iterator = databases.iterator();
 		while(iterator.hasNext()){
 			iterator.next().close();

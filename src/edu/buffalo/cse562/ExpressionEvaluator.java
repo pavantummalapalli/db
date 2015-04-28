@@ -14,7 +14,6 @@ import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.create.table.ColDataType;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.utils.TableUtils;
@@ -61,7 +60,7 @@ public class ExpressionEvaluator extends Eval {
 	public LeafValue eval(Function function) throws SQLException {
 		try{
 			String functionName =function.getName(); 
-			if(functionName.equalsIgnoreCase("SUM")){
+			if (functionName.equals("SUM")) {
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
 				GroupBy key=groupByKey;
@@ -88,7 +87,7 @@ public class ExpressionEvaluator extends Eval {
 					value=0;
 				}
 			}
-			else if(functionName.equalsIgnoreCase("AVG")){
+ else if (functionName.equals("AVG")) {
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
 				GroupBy key=groupByKey;
@@ -124,7 +123,7 @@ public class ExpressionEvaluator extends Eval {
 					value=0;
 				}
 			}
-			else if(functionName.equalsIgnoreCase("MIN") || functionName.equalsIgnoreCase("MAX")){
+ else if (functionName.equals("MIN") || functionName.equals("MAX")) {
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
 				GroupBy key=groupByKey;
@@ -134,7 +133,7 @@ public class ExpressionEvaluator extends Eval {
 						value = evaluatedValue.toLong();
 					}
 					else{
-						if(functionName.equalsIgnoreCase("MIN"))
+						if (functionName.equals("MIN"))
 							value = Math.min((Long)value, evaluatedValue.toLong());
 						else
 							value = Math.max((Long)value, evaluatedValue.toLong());
@@ -146,7 +145,7 @@ public class ExpressionEvaluator extends Eval {
 						value = evaluatedValue.toDouble();
 					}
 					else{
-						if(functionName.equalsIgnoreCase("MIN"))
+						if (functionName.equals("MIN"))
 							value = Math.min(((Double)value),evaluatedValue.toDouble());
 						else
 							value = Math.max(((Double)value),evaluatedValue.toDouble());
@@ -158,7 +157,7 @@ public class ExpressionEvaluator extends Eval {
 						value = ((StringValue) evaluatedValue).toString();
 					}
 					else{
-						if(functionName.equalsIgnoreCase("MIN"))
+						if (functionName.equals("MIN"))
 							value = value.toString().compareToIgnoreCase(evaluatedValue.toString())<=0?value.toString():evaluatedValue.toString();
 						else
 							value = value.toString().compareToIgnoreCase(evaluatedValue.toString())>=0?value.toString():evaluatedValue.toString();
@@ -170,7 +169,7 @@ public class ExpressionEvaluator extends Eval {
 						value = ((DateValue) evaluatedValue).getValue();
 					}
 					else{
-						if(functionName.equalsIgnoreCase("MIN"))
+						if (functionName.equals("MIN"))
 							value = ((DateValue) value).getValue().compareTo(((DateValue) evaluatedValue).getValue())<=0?((DateValue) value).getValue():((DateValue) evaluatedValue).getValue();
 						else
 							value = ((DateValue) value).getValue().compareTo(((DateValue) evaluatedValue).getValue())>=0?((DateValue) value).getValue():((DateValue) evaluatedValue).getValue();
@@ -178,7 +177,7 @@ public class ExpressionEvaluator extends Eval {
 					calculatedData.put(key,value);
 				}
 			}
-			else if(functionName.equalsIgnoreCase("COUNT")){
+ else if (functionName.equals("COUNT")) {
 				GroupBy key=groupByKey;
 				Object value= calculatedData.get(key);
 				if(value==null)
@@ -186,8 +185,7 @@ public class ExpressionEvaluator extends Eval {
 				else
 					value= (int)value + 1;
 				calculatedData.put(key,value);
-			}
-			else if(functionName.equalsIgnoreCase("DATE")){
+			} else if (functionName.equals("DATE")) {
 				Expression dateValueParam = (Expression) function.getParameters().getExpressions().get(0);
 				String dateStr = eval(dateValueParam).toString();
 				return TableUtils.getPooledDateValue(dateStr);

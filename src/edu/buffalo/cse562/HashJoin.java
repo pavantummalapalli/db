@@ -67,7 +67,7 @@ public class HashJoin {
 					if ((exprLeft instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprLeft.toString()))) {
 						table2exp = exprRight;
 						break;
-					} 
+						}
 					else if ((exprRight instanceof Column &&  colDef.getColumnName().equalsIgnoreCase(exprRight.toString()))) {
 						table2exp = exprLeft;
 						break;

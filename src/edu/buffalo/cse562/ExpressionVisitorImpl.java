@@ -65,6 +65,7 @@ public class ExpressionVisitorImpl implements ExpressionVisitor {
 		try{
 			if(paramFunction.getParameters()==null)
 				return;
+			paramFunction.setName(paramFunction.getName().toUpperCase());
 			resolveExpressionList(paramFunction.getParameters().getExpressions());
 		}
 		catch(Exception e){

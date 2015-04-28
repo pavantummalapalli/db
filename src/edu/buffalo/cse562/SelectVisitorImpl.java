@@ -245,6 +245,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		for(SelectExpressionItem item : selectExpressionItemsList){
 			if(item.getExpression() instanceof Function){
 				Function function = (Function)item.getExpression();
+				function.setName(function.getName().toUpperCase());
 				if(isFunctionAggregate(function))
 					items.add(item);
 			}

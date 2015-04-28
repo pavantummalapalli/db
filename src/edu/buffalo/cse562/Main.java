@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.buffalo.cse562.berkelydb.InitializeTableIndexMetaData;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class Main {
@@ -36,6 +35,11 @@ public class Main {
 			}
 		}
 		TableUtils.setDataDir(dataDir);
+		// if (dbDir != null) {
+		// TableUtils.setTempDataDir(dbDir);
+		// TableUtils.isSwapOn = true;
+		// }
+
 		if (swapDir != null) {
 			TableUtils.setTempDataDir(swapDir);
 			TableUtils.isSwapOn = true;

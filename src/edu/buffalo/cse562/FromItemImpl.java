@@ -41,7 +41,10 @@ public class FromItemImpl implements FromItemVisitor {
 		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName().toUpperCase());
 		if(table.getAlias()==null)
 			table.setAlias(table.getName());
-		if(TableUtils.tableIndexMetaData.containsKey(table.getName().toUpperCase())){
+		// if
+		// (TableUtils.tableIndexMetaData.containsKey(table.getName().toUpperCase())
+		// && !table.getName().toUpperCase().equals("LINEITEM")) {
+		if (TableUtils.tableIndexMetaData.containsKey(table.getName().toUpperCase())) {
 			node = new RelationNode(table.getName(),table.getAlias(),new BerekelyDBDataSource(table.getName().toUpperCase()),schema);
 		}
 		else{

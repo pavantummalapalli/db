@@ -6,5 +6,7 @@ public interface DataSource {
 
 	public DataSourceReader getReader() throws IOException;
 	public DataSourceWriter getWriter() throws IOException;
+
+	public long getEstimatedDataSourceSize();
 	public void clear();
 }

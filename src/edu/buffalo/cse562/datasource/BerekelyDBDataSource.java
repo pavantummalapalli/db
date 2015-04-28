@@ -44,7 +44,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private String tableName;
 	private Thread producerThread;
 	private volatile boolean start;
-	private static final int QUEUE_SIZE=2000;
+	private static final int QUEUE_SIZE = 2000000;
 	
 	public void setExpression(Expression expression) {
 		secIndexMap = new HashMap<>();
@@ -199,6 +199,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	}
 	
 	public synchronized void lookupAll(TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+		System.out.println("Started linear scan for table :" + tableName);
+		long startTime = System.currentTimeMillis();
 		DiskOrderedCursor cursor=null;
 		try{
 		DatabaseEntry pkey = new DatabaseEntry();
@@ -211,6 +213,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			buffer.put(results);
 		}
 		buffer.put(new LeafValue[1]);
+			System.out.println("End:" + (System.currentTimeMillis() - startTime));
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");
 		}finally{
@@ -220,6 +223,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	}
 	
 	public synchronized void rangeLookupSecondaryIndex(String secondaryIndexName,LeafValue minValue, boolean minIncluded, boolean maxIncuded, LeafValue maxValue,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+		System.out.println("Started range scan for table :" + tableName);
+		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor=null;
 		try{
 			DatabaseEntry key = new DatabaseEntry();
@@ -278,6 +283,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 				} while (cursor.getNext(key, tuple, LockMode.READ_UNCOMMITTED) == OperationStatus.SUCCESS);
 			}
 			buffer.put(new LeafValue[1]);
+			System.out.println("End:" + (System.currentTimeMillis() - startTime));
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");
 		}finally{
@@ -287,6 +293,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	}
 	
 	public synchronized void lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+		System.out.println("Started primary key scan for table :" + tableName);
+		long startTime = System.currentTimeMillis();
 		try{
 		DatabaseEntry key = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(leafValue, key);
@@ -295,12 +303,15 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		LeafValue[] results = binding.entryToObject(tuple);
 		buffer.put(results);
 		buffer.put(new LeafValue[1]);
+			System.out.println("End:" + (System.currentTimeMillis() - startTime));
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");
 		}
 	}
 	
 	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+		System.out.println("Started secondary key scan for table :" + tableName);
+		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor=null;
 		try{
 			DatabaseEntry key = new DatabaseEntry();
@@ -315,12 +326,18 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 				returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
 			}
 			buffer.put(new LeafValue[1]);
+			System.out.println("End:" + (System.currentTimeMillis() - startTime));
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");
 		}finally{
 			if(cursor!=null)
 				cursor.close();
 		}
+	}
+
+	@Override
+	public long getEstimatedDataSourceSize() {
+		return 200 * 1024 * 1024;
 	}
 	
 //	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){

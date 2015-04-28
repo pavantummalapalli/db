@@ -48,4 +48,9 @@ public class BufferDataSource implements DataSource,DataSourceReader,DataSourceW
 		tuples=new LinkedList<LeafValue[]>();
 		System.gc();
 	}
+
+	@Override
+	public long getEstimatedDataSourceSize() {
+		return 200 * 1024 * 1024;
+	}
 }

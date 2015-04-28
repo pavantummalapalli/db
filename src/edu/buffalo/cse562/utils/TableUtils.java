@@ -1,5 +1,37 @@
 package edu.buffalo.cse562.utils;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.DateValue;
+import net.sf.jsqlparser.expression.DoubleValue;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
+import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.Parenthesis;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.ColDataType;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.je.DatabaseEntry;
 
@@ -13,23 +45,6 @@ import edu.buffalo.cse562.berkelydb.nation.NationLeafValueBinding;
 import edu.buffalo.cse562.berkelydb.orders.OrdersLeafValueBinding;
 import edu.buffalo.cse562.berkelydb.region.RegionLeafValueBinding;
 import edu.buffalo.cse562.berkelydb.supplier.SupplierLeafValueBinding;
-import net.sf.jsqlparser.expression.*;
-import net.sf.jsqlparser.expression.LeafValue.InvalidLeaf;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
-import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
-import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.create.table.ColDataType;
-import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
-import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.regex.Pattern;
 
 public final class TableUtils {
 	
@@ -56,7 +71,7 @@ public final class TableUtils {
     public static Map<String, List<Integer>> tableNameSecondaryIndexMap = new HashMap<String, List<Integer>>(){{
         put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
         //put("LINEITEM", new ArrayList<>(Arrays.asList(0, 3, 4, 6, 8, 10, 12, 14)));
-        put("LINEITEM", new ArrayList<>(Arrays.asList(8)));
+			put("LINEITEM", new ArrayList<>(Arrays.asList(8, 10)));
         put("ORDERS", new ArrayList<>(Arrays.asList(4)));
 //        put("REGION", new ArrayList<>(Arrays.asList(1)));
     }};

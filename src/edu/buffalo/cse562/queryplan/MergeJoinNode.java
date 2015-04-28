@@ -21,6 +21,7 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
 import edu.buffalo.cse562.DataSourceSqlIterator;
 import edu.buffalo.cse562.MergeJoinImpl;
 import edu.buffalo.cse562.SqlIterator;
+import edu.buffalo.cse562.datasource.DataSource;
 import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.fileoperations.sort.ExternalSort;
 import edu.buffalo.cse562.fileoperations.sort.LeafValueComparator;
@@ -143,8 +144,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		try {
 			CreateTable table = relationNode.getTable();
 
-			FileDataSource fileDataSource = (FileDataSource) relationNode.getFile();
-			File file = fileDataSource.getFile();
+			DataSource fileDataSource = relationNode.getFile();
 
 			/**
 			 * expression list and group by list is null.
@@ -155,7 +155,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 			List<File> sortedFileBlocks = new ArrayList<>();
 
 			int fileCount = 1;
-			long fileSizeInKB = (file.length() / 1024);
+			long fileSizeInKB = (fileDataSource.getEstimatedDataSourceSize() / 1024);
 			long memoryAvailableInKB = ExternalSort.getAvailableMemoryInKB();
 			long blocksCount = (long) ((fileSizeInKB * 2) / memoryAvailableInKB);
 			long eachBlockSizeInKB = blocksCount == 0 ? fileSizeInKB : fileSizeInKB / blocksCount;
