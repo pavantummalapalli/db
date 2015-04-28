@@ -198,7 +198,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 	}
 	
-	public synchronized void lookupAll(TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+	private synchronized void lookupAll(TupleBinding<LeafValue[]> binding, Database primaryDatabase) {
 		System.out.println("Started linear scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		DiskOrderedCursor cursor=null;
@@ -222,7 +222,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 	}
 	
-	public synchronized void rangeLookupSecondaryIndex(String secondaryIndexName,LeafValue minValue, boolean minIncluded, boolean maxIncuded, LeafValue maxValue,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+	private synchronized void rangeLookupSecondaryIndex(String secondaryIndexName, LeafValue minValue, boolean minIncluded, boolean maxIncuded, LeafValue maxValue, TupleBinding<LeafValue[]> binding,
+			SecondaryDatabase secondaryDb) {
 		System.out.println("Started range scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor=null;
@@ -292,7 +293,22 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 	}
 	
-	public synchronized void lookupPrimaryIndex(String primaryIndex,LeafValue leafValue,TupleBinding<LeafValue[]> binding,Database primaryDatabase){
+	public synchronized LeafValue[] lookupPrimaryIndex(LeafValue leafValue) {
+		// lookupPrimaryIndex(tableName, primaryIndexExp.getLeafValue(),
+		// binding, indexData.getPrimaryDatabase());
+		System.out.println("Started primary key scan for table :" + tableName);
+		long startTime = System.currentTimeMillis();
+		DatabaseEntry key = new DatabaseEntry();
+		TableUtils.bindLeafValueToKey(leafValue, key);
+		DatabaseEntry tuple = new DatabaseEntry();
+		OperationStatus status = indexData.getPrimaryDatabase().get(null, key, tuple, LockMode.READ_UNCOMMITTED);
+		if (status == OperationStatus.SUCCESS)
+			return binding.entryToObject(tuple);
+		System.out.println("End:" + (System.currentTimeMillis() - startTime));
+		return null;
+	}
+
+	private synchronized void lookupPrimaryIndex(String primaryIndex, LeafValue leafValue, TupleBinding<LeafValue[]> binding, Database primaryDatabase) {
 		System.out.println("Started primary key scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		try{
@@ -309,7 +325,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 	}
 	
-	public synchronized void lookupSecondaryIndexes(String secondaryIndexName,LeafValue value,TupleBinding<LeafValue[]> binding,SecondaryDatabase secondaryDb){
+	private synchronized void lookupSecondaryIndexes(String secondaryIndexName, LeafValue value, TupleBinding<LeafValue[]> binding, SecondaryDatabase secondaryDb) {
 		System.out.println("Started secondary key scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor=null;
