@@ -59,6 +59,25 @@ public class QueryOptimizer implements QueryDomain {
 						iterator.remove();
 					}
 					if(((AbstractJoinNode)node).getJoinCondition()!=null){
+
+						boolean indexLoopJoinSet = false;
+						Expression expTemp = ((AbstractJoinNode) node).getJoinCondition();
+						if (expTemp instanceof BinaryExpression && ((BinaryExpression) expTemp).getRightExpression() instanceof Column) {
+							Column column = (Column) ((BinaryExpression) expTemp).getRightExpression();
+							String primaryIndexName = column.getTable().getName() + "." + column.getColumnName();
+							if (TableUtils.tableIndexMetaData.containsKey(column.getTable().getName())) {
+								if (TableUtils.tableIndexMetaData.get(column.getTable().getName()).getPrimaryIndexName().equals(primaryIndexName)) {
+									IndexedLoopJoinNode indexLoopNode = new IndexedLoopJoinNode();
+									indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
+									indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
+									indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
+									indexLoopNode.addJoinCondition(((AbstractJoinNode) node).getJoinCondition());
+									indexLoopJoinSet = true;
+									node = indexLoopNode;
+								}
+							}
+						}
+						if (!indexLoopJoinSet) {
 						if(TableUtils.isSwapOn){
 							MergeJoinNode sortMerge = new MergeJoinNode(((AbstractJoinNode)node).getRelationNode1(), ((AbstractJoinNode)node).getRelationNode2(), ((AbstractJoinNode)node).getJoinCondition());
 							((AbstractJoinNode)node).getParentNode();
@@ -72,6 +91,7 @@ public class QueryOptimizer implements QueryDomain {
 							hashJoinNode.setTableNames(((AbstractJoinNode)node).getTableNames());
 							hashJoinNode.addJoinCondition(((AbstractJoinNode) node).getJoinCondition());
 							node=hashJoinNode;
+							}
 						}
 					}
 				}

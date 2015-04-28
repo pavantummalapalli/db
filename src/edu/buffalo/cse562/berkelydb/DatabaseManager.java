@@ -110,7 +110,7 @@ public class DatabaseManager {
 			openPrimaryDatabases.put(tableName, myDbEnvironment.openDatabase(null, tableName, dbConfig));
 			PreloadConfig config = new PreloadConfig();
 			long start = System.currentTimeMillis();
-			config.setMaxMillisecs(10000);
+			config.setMaxMillisecs(1000);
 			config.setLoadLNs(true);
 			System.out.println(openPrimaryDatabases.get(tableName).preload(config).toString());
 			System.out.println("Pre loaded index :" + tableName + (System.currentTimeMillis() - start));
@@ -129,7 +129,7 @@ public class DatabaseManager {
 			long start = System.currentTimeMillis();
 			PreloadConfig config = new PreloadConfig();
 			config.setLoadLNs(true);
-			config.setMaxMillisecs(10000);
+			config.setMaxMillisecs(1000);
 			// if (secondaryIndexName.startsWith("LINEITEM"))
 			System.out.println(openSecondaryDatabases.get(secondaryIndexName).preload(config).toString());
 			System.out.println("Pre loaded index :" + secondaryIndexName + (System.currentTimeMillis() - start));

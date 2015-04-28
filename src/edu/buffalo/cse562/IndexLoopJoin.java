@@ -1,11 +1,15 @@
 package edu.buffalo.cse562;
 
-import edu.buffalo.cse562.datasource.*;
-import edu.buffalo.cse562.queryplan.Node;
-import edu.buffalo.cse562.queryplan.RelationNode;
-import edu.buffalo.cse562.utils.TableUtils;
+import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSelectExpressionItems;
+import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import net.sf.jsqlparser.expression.BinaryExpression;
-import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.schema.Column;
@@ -13,16 +17,14 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static edu.buffalo.cse562.utils.TableUtils.convertColumnDefinitionIntoSelectExpressionItems;
-import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemIntoExpressions;
+import edu.buffalo.cse562.datasource.BerekelyDBDataSource;
+import edu.buffalo.cse562.datasource.BufferDataSource;
+import edu.buffalo.cse562.datasource.DataSource;
+import edu.buffalo.cse562.datasource.DataSourceWriter;
+import edu.buffalo.cse562.datasource.FileDataSource;
+import edu.buffalo.cse562.queryplan.Node;
+import edu.buffalo.cse562.queryplan.RelationNode;
+import edu.buffalo.cse562.utils.TableUtils;
 
 /**
  * Created by cksharma on 4/28/15.
@@ -69,7 +71,7 @@ public class IndexLoopJoin {
             int index = 0;
             Column column1 = (Column)((BinaryExpression)expression).getLeftExpression();
             for (Object columnDefinition : relationNode1.getTable().getColumnDefinitions()) {
-                if (((ColumnDefinition)columnDefinition).getColumnName().equals(column1.getColumnName())) {
+				if (((ColumnDefinition) columnDefinition).getColumnName().equals(column1.getWholeColumnName())) {
                     break;
                 }
                 ++index;

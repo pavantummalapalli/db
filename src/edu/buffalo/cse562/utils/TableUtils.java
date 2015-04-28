@@ -71,8 +71,8 @@ public final class TableUtils {
     public static Map<String, List<Integer>> tableNameSecondaryIndexMap = new HashMap<String, List<Integer>>(){{
         put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
         //put("LINEITEM", new ArrayList<>(Arrays.asList(0, 3, 4, 6, 8, 10, 12, 14)));
-			put("LINEITEM", new ArrayList<>(Arrays.asList(8, 10)));
-        put("ORDERS", new ArrayList<>(Arrays.asList(4)));
+			// put("LINEITEM", new ArrayList<>(Arrays.asList(8, 10)));
+			// put("ORDERS", new ArrayList<>(Arrays.asList(4)));
 //        put("REGION", new ArrayList<>(Arrays.asList(1)));
     }};
 

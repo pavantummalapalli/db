@@ -56,7 +56,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 				}
 				else{
 					String columnName = temp.getColumn().getWholeColumnName();
-					if (indexData.getSecondaryIndexes().containsKey(columnName)) {
+					if (indexData.getSecondaryIndexes() != null && indexData.getSecondaryIndexes().containsKey(columnName)) {
 						Range range = secIndexMap.get(columnName);
 						if (range == null) {
 							range = new Range();
@@ -293,10 +293,11 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 	}
 	
-	public synchronized LeafValue[] lookupPrimaryIndex(LeafValue leafValue) {
+	public LeafValue[] lookupPrimaryIndex(LeafValue leafValue) {
 		// lookupPrimaryIndex(tableName, primaryIndexExp.getLeafValue(),
 		// binding, indexData.getPrimaryDatabase());
-		System.out.println("Started primary key scan for table :" + tableName);
+		// System.out.println("Started primary key scan for table :" +
+		// tableName);
 		long startTime = System.currentTimeMillis();
 		DatabaseEntry key = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(leafValue, key);
@@ -304,7 +305,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		OperationStatus status = indexData.getPrimaryDatabase().get(null, key, tuple, LockMode.READ_UNCOMMITTED);
 		if (status == OperationStatus.SUCCESS)
 			return binding.entryToObject(tuple);
-		System.out.println("End:" + (System.currentTimeMillis() - startTime));
+		// System.out.println("End:" + (System.currentTimeMillis() -
+		// startTime));
 		return null;
 	}
 
