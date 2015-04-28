@@ -94,6 +94,7 @@ public class DatabaseManager {
 				myDatabase.put(null, key, tuple);
 			}
 			// myDatabase.sync();
+			indexName = lineItemTable ? "LINEITEM.ORDERKEY.LINENUMBER" : indexName;
 			openPrimaryDatabases.put(indexName, myDatabase);
 			return myDatabase;
 		} catch (Exception dbe) {

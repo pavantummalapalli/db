@@ -40,7 +40,7 @@ public class StatementReader {
 						node=new QueryOptimizer().optimizeQueryPlan((ProjectNode)node);
 						node.eval();
 						System.out.println(System.currentTimeMillis() - startQuery);
-						manager.publishStats();
+						// manager.publishStats();
 						// manager.printCacheMisses();
 					} else if (statement instanceof CreateTable) {
 						try {

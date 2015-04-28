@@ -2,6 +2,7 @@ package edu.buffalo.cse562.datasource;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -349,6 +350,32 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			System.out.println("Thread interrupted");
 		}finally{
 			if(cursor!=null)
+				cursor.close();
+		}
+	}
+
+	public List<LeafValue[]> lookupSecondaryIndexForLineItem(LeafValue value) {
+		List<LeafValue[]> buffer = new ArrayList<LeafValue[]>();
+		SecondaryDatabase secondaryDb = indexData.getSecondaryIndexes().get("LINEITEM.ORDERKEY");
+		System.out.println("Started secondary key scan for table :" + tableName);
+		long startTime = System.currentTimeMillis();
+		SecondaryCursor cursor = null;
+		try {
+			DatabaseEntry key = new DatabaseEntry();
+			DatabaseEntry pkey = new DatabaseEntry();
+			TableUtils.bindLeafValueToKey(value, key);
+			DatabaseEntry tuple = new DatabaseEntry();
+			cursor = secondaryDb.openCursor(null, null);
+			OperationStatus returnVal = cursor.getSearchKey(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+			while (returnVal == OperationStatus.SUCCESS) {
+				LeafValue[] results = binding.entryToObject(tuple);
+				buffer.add(results);
+				returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+			}
+			System.out.println("End:" + (System.currentTimeMillis() - startTime));
+			return buffer;
+		} finally {
+			if (cursor != null)
 				cursor.close();
 		}
 	}

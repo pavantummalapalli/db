@@ -11,8 +11,10 @@ import java.util.Set;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Parenthesis;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import edu.buffalo.cse562.ExpressionVisitorImpl;
+import edu.buffalo.cse562.berkelydb.IndexMetaData;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class QueryOptimizer implements QueryDomain {
@@ -59,21 +61,92 @@ public class QueryOptimizer implements QueryDomain {
 						iterator.remove();
 					}
 					if(((AbstractJoinNode)node).getJoinCondition()!=null){
-
 						boolean indexLoopJoinSet = false;
 						Expression expTemp = ((AbstractJoinNode) node).getJoinCondition();
-						if (expTemp instanceof BinaryExpression && ((BinaryExpression) expTemp).getRightExpression() instanceof Column) {
+						if (expTemp instanceof BinaryExpression && ((BinaryExpression) expTemp).getLeftExpression() instanceof Column) {
+							Column column = (Column) ((BinaryExpression) expTemp).getLeftExpression();
+							String primaryIndexName = column.getTable().getName() + "." + column.getColumnName();
+							// Check if index exists on the table
+							if (TableUtils.tableIndexMetaData.containsKey(column.getTable().getName())) {
+								// check if the expression matches the primary key of the table
+								if (isIndexExists(primaryIndexName)) {
+									IndexedLoopJoinNode indexLoopNode = new IndexedLoopJoinNode();
+									if (((AbstractJoinNode) node).getRelationNode1() instanceof RelationNode) {
+										String tableName = ((RelationNode)(((AbstractJoinNode) node).getRelationNode1())).getTableName();
+										if (tableName.equals(column.getTable().getName())) {
+											// Flip both the table and the
+											// expression since both are on the
+											// left hand side
+											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode2());
+											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode1());
+											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
+											EqualsTo newJoinCondition = new EqualsTo();
+											newJoinCondition.setLeftExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getRightExpression());
+											newJoinCondition.setRightExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getLeftExpression());
+											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
+											indexLoopNode.addJoinCondition(newJoinCondition);
+											indexLoopJoinSet = true;
+											node = indexLoopNode;
+										}
+									} else if (((AbstractJoinNode) node).getRelationNode2() instanceof RelationNode) {
+										String tableName = ((RelationNode) (((AbstractJoinNode) node).getRelationNode2())).getTableName();
+										if (tableName.equals(column.getTable().getName())) {
+											// Flip both the table and the
+											// expression since both are on the
+											// left hand side
+											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
+											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
+											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
+											EqualsTo newJoinCondition = new EqualsTo();
+											newJoinCondition.setLeftExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getRightExpression());
+											newJoinCondition.setRightExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getLeftExpression());
+											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
+											indexLoopNode.addJoinCondition(newJoinCondition);
+											indexLoopJoinSet = true;
+											node = indexLoopNode;
+										}
+									}
+								}
+							}
+						}
+						if (!indexLoopJoinSet && expTemp instanceof BinaryExpression && ((BinaryExpression) expTemp).getRightExpression() instanceof Column) {
 							Column column = (Column) ((BinaryExpression) expTemp).getRightExpression();
 							String primaryIndexName = column.getTable().getName() + "." + column.getColumnName();
+							// Check if index exists on the table
 							if (TableUtils.tableIndexMetaData.containsKey(column.getTable().getName())) {
-								if (TableUtils.tableIndexMetaData.get(column.getTable().getName()).getPrimaryIndexName().equals(primaryIndexName)) {
+								// check if the expression matches the primary
+								// key of the table
+								if (isIndexExists(primaryIndexName)) {
 									IndexedLoopJoinNode indexLoopNode = new IndexedLoopJoinNode();
-									indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
-									indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
-									indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
-									indexLoopNode.addJoinCondition(((AbstractJoinNode) node).getJoinCondition());
-									indexLoopJoinSet = true;
-									node = indexLoopNode;
+									if (((AbstractJoinNode) node).getRelationNode1() instanceof RelationNode) {
+										String tableName = ((RelationNode) (((AbstractJoinNode) node).getRelationNode1())).getTableName();
+										if (tableName.equals(column.getTable().getName())) {
+											// Flip both the table and the
+											// expression since both are on the
+											// left hand side
+											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode2());
+											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode1());
+											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
+											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
+											indexLoopNode.addJoinCondition(expTemp);
+											indexLoopJoinSet = true;
+											node = indexLoopNode;
+										}
+									} else if (((AbstractJoinNode) node).getRelationNode2() instanceof RelationNode) {
+										String tableName = ((RelationNode) (((AbstractJoinNode) node).getRelationNode2())).getTableName();
+										if (tableName.equals(column.getTable().getName())) {
+											// Flip both the table and the
+											// expression since both are on the
+											// left hand side
+											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
+											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
+											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
+											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
+											indexLoopNode.addJoinCondition(expTemp);
+											indexLoopJoinSet = true;
+											node = indexLoopNode;
+										}
+									}
 								}
 							}
 						}
@@ -93,6 +166,7 @@ public class QueryOptimizer implements QueryDomain {
 							node=hashJoinNode;
 							}
 						}
+						break;
 					}
 				}
 			}
@@ -127,59 +201,13 @@ public class QueryOptimizer implements QueryDomain {
 			throw new RuntimeException("Unidentified Instance type");
 	}
 	
-//	private Node iterateNode(Node node,List<Expression> extractedExpressionList){
-//		if(node instanceof ProjectNode){
-//			((ProjectNode) node).setChildNode(iterateNode(((ProjectNode)node).getChildNode(),extractedExpressionList));
-//			return node;
-//		}
-//		else if(node instanceof ExpressionNode){
-//			//At this point call the util function to extract disintegrated function
-//			Node childNode = ((ExpressionNode)node).getChildNode();
-//			List<Expression> expressionList = TableUtils.getBinaryExpressionList(((ExpressionNode)node).getExpression());
-//			if(expressionList!=null)
-//				extractedExpressionList.addAll(expressionList);
-//			((ExpressionNode) node).setChildNode(iterateNode(childNode,extractedExpressionList));
-//			return node;
-//		}
-//		else if(node instanceof ExtendedProjectNode){
-//			((ExtendedProjectNode) node).setChildNode(iterateNode(((ExtendedProjectNode)node).getChildNode(),extractedExpressionList));
-//			return node;
-//		}
-//		else if(node instanceof AbstractJoinNode){
-//			((AbstractJoinNode) node).setRelationNode1(iterateNode(((AbstractJoinNode)node).getRelationNode1(),extractedExpressionList));
-//			((AbstractJoinNode) node).setRelationNode2(iterateNode(((AbstractJoinNode)node).getRelationNode2(),extractedExpressionList));
-//			if(extractedExpressionList!=null){
-//				Iterator<Expression> iterator =  extractedExpressionList.iterator();
-//				while(iterator.hasNext()){
-//					Expression exp = iterator.next();
-//					Set<String> listNames =  getTableName(exp);
-//					if(listNames.size()==1)
-//						continue;
-//					Set<String> joinsTableNames = new HashSet<>(((AbstractJoinNode)node).getTableNames());
-//					listNames.removeAll(joinsTableNames);
-//					if(listNames.isEmpty()){
-//						((AbstractJoinNode)node).addJoinCondition(exp);
-//						iterator.remove();
-//					}
-//				}
-//			}
-//			return node;
-//		}
-//		else if(node instanceof RelationNode){
-//			return node;
-//		}
-//		else if(node instanceof UnionOperatorNode){
-//			List<Node> nodeList = ((UnionOperatorNode) node).getChildNodes();
-//			List<Node> newNodeList = new ArrayList<Node>(); 
-//			for(Node childNode:nodeList){
-//				newNodeList.add(iterateNode(childNode,extractedExpressionList));
-//			}
-//			((UnionOperatorNode) node).setChildNodes(newNodeList);
-//			return node;
-//		}
-//		else
-//			throw new RuntimeException("Unidentified Instance type");
-//	}
+	private boolean isIndexExists(String columnName) {
+		IndexMetaData indexData = TableUtils.tableIndexMetaData.get(columnName);
+		if (indexData.getPrimaryIndexName().equals(columnName))
+			return true;
+		else
+			return (indexData.getSecondaryIndexes() != null && indexData.getSecondaryIndexes().containsKey(columnName));
+	}
 	
 	private Set<String> getTableName(Expression exp){
 		Set<String> tableNames = new HashSet<>();

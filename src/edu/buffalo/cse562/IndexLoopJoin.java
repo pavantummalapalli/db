@@ -78,10 +78,10 @@ public class IndexLoopJoin {
             }
 
             DataSourceWriter fileWriter = file.getWriter();
-
+			BerekelyDBDataSource ds = ((BerekelyDBDataSource) ((RelationNode) node2).getFile());
             while((colVals1 = sqlIterator1.next()) != null) {
                 LeafValue leafValue = colVals1[index];
-                LeafValue[] colVals2 = ((BerekelyDBDataSource) ((RelationNode) node2).getFile()).lookupPrimaryIndex(leafValue);
+				LeafValue[] colVals2 = ds.lookupPrimaryIndex(leafValue);
                 if (colVals2 == null)
                     continue;
                 List<LeafValue> fusedColumnValsList = new ArrayList<LeafValue>();
