@@ -77,28 +77,34 @@ public class IndexLoopJoin {
                 ++index;
             }
 
+            boolean isLineItem = relationNode2.getTableName().equals("LINEITEM");
+
             DataSourceWriter fileWriter = file.getWriter();
 			BerekelyDBDataSource ds = ((BerekelyDBDataSource) ((RelationNode) node2).getFile());
             while((colVals1 = sqlIterator1.next()) != null) {
                 LeafValue leafValue = colVals1[index];
-				LeafValue[] colVals2 = ds.lookupPrimaryIndex(leafValue);
-                if (colVals2 == null)
+                List<LeafValue[]> colValsList = new ArrayList<>();
+                if (isLineItem) {
+                    colValsList = ds.lookupSecondaryIndexForLineItem(leafValue);
+                } else {
+                    LeafValue[] colVals2 = ds.lookupPrimaryIndex(leafValue);
+                    colValsList.add(colVals2);
+                }
+                if (colValsList.get(0) == null)
                     continue;
-                List<LeafValue> fusedColumnValsList = new ArrayList<LeafValue>();
-                fusedColumnValsList.addAll(Arrays.asList(colVals1));
-                LeafValue[] fusedColsVals = new LeafValue[colVals1.length + colVals2.length];
-                fusedColumnValsList.addAll(Arrays.asList(colVals2));
-                fusedColumnValsList.toArray(fusedColsVals);
 
-                int z=0;
-                LeafValue[] joinedTuple = new LeafValue[colVals1.length+colVals2.length];
-                for(int i=0; i<colVals1.length; i++,z++) {
-                    joinedTuple[z]=colVals1[i];
+                for (LeafValue[] colVals2 : colValsList) {
+                    int z = 0;
+                    LeafValue[] joinedTuple = new LeafValue[colVals1.length + colVals2.length];
+                    for (int i = 0; i < colVals1.length; i++, z++) {
+                        joinedTuple[z] = colVals1[i];
+                    }
+
+                    for (int i = 0; i < colVals2.length; i++, z++) {
+                        joinedTuple[z] = colVals2[i];
+                    }
+                    fileWriter.writeNextTuple(joinedTuple);
                 }
-                for(int i=0; i<colVals2.length; i++,z++) {
-                    joinedTuple[z]=colVals2[i];
-                }
-                fileWriter.writeNextTuple(joinedTuple);
             }
 
             fileWriter.close();
