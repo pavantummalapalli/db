@@ -202,7 +202,9 @@ public class QueryOptimizer implements QueryDomain {
 	}
 	
 	private boolean isIndexExists(String columnName) {
-		IndexMetaData indexData = TableUtils.tableIndexMetaData.get(columnName);
+		IndexMetaData indexData = TableUtils.tableIndexMetaData.get(columnName.split("\\.")[0]);
+		if (indexData == null)
+			return false;
 		if (indexData.getPrimaryIndexName().equals(columnName))
 			return true;
 		else

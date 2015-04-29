@@ -6,7 +6,6 @@ import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemInt
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -63,10 +62,10 @@ public class IndexLoopJoin {
             DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1.getReader(),null,relationNode1.getExpression());
             LeafValue[] colVals1;
             DataSource file = null;
-            if(TableUtils.isSwapOn)
-                file =new FileDataSource( new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"),newList);
-            else
-                file = new BufferDataSource();
+			if (TableUtils.isSwapOn)
+			file = new FileDataSource(new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat"), newList);
+			else
+				file = new BufferDataSource();
 
             int index = 0;
             Column column1 = (Column)((BinaryExpression)expression).getLeftExpression();
@@ -76,9 +75,7 @@ public class IndexLoopJoin {
                 }
                 ++index;
             }
-
             boolean isLineItem = relationNode2.getTableName().equals("LINEITEM");
-
             DataSourceWriter fileWriter = file.getWriter();
 			BerekelyDBDataSource ds = ((BerekelyDBDataSource) ((RelationNode) node2).getFile());
             while((colVals1 = sqlIterator1.next()) != null) {

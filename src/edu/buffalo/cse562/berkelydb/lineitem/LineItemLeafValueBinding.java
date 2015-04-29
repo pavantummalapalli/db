@@ -34,7 +34,7 @@ public class LineItemLeafValueBinding extends TupleBinding<LeafValue[]> {
              to.writeLong(((DateValue)arg0[i++]).getValue().getTime()); //receiptdate
 			 to.writeString(arg0[i++].toString()); //shipinstruct
 			 to.writeString(arg0[i++].toString()); // shipmode
-			 to.writeString(arg0[i++].toString()); //comment
+			to.writeString("''"); // comment
 		 } catch (InvalidLeaf e) {
 				e.printStackTrace();
 		 }

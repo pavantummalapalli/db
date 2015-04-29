@@ -28,9 +28,14 @@ public class InitializeTableIndexMetaData {
 
     public void initializeIndexMetaData() {
         IndexMetaData indexMetaData = new IndexMetaData();
-        Integer primaryKeyIndex = TableUtils.tableNamePrimaryIndexMap.get(tableName);
+		String primaryKeyIndex = TableUtils.tableNamePrimaryIndexMap.get(tableName);
         if (primaryKeyIndex != null) {
-            String primaryIndexName = tableName + "." + ((ColumnDefinition)createTable.getColumnDefinitions().get(primaryKeyIndex)).getColumnName().toUpperCase();
+			String primaryIndexName = tableName;
+			String keys[] = primaryKeyIndex.split(",");
+			List<ColumnDefinition> colDefns = createTable.getColumnDefinitions();
+			for (String keyIndex : keys) {
+				primaryIndexName = primaryIndexName + "." + ((ColumnDefinition) createTable.getColumnDefinitions().get(Integer.parseInt(keyIndex))).getColumnName().toUpperCase();
+			}
             Database primaryDatabase = manager.getPrimaryDatabase(primaryIndexName);
             TupleBinding<LeafValue[]> binding = TableUtils.getTupleBindingForTable(tableName);
             Map<String, SecondaryDatabase> secondaryDatabases = null;

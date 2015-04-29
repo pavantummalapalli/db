@@ -21,6 +21,7 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 
 import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DiskOrderedCursor;
@@ -45,7 +46,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private String tableName;
 	private Thread producerThread;
 	private volatile boolean start;
-	private static final int QUEUE_SIZE = 2000000;
+	private static final int QUEUE_SIZE = 2000;
 	
 	public void setExpression(Expression expression) {
 		secIndexMap = new HashMap<>();
@@ -207,7 +208,10 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		DatabaseEntry pkey = new DatabaseEntry();
 		DatabaseEntry tuple = new DatabaseEntry();
 		//DiskOrderedCursor cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
-		cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
+			DiskOrderedCursorConfig config = new DiskOrderedCursorConfig();
+			System.out.println("Queue size" + config.getQueueSize());
+			config.setQueueSize(2000);
+			cursor = primaryDatabase.openCursor(config);
 		//cursor.get(null, null, LockMode.READ_COMMITTED);
 		while(cursor.getNext(pkey, tuple, LockMode.READ_UNCOMMITTED)== OperationStatus.SUCCESS){
 			LeafValue[] results = binding.entryToObject(tuple);
@@ -357,22 +361,23 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	public List<LeafValue[]> lookupSecondaryIndexForLineItem(LeafValue value) {
 		List<LeafValue[]> buffer = new ArrayList<LeafValue[]>();
 		SecondaryDatabase secondaryDb = indexData.getSecondaryIndexes().get("LINEITEM.ORDERKEY");
-		System.out.println("Started secondary key scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor = null;
 		try {
 			DatabaseEntry key = new DatabaseEntry();
-			DatabaseEntry pkey = new DatabaseEntry();
 			TableUtils.bindLeafValueToKey(value, key);
 			DatabaseEntry tuple = new DatabaseEntry();
+			CursorConfig config = new CursorConfig();
+			config.setNonSticky(true);
 			cursor = secondaryDb.openCursor(null, null);
-			OperationStatus returnVal = cursor.getSearchKey(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+			OperationStatus returnVal = cursor.getSearchKey(key, tuple, LockMode.READ_UNCOMMITTED);
 			while (returnVal == OperationStatus.SUCCESS) {
 				LeafValue[] results = binding.entryToObject(tuple);
 				buffer.add(results);
-				returnVal = cursor.getNextDup(key, pkey, tuple, LockMode.READ_UNCOMMITTED);
+				returnVal = cursor.getNextDup(key, tuple, LockMode.READ_UNCOMMITTED);
 			}
-			System.out.println("End:" + (System.currentTimeMillis() - startTime));
+			// System.out.println("End:" + (System.currentTimeMillis() -
+			// startTime));
 			return buffer;
 		} finally {
 			if (cursor != null)

@@ -1,14 +1,16 @@
 package edu.buffalo.cse562.berkelydb;
 
-import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.je.Database;
-import edu.buffalo.cse562.utils.TableUtils;
+import java.io.File;
+import java.util.List;
+
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
-import java.io.File;
-import java.util.List;
+import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.Database;
+
+import edu.buffalo.cse562.utils.TableUtils;
 
 public class CreateTableIndex {
 
@@ -29,15 +31,18 @@ public class CreateTableIndex {
     }
 
     private void createIndexForPrimaryKey() {
-
-        Integer primaryKeyIndex = TableUtils.tableNamePrimaryIndexMap.get(tableName);
+		String primaryKeyIndex = TableUtils.tableNamePrimaryIndexMap.get(tableName);
         if (primaryKeyIndex != null) {
-            File file = TableUtils.getAssociatedTableFile(tableName);
-            List<ColumnDefinition> colDefns = createTable.getColumnDefinitions();
-            TupleBinding<LeafValue[]> tupleBinding = TableUtils.getTupleBindingForTable(tableName);
-            System.out.println("building index for :"+tableName);
-            String primaryIndexName = tableName + "." + ((ColumnDefinition)createTable.getColumnDefinitions().get(primaryKeyIndex)).getColumnName().toUpperCase();
-            primaryDatabase = manager.createIndexedTable(primaryIndexName, primaryKeyIndex, file, tupleBinding, colDefns);
+			String primaryIndexName = tableName;
+			String keys[] = primaryKeyIndex.split(",");
+			List<ColumnDefinition> colDefns = createTable.getColumnDefinitions();
+			for (String keyIndex : keys) {
+				System.out.println("building index for :" + tableName);
+				primaryIndexName = primaryIndexName + "." + ((ColumnDefinition) createTable.getColumnDefinitions().get(Integer.parseInt(keyIndex))).getColumnName().toUpperCase();
+			}
+			File file = TableUtils.getAssociatedTableFile(tableName);
+			TupleBinding<LeafValue[]> tupleBinding = TableUtils.getTupleBindingForTable(tableName);
+			primaryDatabase = manager.createIndexedTable(primaryIndexName, Integer.parseInt(keys[0]), file, tupleBinding, colDefns);
         }
     }
 
