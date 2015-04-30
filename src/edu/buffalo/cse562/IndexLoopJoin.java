@@ -5,10 +5,12 @@ import static edu.buffalo.cse562.utils.TableUtils.convertSelectExpressionItemInt
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.BooleanValue;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.schema.Column;
@@ -60,10 +62,12 @@ public class IndexLoopJoin {
             joinedTable.setTable(new Table(null, newTableName));
             joinedTable.setColumnDefinitions(newList);
             DataSourceSqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1.getReader(),null,relationNode1.getExpression());
+            ExpressionEvaluator evaluate = new ExpressionEvaluator(relationNode2.getTable());
+            Expression filterExpression = relationNode2.getExpression();
             LeafValue[] colVals1;
             DataSource file = null;
 			if (TableUtils.isSwapOn)
-			file = new FileDataSource(new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat"), newList);
+				file = new FileDataSource(new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat"), newList);
 			else
 				file = new BufferDataSource();
 
@@ -81,15 +85,21 @@ public class IndexLoopJoin {
             while((colVals1 = sqlIterator1.next()) != null) {
                 LeafValue leafValue = colVals1[index];
                 List<LeafValue[]> colValsList = new ArrayList<>();
+                //TODO: Filter expression for lineitem secondary index should be evaluated
                 if (isLineItem) {
                     colValsList = ds.lookupSecondaryIndexForLineItem(leafValue);
                 } else {
                     LeafValue[] colVals2 = ds.lookupPrimaryIndex(leafValue);
+                    if(filterExpression!=null){
+    					LeafValue lv = evaluate.evaluateExpression(filterExpression, colVals2, null);
+    					BooleanValue value =(BooleanValue) lv;
+    					if(value ==BooleanValue.FALSE)
+    						continue;
+    				}
                     colValsList.add(colVals2);
                 }
                 if (colValsList.get(0) == null)
                     continue;
-
                 for (LeafValue[] colVals2 : colValsList) {
                     int z = 0;
                     LeafValue[] joinedTuple = new LeafValue[colVals1.length + colVals2.length];
@@ -112,7 +122,9 @@ public class IndexLoopJoin {
             return relationNode;
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
+        } catch (SQLException e) {
+        	throw new RuntimeException(e);
+		}
     }
 
     private String getNewTableName(CreateTable table1,CreateTable table2){
