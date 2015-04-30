@@ -39,6 +39,9 @@ public class RelationNode implements Node {
 	
 	public void setFile(DataSource file) {
 		this.file = file;
+		if (file != null && expression != null && file instanceof BerekelyDBDataSource) {
+			((BerekelyDBDataSource) file).setExpression(expression);
+		}
 	}
 	
 	public DataSource getFile() {

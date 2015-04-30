@@ -46,7 +46,6 @@ public class BufferDataSource implements DataSource,DataSourceReader,DataSourceW
 	@Override
 	public void clear() {
 		tuples=new LinkedList<LeafValue[]>();
-		System.gc();
 	}
 
 	@Override

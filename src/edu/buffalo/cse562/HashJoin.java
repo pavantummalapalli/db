@@ -115,7 +115,7 @@ public class HashJoin {
 		sqlIterator1.close();
 		
 			relationNode1.getFile().clear();
-			System.gc();
+			// System.gc();
 			SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
 					convertSelectExpressionItemIntoExpressions(TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())),
 					dataFile2.getReader(), null, relationNode2.getExpression());

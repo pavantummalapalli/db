@@ -10,7 +10,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Map;
 
 import net.sf.jsqlparser.expression.LeafValue;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -24,10 +24,17 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 	private HashMap<String, Integer> columnMapping=new HashMap<>();
 	private HashMap<Integer,String> reverseColumnMapping=new HashMap<>();
 	private List<ColumnDefinition> colDefns;
+	private String tableName;
+	private boolean init;
 	
-	public FileDataSource(File file,List<ColumnDefinition> colDefns) {
-		this.file=file; 
-		this.colDefns=colDefns;
+	public FileDataSource(String tableName) {
+		this.tableName = tableName.toUpperCase();
+		this.file = TableUtils.getAssociatedTableFile(tableName);
+	}
+
+	private void init() {
+		this.file = TableUtils.getAssociatedTableFile(tableName);
+		this.colDefns = TableUtils.getTableSchemaMap().get(tableName.toUpperCase()).getColumnDefinitions();
 		Iterator<ColumnDefinition> iterator = colDefns.iterator();
 		int index = 0;
 		while(iterator.hasNext()) {
@@ -36,8 +43,21 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 			reverseColumnMapping.put(index, cd.getColumnName());
 			index++;
 		}
+		init = true;
 	}
 	
+	public FileDataSource(File file, List<ColumnDefinition> colDefns) {
+		this.colDefns = TableUtils.getTableSchemaMap().get(tableName.toUpperCase()).getColumnDefinitions();
+		Iterator<ColumnDefinition> iterator = colDefns.iterator();
+		int index = 0;
+		while (iterator.hasNext()) {
+			ColumnDefinition cd = iterator.next();
+			columnMapping.put(cd.getColumnName(), index);
+			reverseColumnMapping.put(index, cd.getColumnName());
+			index++;
+		}
+	}
+
 	@Override
 	public void close() throws IOException {
 		if(reader!=null)
@@ -56,18 +76,38 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 
 	@Override
 	public LeafValue[] readNextTuple() throws IOException {
+		if (!init)
+			init();
 		String row = reader.readLine();
 		if(row==null || row.isEmpty())
 			return null;
-		StringTokenizer tokenizer = new StringTokenizer(row, "|");
-		int count = tokenizer.countTokens();
-		String[] colVals = new String[count];
-		for(int i=0;i<count;i++)
-			colVals[i]=tokenizer.nextToken();
-		LeafValue [] convertedValues = new LeafValue[count];
-		for(int i=0;i<colVals.length;i++){
-			String columnName = reverseColumnMapping.get(i);
-			convertedValues[i]=TableUtils.getLeafValue(columnName, columnMapping, colVals, colDefns);
+		// StringTokenizer tokenizer = new StringTokenizer(row, "|");
+		// int count = tokenizer.countTokens();
+		// String[] colVals = new String[count];
+		// for(int i=0;i<count;i++)
+		// colVals[i]=tokenizer.nextToken();
+		String[] colVals = TableUtils.pattern.split(row);
+		LeafValue[] convertedValues = null;
+		Map<String, Integer> physicalColumnMap = TableUtils.physicalColumnMapping.get(tableName);
+		if (physicalColumnMap != null) {
+			String[] newColVals = new String[columnMapping.size()];
+			convertedValues = new LeafValue[newColVals.length];
+			Iterator<String> physicalColumnMapIte = physicalColumnMap.keySet().iterator();
+			while (physicalColumnMapIte.hasNext()) {
+				String columnName = physicalColumnMapIte.next();
+				if (columnMapping.get(columnName) != null)
+				newColVals[columnMapping.get(columnName)] = colVals[physicalColumnMap.get(columnName)];
+			}
+			for (int i = 0; i < newColVals.length; i++) {
+				String columnName = reverseColumnMapping.get(i);
+				convertedValues[i] = TableUtils.getLeafValue(columnName, columnMapping, newColVals, colDefns);
+			}
+		} else {
+			convertedValues = new LeafValue[colVals.length];
+			for (int i = 0; i < colVals.length; i++) {
+				String columnName = reverseColumnMapping.get(i);
+				convertedValues[i] = TableUtils.getLeafValue(columnName, columnMapping, colVals, colDefns);
+			}
 		}
 		return convertedValues;
 	}

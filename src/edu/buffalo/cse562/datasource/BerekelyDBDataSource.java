@@ -19,6 +19,7 @@ import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.je.CursorConfig;
@@ -46,7 +47,10 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private String tableName;
 	private Thread producerThread;
 	private volatile boolean start;
-	private static final int QUEUE_SIZE = 2000;
+	private static final int QUEUE_SIZE = 20000;
+	private HashMap<String, Integer> columnMapping = new HashMap<>();
+	private List<ColumnDefinition> colDefns;
+	private boolean init;
 	
 	public void setExpression(Expression expression) {
 		secIndexMap = new HashMap<>();
@@ -94,7 +98,23 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		this.tableName = tableName;
 		indexData = TableUtils.tableIndexMetaData.get(tableName);
 		binding=indexData.getBinding();
+		
 	}
+	
+	private void init() {
+		this.colDefns = TableUtils.getTableSchemaMap().get(tableName.toUpperCase()).getColumnDefinitions();
+		Iterator<ColumnDefinition> iterator = colDefns.iterator();
+		int index = 0;
+		while(iterator.hasNext()) {
+			ColumnDefinition cd = iterator.next();
+			columnMapping.put(cd.getColumnName(), index);
+			index++;
+		}
+		init = true;
+	}
+	
+	
+	
 	
 	private Range evaluateBestAvailableSecondaryIndex() {
 		Iterator<String> iterator = secIndexMap.keySet().iterator();
@@ -170,6 +190,24 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	public void clear() {
 	}
 
+	private LeafValue[] remapData(LeafValue[] values) {
+		if (values == null)
+			return values;
+		Map<String, Integer> physicalColumnMap = TableUtils.physicalColumnMapping.get(tableName);
+		if (physicalColumnMap != null) {
+			LeafValue[] convertedValues = new LeafValue[columnMapping.size()];
+			Iterator<String> physicalColumnMapIte = physicalColumnMap.keySet().iterator();
+			while (physicalColumnMapIte.hasNext()) {
+				String columnName = physicalColumnMapIte.next();
+				if (columnMapping.get(columnName) != null)
+					convertedValues[columnMapping.get(columnName)] = values[physicalColumnMap.get(columnName)];
+			}
+			return convertedValues;
+		} else {
+			return values;
+		}
+	}
+
 	@Override
 	public LeafValue[] readNextTuple() throws IOException {
 		try {
@@ -177,14 +215,16 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 				start=true;
 				producerThread.start();
 			}
+			if (!init)
+				init();
 			LeafValue[] values = buffer.take();
 			if(values.length == 1 && values[0]==null){
 				producerThread=null;
 				start=false;
 				return null;
+			}else{
+				remapData(values);
 			}
-			else
-				return values;
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");
 		}
@@ -203,15 +243,17 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	private synchronized void lookupAll(TupleBinding<LeafValue[]> binding, Database primaryDatabase) {
 		System.out.println("Started linear scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
-		DiskOrderedCursor cursor=null;
+		DiskOrderedCursor cursor = null;
 		try{
 		DatabaseEntry pkey = new DatabaseEntry();
 		DatabaseEntry tuple = new DatabaseEntry();
 		//DiskOrderedCursor cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
 			DiskOrderedCursorConfig config = new DiskOrderedCursorConfig();
+			config.setInternalMemoryLimit((long) (TableUtils.getAvailableMemory() * .60));
 			System.out.println("Queue size" + config.getQueueSize());
 			config.setQueueSize(2000);
 			cursor = primaryDatabase.openCursor(config);
+			// cursor = primaryDatabase.openCursor(null, null);
 		//cursor.get(null, null, LockMode.READ_COMMITTED);
 		while(cursor.getNext(pkey, tuple, LockMode.READ_UNCOMMITTED)== OperationStatus.SUCCESS){
 			LeafValue[] results = binding.entryToObject(tuple);
@@ -240,6 +282,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			if(minValue==null){
 				TableUtils.bindLeafValueToKey(maxValue, key);
 				DatabaseEntry tuple = new DatabaseEntry();
+				CursorConfig config = new CursorConfig();
+				config.setNonSticky(true);
 				cursor = secondaryDb.openCursor(null, null);
 				OperationStatus returnVal = cursor.getSearchKeyRange(key, tuple, LockMode.READ_UNCOMMITTED);
 				if(returnVal!=OperationStatus.SUCCESS){
@@ -303,13 +347,16 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		// binding, indexData.getPrimaryDatabase());
 		// System.out.println("Started primary key scan for table :" +
 		// tableName);
+		if (!init)
+			init();
 		long startTime = System.currentTimeMillis();
 		DatabaseEntry key = new DatabaseEntry();
 		TableUtils.bindLeafValueToKey(leafValue, key);
 		DatabaseEntry tuple = new DatabaseEntry();
 		OperationStatus status = indexData.getPrimaryDatabase().get(null, key, tuple, LockMode.READ_UNCOMMITTED);
-		if (status == OperationStatus.SUCCESS)
-			return binding.entryToObject(tuple);
+		if (status == OperationStatus.SUCCESS) {
+			return remapData(binding.entryToObject(tuple));
+		}
 		// System.out.println("End:" + (System.currentTimeMillis() -
 		// startTime));
 		return null;

@@ -15,6 +15,7 @@ import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import edu.buffalo.cse562.ExpressionVisitorImpl;
 import edu.buffalo.cse562.berkelydb.IndexMetaData;
+import edu.buffalo.cse562.datasource.BerekelyDBDataSource;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class QueryOptimizer implements QueryDomain {
@@ -79,6 +80,12 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode2());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode1());
+											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
+												// convert to berkeley data source
+												BerekelyDBDataSource bds = new BerekelyDBDataSource(temp.getTableName());
+												temp.setFile(bds);
+											}
 											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
 											EqualsTo newJoinCondition = new EqualsTo();
 											newJoinCondition.setLeftExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getRightExpression());
@@ -96,6 +103,13 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
+											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
+												// convert to berkeley data
+												// source
+												BerekelyDBDataSource bds = new BerekelyDBDataSource(temp.getTableName());
+												temp.setFile(bds);
+											}
 											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
 											EqualsTo newJoinCondition = new EqualsTo();
 											newJoinCondition.setLeftExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getRightExpression());
@@ -126,6 +140,13 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode2());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode1());
+											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
+												// convert to berkeley data
+												// source
+												BerekelyDBDataSource bds = new BerekelyDBDataSource(temp.getTableName());
+												temp.setFile(bds);
+											}
 											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
 											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
 											indexLoopNode.addJoinCondition(expTemp);
@@ -140,6 +161,13 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
+											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
+												// convert to berkeley data
+												// source
+												BerekelyDBDataSource bds = new BerekelyDBDataSource(temp.getTableName());
+												temp.setFile(bds);
+											}
 											indexLoopNode.setParentNode(((AbstractJoinNode) node).getParentNode());
 											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
 											indexLoopNode.addJoinCondition(expTemp);
@@ -182,6 +210,18 @@ public class QueryOptimizer implements QueryDomain {
 					Set<String> listNames =  getTableName(exp);
 					listNames.remove(alias);
 					if(listNames.isEmpty()){
+						Set<String> columnNames = getColumnNames(exp);
+						Iterator<String> columnNamesIterator = columnNames.iterator();
+						boolean indexExists = false;
+						while (columnNamesIterator.hasNext()) {
+							indexExists = isIndexExists(columnNamesIterator.next());
+							if (indexExists && !(((RelationNode) node).getFile() instanceof BerekelyDBDataSource)) {
+								// convert to berkeley data source
+								BerekelyDBDataSource bds = new BerekelyDBDataSource(((RelationNode) node).getTableName());
+								((RelationNode) node).setFile(bds);
+								break;
+							}
+						}
 						((RelationNode)node).addExpression(exp);
 						iterator.remove();
 					}
@@ -229,6 +269,23 @@ public class QueryOptimizer implements QueryDomain {
 		return tableNames;
 	}
 	
+	private Set<String> getColumnNames(Expression exp) {
+		Set<String> columnsNames = new HashSet<>();
+		if (exp instanceof BinaryExpression) {
+			if (((BinaryExpression) exp).getLeftExpression() instanceof Column) {
+				columnsNames.add(((Column) ((BinaryExpression) exp).getLeftExpression()).getWholeColumnName());
+			}
+			if (((BinaryExpression) exp).getRightExpression() instanceof Column) {
+				columnsNames.add(((Column) ((BinaryExpression) exp).getRightExpression()).getWholeColumnName());
+			}
+		} else if (exp instanceof Parenthesis) {
+			exp.accept(new ExpressionVisitorImpl(this));
+			columnsNames.addAll(this.tableNames);
+			this.tableNames = new HashSet<String>();
+		}
+		return columnsNames;
+	}
+
 	public Node optimizeQueryPlan(Node node){
 		ArrayList<Expression> extractedExpressionList = new ArrayList<Expression>();
 		iterateNode(node, extractedExpressionList);

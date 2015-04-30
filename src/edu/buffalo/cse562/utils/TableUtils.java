@@ -49,6 +49,7 @@ import edu.buffalo.cse562.berkelydb.supplier.SupplierLeafValueBinding;
 public final class TableUtils {
 	
 	public static Pattern pattern = Pattern.compile("\\|");
+	public static Pattern patternDot = Pattern.compile("\\.");
 	private static Map <String, CreateTable> tableSchemaMap = new HashMap <>();
 	private static String dataDir;
 	private static String tempDataDir;
@@ -58,6 +59,7 @@ public final class TableUtils {
 	private static Map<String,DateValue> pooledDateValue = new HashMap<String, DateValue>();
 	private static Map<Long,DateValue> pooledLongDateValue = new HashMap<>();
 	public static Map<String,IndexMetaData> tableIndexMetaData = new HashMap<>();
+	public static Map<String, Map<String, Integer>> physicalColumnMapping = new HashMap<>();
 
 	public static Map<String, String> tableNamePrimaryIndexMap = new HashMap<String, String>() {
 		{
@@ -73,7 +75,7 @@ public final class TableUtils {
         put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
 			// put("LINEITEM", new ArrayList<>(Arrays.asList(0, 3, 4, 6, 8, 10,
 			// 12, 14)));
-			// put("LINEITEM", new ArrayList<>(Arrays.asList(0)));
+			// put("LINEITEM", new ArrayList<>(Arrays.asList(10)));
 			// put("ORDERS", new ArrayList<>(Arrays.asList(4)));
 //        put("REGION", new ArrayList<>(Arrays.asList(1)));
     }};
@@ -416,10 +418,17 @@ public final class TableUtils {
 
 	public static int compareTwoLeafValues(LeafValue leafValue1, LeafValue leafValue2) {
 		int ans = 0;
-		if (leafValue1 instanceof DoubleValue && leafValue2 instanceof DoubleValue)
-			ans = new Double(((DoubleValue) leafValue1).getValue()).compareTo(new Double(((DoubleValue) leafValue2).getValue()));
-		else if (leafValue1 instanceof LongValue && leafValue2 instanceof LongValue)
-			ans = new Long(((LongValue) leafValue1).getValue()).compareTo(new Long(((LongValue) leafValue2).getValue()));
+		if (leafValue1 instanceof DoubleValue && leafValue2 instanceof DoubleValue) {
+			double value1 = ((DoubleValue) leafValue1).getValue();
+			double value2 = ((DoubleValue) leafValue2).getValue();
+			return value1 < value2 ? -1 : (value1 > value2 ? 1 : 0);
+		} else if (leafValue1 instanceof LongValue && leafValue2 instanceof LongValue) {
+			// ans = new Long(((LongValue) leafValue1).getValue()).compareTo(new
+			// Long(((LongValue) leafValue2).getValue()));
+			long value1 = ((LongValue) leafValue1).getValue();
+			long value2 = ((LongValue) leafValue2).getValue();
+			return value1 < value2 ? -1 : (value1 > value2 ? 1 : 0);
+		}
 		else if (leafValue1 instanceof StringValue && leafValue2 instanceof StringValue)
 			ans = ((StringValue) leafValue1).getValue().compareTo(((StringValue) leafValue2).getValue());
 		else if (leafValue1 instanceof DateValue && leafValue1 instanceof DateValue)

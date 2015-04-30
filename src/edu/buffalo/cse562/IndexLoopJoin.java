@@ -78,6 +78,8 @@ public class IndexLoopJoin {
             boolean isLineItem = relationNode2.getTableName().equals("LINEITEM");
             DataSourceWriter fileWriter = file.getWriter();
 			BerekelyDBDataSource ds = ((BerekelyDBDataSource) ((RelationNode) node2).getFile());
+			long start = System.currentTimeMillis();
+
             while((colVals1 = sqlIterator1.next()) != null) {
                 LeafValue leafValue = colVals1[index];
                 List<LeafValue[]> colValsList = new ArrayList<>();
@@ -103,7 +105,7 @@ public class IndexLoopJoin {
                     fileWriter.writeNextTuple(joinedTuple);
                 }
             }
-
+			System.out.println(System.currentTimeMillis() - start);
             fileWriter.close();
             sqlIterator1.close();
             dataFile1.clear();

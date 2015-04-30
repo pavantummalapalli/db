@@ -1,5 +1,6 @@
 package edu.buffalo.cse562;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
@@ -36,6 +38,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 	private Node node;
 	private Map<String,String> columnTableMap = new HashMap <>();
 	private List<SelectExpressionItem> selectExpressionItems;
+	private Set<String> tiedColumnNames = new HashSet<>();
 	
 	public Node getQueryPlanTreeRoot(){
 		return node;
@@ -75,6 +78,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				Node rightNode =  tempVisitor.getFromItemNode();
 				removeParentFlag(rightNode);
 				visitor.getTableList().addAll(tempVisitor.getTableList());
+				visitor.getTableToNodeMap().putAll(tempVisitor.getTableToNodeMap());
 				leftNode = buildJoinOperatorNode(leftNode, rightNode);
 				tableNames.addAll(tempVisitor.getTableNames());
 				((AbstractJoinNode)leftNode).setTableNames(new HashSet<>(tableNames));
@@ -93,7 +97,7 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 			//leafNode.setExpressionList(expressionList);
 			node=expressionNode;
 		}
-		
+
 		//STEP 3: SET GROUP BY CLAUSE AND PROCESS AGGREGATES
 		ProjectNode projectNode = new ProjectNode();
 		List <SelectItem> selectItem = arg0.getSelectItems();
@@ -157,8 +161,66 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		//STEP 7: SET LIMIT		
 		projectNode.setLimit(arg0.getLimit());
 		node=projectNode;
-		
-//		List<Expression> expressionList = TableUtils.getBinaryExpressionList(arg0.getWhere());
+		ColumnExtractor ext = new ColumnExtractor();
+		try {
+			// Extract where clause
+			ext.eval(arg0.getWhere());
+			// Extract select items
+			List<SelectExpressionItem> selectList = prjImp.getSelectExpressionItemList();
+			for(SelectExpressionItem item:selectList){
+				ext.eval(item.getExpression());
+			}
+			tiedColumnNames.addAll(ext.getColumns());
+			//Save physical column definitions
+			Map<String,CreateTable> schemaMap = TableUtils.getTableSchemaMap();
+			Map<String, Map<String, Integer>> physicalSchema = TableUtils.physicalColumnMapping;
+			Iterator<String> tablesIte = schemaMap.keySet().iterator();
+			while(tablesIte.hasNext()){
+				String table = tablesIte.next();
+				List<ColumnDefinition> colDef = schemaMap.get(table).getColumnDefinitions();
+				Map<String, Integer> colIndexMap = new HashMap<String, Integer>();
+				int i = 0;
+				for (ColumnDefinition temp : colDef) {
+					colIndexMap.put(temp.getColumnName(), i++);
+				}
+				physicalSchema.put(table, colIndexMap);
+			}
+			//Delete from columnDefinitions
+			Map<String, List<ColumnDefinition>> alteredSchema = new HashMap<>();
+			Iterator<String> columnsIte = tiedColumnNames.iterator();
+			while(columnsIte.hasNext()){
+				String[] name = TableUtils.patternDot.split(columnsIte.next());
+				String columnName = name[1];
+				String tableName = name[0];
+				List<ColumnDefinition> newColDef = alteredSchema.get(tableName);
+				if (newColDef == null) {
+					newColDef = new ArrayList<ColumnDefinition>();
+				}
+				CreateTable table = schemaMap.get(tableName);
+				if (table != null) {
+				List<ColumnDefinition> colDefs = table.getColumnDefinitions();
+				Iterator<ColumnDefinition > colDefsIte = colDefs.iterator();
+				while(colDefsIte.hasNext()){
+					ColumnDefinition colDef = colDefsIte.next();
+						if (colDef.getColumnName().equalsIgnoreCase(columnName)) {
+						newColDef.add(colDef);
+					}
+				}
+					alteredSchema.put(tableName, newColDef);
+				}
+			}
+			// save all alteredSchema to original column definitions
+			tablesIte = alteredSchema.keySet().iterator();
+			// Reinit relation nodes
+			while (tablesIte.hasNext()) {
+				String table = tablesIte.next();
+				CreateTable schema = schemaMap.get(table);
+				visitor.getTableToNodeMap().get(table).getTable().setColumnDefinitions(alteredSchema.get(table));
+				schema.setColumnDefinitions(alteredSchema.get(table));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private boolean isAggregateFunctionInSelecItem(List<SelectExpressionItem> items) {

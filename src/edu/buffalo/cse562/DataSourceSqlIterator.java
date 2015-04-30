@@ -84,8 +84,9 @@ public class DataSourceSqlIterator implements SqlIterator {
 			try {
 				while(true){
 					LeafValue [] convertedValues = dataFileReader.readNextTuple();
-					if(convertedValues == null)
+				if (convertedValues == null) {
 						return null;
+				}
 					//TODO: detect n trim spaces
 	//				colVals = row.split("\\|");
 	//				LeafValue [] convertedValues = new LeafValue[colVals.length];
@@ -127,6 +128,7 @@ public class DataSourceSqlIterator implements SqlIterator {
 		public void nextAggregate() {
 			try {
 				LeafValue[] resolvedValues=null;
+
 				while((resolvedValues=dataFileReader.readNextTuple()) != null){
 //					colVals = row.split("\\|");
 //					LeafValue [] resolvedValues = new LeafValue[colVals.length];

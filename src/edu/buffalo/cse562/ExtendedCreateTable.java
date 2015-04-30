@@ -11,6 +11,7 @@ public class ExtendedCreateTable extends CreateTable {
 	
 	private List<ColumnDefinition> cds;
 	private CreateTable table;
+	private String alias;
 	
 	public ExtendedCreateTable(CreateTable table,String alias){
 		this.table = table;
@@ -18,6 +19,11 @@ public class ExtendedCreateTable extends CreateTable {
 	}
 
 	public void setAlias(String alias) {
+		this.alias = alias;
+		copyColumnDefinitions(alias);
+	}
+
+	private void copyColumnDefinitions(String alias) {
 		cds= new ArrayList<>();
 		for(ColumnDefinition cd : (List<ColumnDefinition>) table.getColumnDefinitions())
 			cds.add(new ExtendedColumnDefinition(cd, alias));
@@ -32,7 +38,10 @@ public class ExtendedCreateTable extends CreateTable {
 	@Override
 	public void setColumnDefinitions(List list) {
 		// TODO Auto-generated method stub
-		this.cds = list;
+		table.setColumnDefinitions(list);
+		cds = new ArrayList<>();
+		for (ColumnDefinition cd : (List<ColumnDefinition>) table.getColumnDefinitions())
+			cds.add(new ExtendedColumnDefinition(cd, alias));
 	}
 	
 	@Override

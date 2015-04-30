@@ -1,18 +1,16 @@
 package edu.buffalo.cse562;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import edu.buffalo.cse562.datasource.BerekelyDBDataSource;
 import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.queryplan.Node;
 import edu.buffalo.cse562.queryplan.ProjectNode;
@@ -25,31 +23,38 @@ public class FromItemImpl implements FromItemVisitor {
 	private Node node;
 	private List <Table> tableList = new ArrayList<>();
 	private List<String> tableNames = new ArrayList<>();
+	private HashMap<String, RelationNode> tableToNodeMap = new HashMap<>();
 	private QueryDomain queryDomain;
 	
 	public FromItemImpl(QueryDomain queryDomain){
 		this.queryDomain = queryDomain;
 	}
 	
+	public HashMap<String, RelationNode> getTableToNodeMap() {
+		return tableToNodeMap;
+	}
+
 	public List<String> getTableNames() {
 		return tableNames;
 	}
 	
 	@Override
 	public void visit(Table table) {
-		File filePath = TableUtils.getAssociatedTableFile(table.getName());
-		CreateTable schema =TableUtils.getTableSchemaMap().get(table.getName().toUpperCase());
 		if(table.getAlias()==null)
 			table.setAlias(table.getName());
 		// if
 		// (TableUtils.tableIndexMetaData.containsKey(table.getName().toUpperCase())
 		// && !table.getName().toUpperCase().equals("LINEITEM")) {
-		if (TableUtils.tableIndexMetaData.containsKey(table.getName().toUpperCase())) {
-			node = new RelationNode(table.getName(),table.getAlias(),new BerekelyDBDataSource(table.getName().toUpperCase()),schema);
-		}
-		else{
-			node = new RelationNode(table.getName(),table.getAlias(), new FileDataSource(filePath,schema.getColumnDefinitions()),schema);
-		}
+		// if
+		// (TableUtils.tableIndexMetaData.containsKey(table.getName().toUpperCase()))
+		// {
+		// node = new RelationNode(table.getName(),table.getAlias(),new
+		// BerekelyDBDataSource(table.getName().toUpperCase()),schema);
+		// }
+		// else{
+		node = new RelationNode(table.getName(), table.getAlias(), new FileDataSource(table.getName().toUpperCase()), TableUtils.getTableSchemaMap().get(table.getName().toUpperCase()));
+		tableToNodeMap.put(table.getName().toUpperCase(), (RelationNode) node);
+		// }
 		tableList.add(table);
 		tableNames.add(table.getAlias().toUpperCase());
 	}

@@ -139,7 +139,7 @@ public class ProjectNode implements Node {
 			projectList.add(colVals);
 		}
 		relationNode.getFile().clear();
-		System.gc();
+			// System.gc();
 		DataSource file = null;
 		RelationNode relationNode1=null;
 		DataSourceWriter fileWriter = null;
