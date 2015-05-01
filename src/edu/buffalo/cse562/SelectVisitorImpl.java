@@ -1,6 +1,5 @@
 package edu.buffalo.cse562;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -162,13 +161,12 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 		projectNode.setLimit(arg0.getLimit());
 		node=projectNode;
 		ColumnExtractor ext = new ColumnExtractor();
-		try {
 			// Extract where clause
-			ext.eval(arg0.getWhere());
+			arg0.getWhere().accept(ext);
 			// Extract select items
 			List<SelectExpressionItem> selectList = prjImp.getSelectExpressionItemList();
 			for(SelectExpressionItem item:selectList){
-				ext.eval(item.getExpression());
+				item.getExpression().accept(ext);
 			}
 			tiedColumnNames.addAll(ext.getColumns());
 			//Save physical column definitions
@@ -218,9 +216,6 @@ public class SelectVisitorImpl implements SelectVisitor,QueryDomain{
 				visitor.getTableToNodeMap().get(table).getTable().setColumnDefinitions(alteredSchema.get(table));
 				schema.setColumnDefinitions(alteredSchema.get(table));
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	private boolean isAggregateFunctionInSelecItem(List<SelectExpressionItem> items) {

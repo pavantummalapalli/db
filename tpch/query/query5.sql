@@ -120,6 +120,6 @@ WHERE customer.custkey = orders.custkey
   AND nation.regionkey = region.regionkey
   AND region.name = 'EUROPE'
   AND orders.orderdate >= DATE('1997-01-01')
-  AND orders.orderdate < DATE('1998-01-01')
+  AND orders.orderdate < date('1998-01-01')
 GROUP BY nation.name
 ORDER BY revenue DESC

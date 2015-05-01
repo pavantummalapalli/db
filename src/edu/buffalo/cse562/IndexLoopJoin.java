@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -90,6 +91,16 @@ public class IndexLoopJoin {
                 //TODO: Filter expression for lineitem secondary index should be evaluated
                 if (isLineItem) {
                     colValsList = ds.lookupSecondaryIndexForLineItem(leafValue);
+					Iterator<LeafValue[]> ite = colValsList.iterator();
+					while (ite.hasNext()) {
+						LeafValue[] colVals2 = ite.next();
+						if (filterExpression != null) {
+							LeafValue lv = evaluate.evaluateExpression(filterExpression, colVals2, null);
+							BooleanValue value = (BooleanValue) lv;
+							if (value == BooleanValue.FALSE)
+								ite.remove();
+						}
+					}
                 } else {
                     LeafValue[] colVals2 = ds.lookupPrimaryIndex(leafValue);
                     if(filterExpression!=null){

@@ -80,7 +80,7 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode2());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode1());
-											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											RelationNode temp = (RelationNode) indexLoopNode.getRelationNode2();
 											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
 												// convert to berkeley data source
 												BerekelyDBDataSource bds = new BerekelyDBDataSource(temp.getTableName());
@@ -103,7 +103,7 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
-											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											RelationNode temp = (RelationNode) indexLoopNode.getRelationNode2();
 											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
 												// convert to berkeley data
 												// source
@@ -140,7 +140,7 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode2());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode1());
-											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											RelationNode temp = (RelationNode) indexLoopNode.getRelationNode2();
 											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
 												// convert to berkeley data
 												// source
@@ -161,7 +161,7 @@ public class QueryOptimizer implements QueryDomain {
 											// left hand side
 											indexLoopNode.setRelationNode1(((AbstractJoinNode) node).getRelationNode1());
 											indexLoopNode.setRelationNode2(((AbstractJoinNode) node).getRelationNode2());
-											RelationNode temp = (RelationNode) ((AbstractJoinNode) node).getRelationNode2();
+											RelationNode temp = (RelationNode) indexLoopNode.getRelationNode2();
 											if (!(temp.getFile() instanceof BerekelyDBDataSource)) {
 												// convert to berkeley data
 												// source

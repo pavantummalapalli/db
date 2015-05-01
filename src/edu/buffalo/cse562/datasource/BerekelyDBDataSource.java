@@ -223,7 +223,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 				start=false;
 				return null;
 			}else{
-				remapData(values);
+				return remapData(values);
 			}
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");

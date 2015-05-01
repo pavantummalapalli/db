@@ -106,7 +106,6 @@ CREATE TABLE REGION (
 --   AND  LINEITEM.shipdate > DATE('1995-03-15')
 -- GROUP BY ORDERS.orderkey, ORDERS.orderdate, ORDERS.shippriority;
 
-
 --SELECT LINEITEM.ORDERKEY, SUM(LINEITEM.EXTENDEDPRICE * (1 - LINEITEM.DISCOUNT)) 
 --AS REVENUE, ORDERS.ORDERDATE, ORDERS.SHIPPRIORITY FROM CUSTOMER, ORDERS, LINEITEM 
 --WHERE CUSTOMER.MKTSEGMENT = 'BUILDING' AND CUSTOMER.CUSTKEY = ORDERS.CUSTKEY AND 
@@ -120,12 +119,12 @@ SELECT
    orders.orderdate,
    orders.shippriority 
 FROM
-   customer, orders, lineitem 
+   customer, orders, lineitem
 WHERE
    customer.mktsegment = 'HOUSEHOLD' 
    AND customer.custkey = orders.custkey 
    AND lineitem.orderkey = orders.orderkey 
-   AND orders.orderdate < DATE('1995-03-24') 
+   AND orders.orderdate < date('1995-03-24') 
    AND lineitem.shipdate > DATE('1995-03-24') 
 GROUP BY
    lineitem.orderkey,
@@ -133,4 +132,4 @@ GROUP BY
    orders.shippriority 
 ORDER BY
    revenue DESC,
-   orderdate LIMIT 10
+   orderdate LIMIT 10;
