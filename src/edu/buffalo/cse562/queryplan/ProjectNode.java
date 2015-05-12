@@ -169,7 +169,7 @@ public class ProjectNode implements Node {
 			newTable.setColumnDefinitions(newList);
 			if(TableUtils.isSwapOn){
 				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator
-						+ newTableName + ".dat"),newList);
+ + newTableName + ".dat"), newList, newTableName);
 			}
 			else{
 				file = new BufferDataSource();
@@ -234,7 +234,6 @@ public class ProjectNode implements Node {
 		if(!parentNode)
 			fileWriter.close();
 		projectList.clear();
-		System.gc();
 		if (parentNode == false) {
 			relationNode.setFile(file);
 			return relationNode1;

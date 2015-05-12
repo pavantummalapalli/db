@@ -43,6 +43,7 @@ public class HashJoin {
 	
 	public RelationNode doHashJoin() {
 		try {
+			long start = System.currentTimeMillis();
 		RelationNode relationNode1 = node1.eval();
 		RelationNode relationNode2 = node2.eval();
 		CreateTable table1 = relationNode1.getTable();
@@ -85,46 +86,59 @@ public class HashJoin {
 			}
 		}
 		
-		Map<String, List<LeafValue[]>> hashMap = new HashMap<>();
+			Map<String, List<LeafValue[]>> hashMap = new HashMap<>(15000);
 		SqlIterator sqlIterator1 = new DataSourceSqlIterator(table1,table1ItemsExpression , dataFile1.getReader(), null, relationNode1.getExpression());
 		String newTableName = getNewTableName(table1, table2);
 		LeafValue[] colVals1, colVals2;
 		DataSource file =null;
 		if(TableUtils.isSwapOn)
-			file= new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"),newList);
+				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"), newList, newTableName);
 		else
 			file = new BufferDataSource();
 		DataSourceWriter fileWriter = file.getWriter();
 		String delimiter = "!~";
 		while((colVals1 = sqlIterator1.next()) != null) { 
 			StringBuilder hashKeyBuilder = new StringBuilder();
+				int i = 0;
 			for(int[] colIndex: colIndexList) {
-				hashKeyBuilder.append(toUnescapedString( colVals1[colIndex[0]]) + delimiter); 
+					if (i == colIndexList.size() - 1)
+						hashKeyBuilder.append(toUnescapedString(colVals1[colIndex[0]]));
+					else
+						hashKeyBuilder.append(toUnescapedString(colVals1[colIndex[0]])).append(delimiter);
+					i++;
 			}
-			String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
+				// String hashKey = hashKeyBuilder.substring(0,
+				// hashKeyBuilder.length() - delimiter.length());
+				String hashKey = hashKeyBuilder.toString();
 			List<LeafValue[]> temp;
 			if( (temp = hashMap.get(hashKey))!=null) {
 				temp.add(colVals1);
 			}
 			else {
-				List<LeafValue[]> list = new ArrayList<>();
+					List<LeafValue[]> list = new LinkedList<>();
 				list.add(colVals1);
 				hashMap.put(hashKey, list);
 			}
 		}
 		sqlIterator1.close();
 		
-			relationNode1.getFile().clear();
+			// relationNode1.getFile().clear();
 			// System.gc();
 			SqlIterator sqlIterator2 = new DataSourceSqlIterator(table2,
 					convertSelectExpressionItemIntoExpressions(TableUtils.convertColumnDefinitionIntoSelectExpressionItems(table2.getColumnDefinitions())),
 					dataFile2.getReader(), null, relationNode2.getExpression());
 			while((colVals2 = sqlIterator2.next()) != null) {
 				StringBuilder hashKeyBuilder = new StringBuilder();
+				int i = 0;
 				for(int[] colIndex: colIndexList) {
-					hashKeyBuilder.append(toUnescapedString(colVals2[colIndex[1]]) + delimiter); 
+					if (i == colIndexList.size() - 1)
+						hashKeyBuilder.append(toUnescapedString(colVals2[colIndex[1]]));
+					else
+						hashKeyBuilder.append(toUnescapedString(colVals2[colIndex[1]])).append(delimiter);
 				}
-				String hashKey = hashKeyBuilder.substring(0, hashKeyBuilder.length() - delimiter.length());
+				// String hashKey = hashKeyBuilder.substring(0,
+				// hashKeyBuilder.length() - delimiter.length());
+				String hashKey = hashKeyBuilder.toString();
 				List<LeafValue[]> leafValues=null;
 				if((leafValues=hashMap.get(hashKey))!=null) {
 					Iterator<LeafValue[]> it = leafValues.iterator();
@@ -142,14 +156,16 @@ public class HashJoin {
 			}
 			fileWriter.close();
 			sqlIterator2.close();
-			relationNode2.getFile().clear();
-			System.gc();
+			// relationNode2.getFile().clear();
+			// System.gc();
 		CreateTable newTable = new CreateTable();
 		newTable.setTable(new Table(null, newTableName));
 		newTable.setColumnDefinitions(newList);
 		//TODO put the table name in a temp hash map
 		//TableUtils.getTableSchemaMap().put(newTableName, newTable);
 		RelationNode relationNode = new RelationNode(newTableName, null,file,newTable);
+			// System.out.println("HAsh Join : " + (System.currentTimeMillis() -
+			// start));
 		return relationNode;
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);

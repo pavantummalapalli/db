@@ -46,8 +46,10 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 		init = true;
 	}
 	
-	public FileDataSource(File file, List<ColumnDefinition> colDefns) {
+	public FileDataSource(File file, List<ColumnDefinition> colDefns, String tableName) {
+		this.file = TableUtils.getAssociatedTableFile(tableName);
 		this.colDefns = TableUtils.getTableSchemaMap().get(tableName.toUpperCase()).getColumnDefinitions();
+		this.tableName = tableName.toUpperCase();
 		Iterator<ColumnDefinition> iterator = colDefns.iterator();
 		int index = 0;
 		while (iterator.hasNext()) {
@@ -86,6 +88,25 @@ public class FileDataSource implements DataSource,DataSourceReader,DataSourceWri
 		// String[] colVals = new String[count];
 		// for(int i=0;i<count;i++)
 		// colVals[i]=tokenizer.nextToken();
+		// List<String> colValsList = new LinkedList<String>();
+		// char[] array = row.toCharArray();
+		// StringBuilder builder = new StringBuilder();
+		// for (int i = 0; i < array.length; i++) {
+		// if (array[i] == '|') {
+		// colValsList.add(builder.toString());
+		// builder = new StringBuilder();
+		// continue;
+		// }
+		// builder.append(array[i]);
+		// }
+		// String[] colVals = new String[colValsList.size()];
+		// {
+		// int i=0;
+		// for(String temp:colValsList){
+		// colVals[i]=temp;
+		// i++;
+		// }
+		// }
 		String[] colVals = TableUtils.pattern.split(row);
 		LeafValue[] convertedValues = null;
 		Map<String, Integer> physicalColumnMap = TableUtils.physicalColumnMapping.get(tableName);

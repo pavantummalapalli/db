@@ -2,10 +2,10 @@ package edu.buffalo.cse562.datasource;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LeafValue;
+import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
@@ -22,6 +23,7 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import com.sleepycat.bind.tuple.TupleBinding;
+import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
@@ -35,6 +37,7 @@ import com.sleepycat.je.SecondaryDatabase;
 import edu.buffalo.cse562.ExpressionTriplets;
 import edu.buffalo.cse562.berkelydb.IndexMetaData;
 import edu.buffalo.cse562.berkelydb.Range;
+import edu.buffalo.cse562.berkelydb.lineitem.LineItemPrimaryKeyBinding;
 import edu.buffalo.cse562.utils.TableUtils;
 
 public class BerekelyDBDataSource implements DataSource,DataSourceReader{
@@ -112,9 +115,6 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		}
 		init = true;
 	}
-	
-	
-	
 	
 	private Range evaluateBestAvailableSecondaryIndex() {
 		Iterator<String> iterator = secIndexMap.keySet().iterator();
@@ -241,7 +241,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	}
 	
 	private synchronized void lookupAll(TupleBinding<LeafValue[]> binding, Database primaryDatabase) {
-		System.out.println("Started linear scan for table :" + tableName);
+		// System.out.println("Started linear scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		DiskOrderedCursor cursor = null;
 		try{
@@ -249,9 +249,10 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 		DatabaseEntry tuple = new DatabaseEntry();
 		//DiskOrderedCursor cursor = primaryDatabase.openCursor(new DiskOrderedCursorConfig());
 			DiskOrderedCursorConfig config = new DiskOrderedCursorConfig();
-			config.setInternalMemoryLimit((long) (TableUtils.getAvailableMemory() * .60));
-			System.out.println("Queue size" + config.getQueueSize());
-			config.setQueueSize(2000);
+			// config.setInternalMemoryLimit((long)
+			// (TableUtils.getAvailableMemory() * .60));
+			// System.out.println("Queue size" + config.getQueueSize());
+			// config.setQueueSize(2000);
 			cursor = primaryDatabase.openCursor(config);
 			// cursor = primaryDatabase.openCursor(null, null);
 		//cursor.get(null, null, LockMode.READ_COMMITTED);
@@ -260,9 +261,10 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			buffer.put(results);
 		}
 		buffer.put(new LeafValue[1]);
-			System.out.println("End:" + (System.currentTimeMillis() - startTime));
+			// System.out.println("End:" + (System.currentTimeMillis() -
+			// startTime));
 		} catch (InterruptedException e) {
-			System.out.println("Thread interrupted");
+			// System.out.println("Thread interrupted");
 		}finally{
 			if(cursor!=null)
 				cursor.close();
@@ -271,7 +273,7 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	
 	private synchronized void rangeLookupSecondaryIndex(String secondaryIndexName, LeafValue minValue, boolean minIncluded, boolean maxIncuded, LeafValue maxValue, TupleBinding<LeafValue[]> binding,
 			SecondaryDatabase secondaryDb) {
-		System.out.println("Started range scan for table :" + tableName);
+		// System.out.println("Started range scan for table :" + tableName);
 		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor=null;
 		try{
@@ -333,7 +335,8 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 				} while (cursor.getNext(key, tuple, LockMode.READ_UNCOMMITTED) == OperationStatus.SUCCESS);
 			}
 			buffer.put(new LeafValue[1]);
-			System.out.println("End:" + (System.currentTimeMillis() - startTime));
+			// System.out.println("End:" + (System.currentTimeMillis() -
+			// startTime));
 		} catch (InterruptedException e) {
 			System.out.println("Thread interrupted");
 		}finally{
@@ -406,11 +409,13 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 	}
 
 	public List<LeafValue[]> lookupSecondaryIndexForLineItem(LeafValue value) {
-		List<LeafValue[]> buffer = new ArrayList<LeafValue[]>();
+		List<LeafValue[]> buffer = new LinkedList<LeafValue[]>();
 		SecondaryDatabase secondaryDb = indexData.getSecondaryIndexes().get("LINEITEM.ORDERKEY");
 		long startTime = System.currentTimeMillis();
 		SecondaryCursor cursor = null;
 		try {
+			if (!init)
+				init();
 			DatabaseEntry key = new DatabaseEntry();
 			TableUtils.bindLeafValueToKey(value, key);
 			DatabaseEntry tuple = new DatabaseEntry();
@@ -420,8 +425,43 @@ public class BerekelyDBDataSource implements DataSource,DataSourceReader{
 			OperationStatus returnVal = cursor.getSearchKey(key, tuple, LockMode.READ_UNCOMMITTED);
 			while (returnVal == OperationStatus.SUCCESS) {
 				LeafValue[] results = binding.entryToObject(tuple);
-				buffer.add(results);
+				buffer.add(remapData(results));
 				returnVal = cursor.getNextDup(key, tuple, LockMode.READ_UNCOMMITTED);
+			}
+			// System.out.println("End:" + (System.currentTimeMillis() -
+			// startTime));
+			return buffer;
+		} finally {
+			if (cursor != null)
+				cursor.close();
+		}
+	}
+
+	public List<LeafValue[]> lookupPrimaryIndexForLineItem(LeafValue value) {
+		List<LeafValue[]> buffer = new LinkedList<LeafValue[]>();
+		Database primaryDb = indexData.getPrimaryDatabase();
+		long startTime = System.currentTimeMillis();
+		Cursor cursor = null;
+		try {
+			if (!init)
+				init();
+			DatabaseEntry key = new DatabaseEntry();
+			TupleBinding<LeafValue[]> pKeyBinding = new LineItemPrimaryKeyBinding();
+			LeafValue[] pKey = new LeafValue[4];
+			pKey[0] = value;
+			pKey[3] = new LongValue(Integer.MIN_VALUE);
+			pKeyBinding.objectToEntry(pKey, key);
+			DatabaseEntry tuple = new DatabaseEntry();
+			CursorConfig config = new CursorConfig();
+			config.setNonSticky(true);
+			cursor = primaryDb.openCursor(null, null);
+			OperationStatus returnVal = cursor.getSearchKeyRange(key, tuple, LockMode.READ_UNCOMMITTED);
+			while (returnVal == OperationStatus.SUCCESS) {
+				LeafValue[] results = binding.entryToObject(tuple);
+				if (TableUtils.compareTwoLeafValues(results[0], value) > 0)
+					break;
+				buffer.add(remapData(results));
+				returnVal = cursor.getNext(key, tuple, LockMode.READ_UNCOMMITTED);
 			}
 			// System.out.println("End:" + (System.currentTimeMillis() -
 			// startTime));

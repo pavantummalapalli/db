@@ -34,8 +34,10 @@ public class MergeJoinNode extends AbstractJoinNode {
 	private Expression exp;
 	private static final double ROW_SIZE_IN_KB = 0.5;
 	private static final double SCALING_FACTOR = 5;
+	private boolean sortBeforeMerge;
 
-	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression) {
+	public MergeJoinNode(Node relationNode1, Node relationNode2, Expression expression, boolean sortBeforeMerge) {
+		this.sortBeforeMerge = sortBeforeMerge;
 		setRelationNode1(relationNode1);
 		setRelationNode2(relationNode2);
 		addJoinCondition(expression);
@@ -45,9 +47,10 @@ public class MergeJoinNode extends AbstractJoinNode {
 	@Override
 	public RelationNode eval() {
 		// sorting node1
+		
 		RelationNode relationNode1 = getRelationNode1().eval();
 		RelationNode relationNode2 = getRelationNode2().eval();
-
+		if (sortBeforeMerge) {
 		List<Integer>[] columnIndexList = getExpressionColumnIndexList(relationNode1, relationNode2, getJoinCondition());
 
 		// external sorting relation 1
@@ -78,7 +81,7 @@ public class MergeJoinNode extends AbstractJoinNode {
 		// setting sorted file2 to relation 2
 		FileDataSource fileDataSource2 = (FileDataSource) relationNode2.getFile();
 		fileDataSource2.setFile(finalSortedFiles2);
-
+		}
 		MergeJoinImpl mergeJoin = new MergeJoinImpl(relationNode1, relationNode2, getJoinCondition());
 
 		return mergeJoin.doMergeJoins();

@@ -57,7 +57,7 @@ public class MergeJoinImpl {
 
 			DataSource file = null;
 			if (TableUtils.isSwapOn)
-				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"), newList);
+				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"), newList, newTableName);
 			else
 				file = new BufferDataSource();
 			DataSourceWriter fileWriter = file.getWriter();

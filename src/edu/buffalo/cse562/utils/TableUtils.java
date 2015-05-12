@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 
+import com.sleepycat.bind.tuple.SortedPackedIntegerBinding;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.je.DatabaseEntry;
 
@@ -60,6 +62,7 @@ public final class TableUtils {
 	private static Map<Long,DateValue> pooledLongDateValue = new HashMap<>();
 	public static Map<String,IndexMetaData> tableIndexMetaData = new HashMap<>();
 	public static Map<String, Map<String, Integer>> physicalColumnMapping = new HashMap<>();
+	public static Map<String, HashSet<Integer>> existinColumnsForTable = new HashMap<>();
 
 	public static Map<String, String> tableNamePrimaryIndexMap = new HashMap<String, String>() {
 		{
@@ -72,10 +75,10 @@ public final class TableUtils {
     }};
 
     public static Map<String, List<Integer>> tableNameSecondaryIndexMap = new HashMap<String, List<Integer>>(){{
-        put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
+			// put("CUSTOMER", new ArrayList<>(Arrays.asList(6)));
 			// put("LINEITEM", new ArrayList<>(Arrays.asList(0, 3, 4, 6, 8, 10,
 			// 12, 14)));
-			// put("LINEITEM", new ArrayList<>(Arrays.asList(10)));
+			// put("LINEITEM", new ArrayList<>(Arrays.asList(0)));
 			// put("ORDERS", new ArrayList<>(Arrays.asList(4)));
 //        put("REGION", new ArrayList<>(Arrays.asList(1)));
     }};
@@ -107,7 +110,7 @@ public final class TableUtils {
     public static void bindLeafValueToKey(LeafValue leafValue, DatabaseEntry key) {
 		if(leafValue instanceof LongValue){
 			try {
-				TupleBinding.getPrimitiveBinding(Long.class).objectToEntry(leafValue.toLong(), key);
+				SortedPackedIntegerBinding.intToEntry((int) leafValue.toLong(), key);
 			} catch (InvalidLeaf e) {
 				e.printStackTrace();
 			}
@@ -124,7 +127,7 @@ public final class TableUtils {
     
     public static LeafValue unbindLeafValueToKey(LeafValue leafValue, DatabaseEntry key) {
 		if(leafValue instanceof LongValue){
-			return new LongValue(TupleBinding.getPrimitiveBinding(Long.class).entryToObject(key));
+			return new LongValue(SortedPackedIntegerBinding.entryToInt(key));
 		}else if(leafValue instanceof StringValue){
 			return new StringValue(TupleBinding.getPrimitiveBinding(String.class).entryToObject(key));
 		}

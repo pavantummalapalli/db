@@ -92,6 +92,7 @@ public class QueryOptimizer implements QueryDomain {
 											newJoinCondition.setRightExpression(((EqualsTo) ((AbstractJoinNode) node).getJoinCondition()).getLeftExpression());
 											indexLoopNode.setTableNames(((AbstractJoinNode) node).getTableNames());
 											indexLoopNode.addJoinCondition(newJoinCondition);
+
 											indexLoopJoinSet = true;
 											node = indexLoopNode;
 										}
@@ -180,7 +181,8 @@ public class QueryOptimizer implements QueryDomain {
 						}
 						if (!indexLoopJoinSet) {
 						if(TableUtils.isSwapOn){
-							MergeJoinNode sortMerge = new MergeJoinNode(((AbstractJoinNode)node).getRelationNode1(), ((AbstractJoinNode)node).getRelationNode2(), ((AbstractJoinNode)node).getJoinCondition());
+								MergeJoinNode sortMerge = new MergeJoinNode(((AbstractJoinNode) node).getRelationNode1(), ((AbstractJoinNode) node).getRelationNode2(),
+										((AbstractJoinNode) node).getJoinCondition(), true);
 							((AbstractJoinNode)node).getParentNode();
 							sortMerge.setTableNames(((AbstractJoinNode)node).getTableNames());
 							node=sortMerge;
@@ -245,7 +247,7 @@ public class QueryOptimizer implements QueryDomain {
 		IndexMetaData indexData = TableUtils.tableIndexMetaData.get(columnName.split("\\.")[0]);
 		if (indexData == null)
 			return false;
-		if (indexData.getPrimaryIndexName().equals(columnName))
+		if (indexData.getPrimaryIndexName().startsWith(columnName))
 			return true;
 		else
 			return (indexData.getSecondaryIndexes() != null && indexData.getSecondaryIndexes().containsKey(columnName));

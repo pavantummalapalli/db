@@ -122,7 +122,7 @@ public class ExtendedProjectNode implements Node {
 				if (TableUtils.isSwapOn)
 					file = new FileDataSource(new File(
 							TableUtils.getTempDataDir() + File.separator
-									+ newTableName + ".dat"), newList);
+ + newTableName + ".dat"), newList, newTableName);
 				else
 					file = new BufferDataSource();
 				// End of setting the metaData

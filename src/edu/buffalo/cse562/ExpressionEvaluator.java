@@ -86,8 +86,7 @@ public class ExpressionEvaluator extends Eval {
 				else {
 					value=0;
 				}
-			}
- else if (functionName.equals("AVG")) {
+			} else if (functionName.equals("AVG")) {
 				Expression exp =(Expression)function.getParameters().getExpressions().get(0);
 				LeafValue evaluatedValue = eval(exp);
 				GroupBy key=groupByKey;

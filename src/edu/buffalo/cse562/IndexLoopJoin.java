@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -68,7 +69,7 @@ public class IndexLoopJoin {
             LeafValue[] colVals1;
             DataSource file = null;
 			if (TableUtils.isSwapOn)
-				file = new FileDataSource(new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat"), newList);
+				file = new FileDataSource(new File(TableUtils.getDataDir() + File.separator + newTableName + ".dat"), newList, newTableName);
 			else
 				file = new BufferDataSource();
 
@@ -81,16 +82,17 @@ public class IndexLoopJoin {
                 ++index;
             }
             boolean isLineItem = relationNode2.getTableName().equals("LINEITEM");
+			// isLineItem = false;
             DataSourceWriter fileWriter = file.getWriter();
 			BerekelyDBDataSource ds = ((BerekelyDBDataSource) ((RelationNode) node2).getFile());
 			long start = System.currentTimeMillis();
 
             while((colVals1 = sqlIterator1.next()) != null) {
                 LeafValue leafValue = colVals1[index];
-                List<LeafValue[]> colValsList = new ArrayList<>();
+				List<LeafValue[]> colValsList;
                 //TODO: Filter expression for lineitem secondary index should be evaluated
                 if (isLineItem) {
-                    colValsList = ds.lookupSecondaryIndexForLineItem(leafValue);
+					colValsList = ds.lookupPrimaryIndexForLineItem(leafValue);
 					Iterator<LeafValue[]> ite = colValsList.iterator();
 					while (ite.hasNext()) {
 						LeafValue[] colVals2 = ite.next();
@@ -109,9 +111,10 @@ public class IndexLoopJoin {
     					if(value ==BooleanValue.FALSE)
     						continue;
     				}
+					colValsList = new LinkedList<LeafValue[]>();
                     colValsList.add(colVals2);
                 }
-                if (colValsList.get(0) == null)
+				if (colValsList.isEmpty() || colValsList.get(0) == null)
                     continue;
                 for (LeafValue[] colVals2 : colValsList) {
                     int z = 0;
@@ -126,13 +129,13 @@ public class IndexLoopJoin {
                     fileWriter.writeNextTuple(joinedTuple);
                 }
             }
-			System.out.println(System.currentTimeMillis() - start);
+			// System.out.println(System.currentTimeMillis() - start);
             fileWriter.close();
             sqlIterator1.close();
             dataFile1.clear();
             dataFile2.clear();
             RelationNode relationNode = new RelationNode(newTableName, null,file,joinedTable);
-            return relationNode;
+			return relationNode;
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (SQLException e) {

@@ -15,6 +15,7 @@ import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.PreloadConfig;
 import com.sleepycat.je.SecondaryConfig;
 import com.sleepycat.je.SecondaryDatabase;
 import com.sleepycat.je.SecondaryKeyCreator;
@@ -35,13 +36,15 @@ public class DatabaseManager {
 	
 	public DatabaseManager(String envHome){
 		envConfig = new EnvironmentConfig();
-		// envConfig.setConfigParam("je.log.fileMax", "100000000");
+		envConfig.setConfigParam(EnvironmentConfig.ENV_RUN_CLEANER, "false");
+		envConfig.setConfigParam(EnvironmentConfig.ENV_RUN_CHECKPOINTER, "false");
+		envConfig.setConfigParam(EnvironmentConfig.ENV_RUN_IN_COMPRESSOR, "false");
 		if (TableUtils.isLoadPhase) {
-			envConfig.setCachePercent(80);
+			envConfig.setCachePercent(50);
 			envConfig.setAllowCreate(true);
 		} else {
 			envConfig.setConfigParam(EnvironmentConfig.LOG_CHECKSUM_READ, "false");
-			envConfig.setCacheSize(1024 * 1024 * 300);
+			envConfig.setCacheSize(1024 * 1024 * 400);
 			envConfig.setAllowCreate(false);
 			envConfig.setTransactional(false);
 		}
@@ -83,13 +86,15 @@ public class DatabaseManager {
 			dbConfig.setAllowCreate(true);
 			// Make it deferred write
 			dbConfig.setDeferredWrite(true);
+			dbConfig.setKeyPrefixing(true);
 		    myDatabase = myDbEnvironment.openDatabase(null, indexName, dbConfig); 
 		    // start indexing table
-		    FileDataSource source = new FileDataSource(sourceData, colDefns);
-			DataSourceReader reader =  source.getReader();
 			TupleBinding<LeafValue[]> pKeyBinding = new LineItemPrimaryKeyBinding();
 			String tableName = indexName.split("\\.")[0];
 			boolean lineItemTable = tableName.equals("LINEITEM");
+			FileDataSource source = new FileDataSource(sourceData, colDefns, tableName);
+			DataSourceReader reader = source.getReader();
+
 			LeafValue[] row = null;
 			while( (row = reader.readNextTuple())!=null){
 				DatabaseEntry tuple = new DatabaseEntry();
@@ -118,15 +123,18 @@ public class DatabaseManager {
 			dbConfig.setReadOnly(true);
 			dbConfig.setSortedDuplicates(false);
 			dbConfig.setTransactional(false);
+			// dbConfig.setKeyPrefixing(true);
 			openPrimaryDatabases.put(tableName, myDbEnvironment.openDatabase(null, tableName, dbConfig));
-			// PreloadConfig config = new PreloadConfig();
-			// long start = System.currentTimeMillis();
-			// config.setMaxMillisecs(10000);
-			// config.setLoadLNs(true);
-			// if (!tableName.startsWith("LINEITEM")) {
-			// System.out.println(openPrimaryDatabases.get(tableName).preload(config).toString());
-			// System.out.println("Pre loaded index :" + tableName +
-			// (System.currentTimeMillis() - start));
+			PreloadConfig config = new PreloadConfig();
+			long start = System.currentTimeMillis();
+			// config.setMaxMillisecs(500);
+			config.setLoadLNs(false);
+			// if (!tableName.startsWith("LINEITEM") &&
+			// !tableName.startsWith("ORDER")) {
+			// openPrimaryDatabases.get(tableName).preload(config).toString();
+//			System.out.println(openPrimaryDatabases.get(tableName).preload(config).toString());
+				// System.out.println("Pre loaded index :" + tableName +
+				// (System.currentTimeMillis() - start));
 			// }
     	}
         return openPrimaryDatabases.get(tableName);
@@ -140,14 +148,15 @@ public class DatabaseManager {
             dbConfig.setSortedDuplicates(true);
             dbConfig.setTransactional(false);
             openSecondaryDatabases.put(secondaryIndexName, myDbEnvironment.openSecondaryDatabase(null, secondaryIndexName, primaryDatabase, dbConfig));
-			// long start = System.currentTimeMillis();
-			// PreloadConfig config = new PreloadConfig();
-			// config.setLoadLNs(true);
-			// config.setMaxMillisecs(10000);
-			// if (!secondaryIndexName.startsWith("LINEITEM")) {
+			long start = System.currentTimeMillis();
+			PreloadConfig config = new PreloadConfig();
+			config.setLoadLNs(false);
+			config.setMaxMillisecs(500);
+//			if (!secondaryIndexName.startsWith("LINEITEM") && !secondaryIndexName.startsWith("ORDER")) {
+			// openSecondaryDatabases.get(secondaryIndexName).preload(config).toString();
 			// System.out.println(openSecondaryDatabases.get(secondaryIndexName).preload(config).toString());
-			// System.out.println("Pre loaded index :" + secondaryIndexName +
-			// (System.currentTimeMillis() - start));
+				// System.out.println("Pre loaded index :" + secondaryIndexName
+				// + (System.currentTimeMillis() - start));
 			// }
     	}
         return openSecondaryDatabases.get(secondaryIndexName);

@@ -58,7 +58,7 @@ public class ExpressionNode implements Node {
 			
 			if (TableUtils.isSwapOn)
 				file = new FileDataSource(new File(TableUtils.getTempDataDir()
-						+ File.separator + newTableName + ".dat"),table.getColumnDefinitions());
+ + File.separator + newTableName + ".dat"), table.getColumnDefinitions(), newTableName);
 			else
 				file = new BufferDataSource();
 			

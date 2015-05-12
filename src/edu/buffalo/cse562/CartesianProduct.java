@@ -20,7 +20,6 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import edu.buffalo.cse562.datasource.BufferDataSource;
 import edu.buffalo.cse562.datasource.DataSource;
-import edu.buffalo.cse562.datasource.DataSourceReader;
 import edu.buffalo.cse562.datasource.DataSourceWriter;
 import edu.buffalo.cse562.datasource.FileDataSource;
 import edu.buffalo.cse562.queryplan.Node;
@@ -63,7 +62,7 @@ public class CartesianProduct {
 		LeafValue[] colVals1, colVals2;
 		DataSource file = null;
 		if(TableUtils.isSwapOn)
-			file =new FileDataSource( new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"),newList);
+				file = new FileDataSource(new File(TableUtils.getTempDataDir() + File.separator + newTableName + ".dat"), newList, newTableName);
 		else
 			file = new BufferDataSource();
 		

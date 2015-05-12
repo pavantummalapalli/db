@@ -23,7 +23,8 @@ public class StatementReader {
 		try {
 			long startTime = System.currentTimeMillis();
 			DatabaseManager manager = new DatabaseManager(TableUtils.getDbDir());
-			System.out.println("Time in seconds to initt :  " + (System.currentTimeMillis() - startTime) / 1000.0);
+			// System.out.println("Time in seconds to initt :  " +
+			// (System.currentTimeMillis() - startTime) / 1000.0);
 			startTime = System.currentTimeMillis();
 			for (int i=0;i<sqlfiles.length;i++) {
 				File file = new File(sqlfiles[i]);
@@ -39,7 +40,8 @@ public class StatementReader {
 						Node node = selectVistor.getQueryPlanTreeRoot();
 						node=new QueryOptimizer().optimizeQueryPlan((ProjectNode)node);
 						node.eval();
-						System.out.println(System.currentTimeMillis() - startQuery);
+						// System.out.println("Time taken " +
+						// (System.currentTimeMillis() - startQuery));
 						// manager.publishStats();
 						// manager.printCacheMisses();
 					} else if (statement instanceof CreateTable) {
@@ -70,7 +72,8 @@ public class StatementReader {
 			}
 			manager.close();
 			long endTime = System.currentTimeMillis();
-			System.out.println("Time in seconds " + (endTime - startTime) / 1000.0);
+			// System.out.println("Time in seconds " + (endTime - startTime) /
+			// 1000.0);
 		} catch (Throwable e) {
 			throw new RuntimeException("Runtime Exception at StatementReader for query : " + query , e);
 		}
